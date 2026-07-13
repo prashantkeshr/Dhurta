@@ -1,25 +1,46 @@
-MIT License
+Dhurta — Proprietary Software License
+Copyright © 2026 Dhurta.inc. All Rights Reserved.
 
-Copyright (c) 2024 Shiva
+1. OWNERSHIP
+   "Dhurta" (the "Software") — including its source code, design, artwork,
+   trademarks, and documentation — is the exclusive property of Dhurta.inc and
+   its owner, Prashant Keshri (the "Owner"). All rights not expressly granted
+   herein are reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+2. AUTHORIZATION REQUIRED FOR ANY CHANGE
+   No person or entity may copy, modify, merge, adapt, translate, reverse-
+   engineer, redistribute, publish, sublicense, or create derivative works of
+   the Software, in whole or in part, WITHOUT THE PRIOR WRITTEN AUTHORIZATION OF
+   THE OWNER. Any contribution, pull request, or change to this project is valid
+   only after it has been explicitly reviewed and approved by the Owner.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+3. PERMITTED USE
+   Subject to this license, end users are granted a personal, non-exclusive,
+   non-transferable right to install and run official, unmodified builds of the
+   Software for their own lawful use. This grant conveys no ownership and may be
+   revoked for breach of these terms.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+4. THIRD-PARTY COMPONENTS
+   The Software incorporates open-source components (including Electron, React,
+   Chromium, better-sqlite3, and Tor) that remain licensed under their own
+   respective licenses. Those licenses govern only their respective components
+   and do not extend to the Software as a whole. A full third-party notice will
+   be maintained as the project matures.
 
-NO WARRANTY: The authors provide this software without any warranty of fitness
-for a particular purpose. Users are solely responsible for their use of this
-software and must comply with all applicable laws and regulations.
+5. TRADEMARKS
+   "Dhurta", "Dhurta.inc", the Dhurta trishula mark, and related logos are
+   trademarks of Dhurta.inc. No trademark rights are granted by this license.
+
+6. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+   OWNER OR DHURTA.INC BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY
+   ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+7. GOVERNING TERMS
+   This license may be updated by the Owner at any time. Formal legal terms and
+   full regulatory compliance will be finalized in a later revision; until then,
+   these terms govern all use of the Software.
+
+For licensing, partnership, or authorization requests, contact: Dhurta.inc.

@@ -1,13 +1,13 @@
 {
   "name": "dhurta",
   "version": "1.0.8",
-  "description": "Sovereign Browser — Productivity fortress with Ghost Mode",
+  "description": "Dhurta — a sovereign, privacy-native desktop browser by Dhurta.inc.",
   "main": "dist-electron/main.js",
   "author": {
-    "name": "Prashant Keshri",
+    "name": "Dhurta.inc",
     "email": "prashant.keshr@gmail.com"
   },
-  "license": "MIT",
+  "license": "UNLICENSED",
   "private": true,
   "workspaces": [
     "packages/core",
@@ -50,9 +50,9 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.shiva.dhurta",
+    "appId": "inc.dhurta.browser",
     "productName": "Dhurta",
-    "copyright": "Copyright © 2026 Shiva",
+    "copyright": "Copyright © 2026 Dhurta.inc. All Rights Reserved.",
     "directories": {
       "output": "release",
       "buildResources": "build"
