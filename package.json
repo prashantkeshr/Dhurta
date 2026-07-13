@@ -20,7 +20,7 @@
     "build:core": "npm run build -w @dhurta/core",
     "build:electron": "npm run build:core && tsc -p tsconfig.electron.json && node electron/scripts/genInjection.cjs && node -e \"const fs=require('fs');fs.copyFileSync('electron/webviewPreload.js','dist-electron/webviewPreload.js');fs.copyFileSync('electron/offline.html','dist-electron/offline.html');fs.copyFileSync('electron/popupPreload.js','dist-electron/popupPreload.js');fs.copyFileSync('electron/downloadPopup.html','dist-electron/downloadPopup.html');fs.copyFileSync('electron/warmthPopup.html','dist-electron/warmthPopup.html');fs.copyFileSync('electron/appsPopup.html','dist-electron/appsPopup.html');fs.copyFileSync('electron/toolsPopup.html','dist-electron/toolsPopup.html');fs.copyFileSync('electron/popoutPreload.js','dist-electron/popoutPreload.js');try{fs.copyFileSync('electron/browser-polyfill.min.js','dist-electron/browser-polyfill.min.js')}catch(_){}\"",
     "preview": "vite preview",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "node scripts/postinstall.cjs"
   },
   "dependencies": {
     "@cliqz/adblocker-electron": "^1.27.0",

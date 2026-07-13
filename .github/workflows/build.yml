@@ -18,16 +18,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Build @dhurta/core
-        working-directory: packages/core
-        # npm treats this dir as part of the root workspace and resolves the whole
-        # workspace's peers, which includes a known React version mismatch in the
-        # mobile/ui expansion packages. Legacy peer resolution (same as the desktop
-        # job and local dev) is required or install fails with ERESOLVE.
+      - name: Build & typecheck @dhurta/core
+        # Build from the repo ROOT, not packages/core: a subdir install produces
+        # broken dependency hoisting (esbuild becomes unresolvable for tsup). The
+        # root install hoists everything correctly. --legacy-peer-deps is required
+        # for the workspace's React version mismatch (mobile/ui expansion pkgs),
+        # and the non-fatal postinstall wrapper means the Electron native-deps
+        # rebuild can't break this pure-TypeScript job.
         run: |
           npm install --legacy-peer-deps
-          npm run typecheck
-          npm run build
+          npm run build:core
+          node ./node_modules/typescript/bin/tsc --noEmit -p packages/core/tsconfig.json
       - uses: actions/upload-artifact@v4
         with:
           name: dhurta-core-dist
