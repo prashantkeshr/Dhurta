@@ -20,8 +20,12 @@ jobs:
           node-version: 20
       - name: Build @dhurta/core
         working-directory: packages/core
+        # npm treats this dir as part of the root workspace and resolves the whole
+        # workspace's peers, which includes a known React version mismatch in the
+        # mobile/ui expansion packages. Legacy peer resolution (same as the desktop
+        # job and local dev) is required or install fails with ERESOLVE.
         run: |
-          npm install
+          npm install --legacy-peer-deps
           npm run typecheck
           npm run build
       - uses: actions/upload-artifact@v4
