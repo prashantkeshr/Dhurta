@@ -3,7 +3,10 @@
   "version": "1.0.8",
   "description": "Sovereign Browser — Productivity fortress with Ghost Mode",
   "main": "dist-electron/main.js",
-  "author": "Shiva",
+  "author": {
+    "name": "Prashant Keshri",
+    "email": "prashant.keshr@gmail.com"
+  },
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -91,8 +94,7 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "arm64"
+            "x64"
           ]
         }
       ],
@@ -111,7 +113,7 @@
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "x64"
           ]
         }
       ],
@@ -124,19 +126,11 @@
         {
           "target": "AppImage",
           "arch": [
-            "x64",
-            "arm64"
+            "x64"
           ]
         },
         {
           "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "rpm",
           "arch": [
             "x64"
           ]
