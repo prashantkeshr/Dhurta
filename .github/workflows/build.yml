@@ -85,11 +85,10 @@ jobs:
           # GITHUB_TOKEN is provided automatically; contents:write (set above)
           # lets electron-builder create/upload the release.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Optional signing secrets — used only if you add them in repo settings.
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          # Unsigned builds. Do NOT pass empty CSC_* vars — electron-builder reads an
+          # empty CSC_LINK as a bad file path and fails (Windows/macOS). Disabling
+          # signing-identity discovery keeps macOS from attempting to sign.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       # Also keep raw artifacts on the workflow run itself (handy for testing).
       - uses: actions/upload-artifact@v4
