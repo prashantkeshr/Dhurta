@@ -479,7 +479,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             in the URL bar, Ctrl+scroll), no separate controls duplicated here */}
         <div className="flex items-center gap-4 mb-2">
           <div className="omni-badge">
-            <img src="/dhurta-logo.png" alt="" className="w-9 h-9 object-contain relative z-10" draggable={false} />
+            <img src="./dhurta-logo.png" alt="" className="w-9 h-9 object-contain relative z-10" draggable={false} />
           </div>
           <div className="flex-1">
             <h1 className="omni-title text-2xl font-mono font-bold tracking-[0.2em]">DHURTA :: OMNI</h1>
@@ -611,7 +611,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   active={currentMode === 'normal'}
                   busy={chakraBusy}
                   accent="#9d00ff"
-                  iconSrc="/dhurta-logo.png"
+                  iconSrc="./dhurta-logo.png"
                   title="Normal Browsing"
                   subtitle="No extra protection layer"
                   desc="Default state. Sites see your real IP and standard fingerprint baseline — fine for everyday, non-sensitive browsing."
@@ -624,7 +624,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   active={currentMode === 'chakra'}
                   busy={chakraBusy}
                   accent="#FF4500"
-                  iconSrc="/chakra-icon.png"
+                  iconSrc="./chakra-icon.png"
                   title="Chakra Shield"
                   subtitle="Moderate — everyday protection"
                   desc="VPN + Anti-Fingerprint + WebRTC block + Cookie Guard + Ad Blocker, bundled in one switch. Fast, most sites keep working normally."
@@ -637,7 +637,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   active={currentMode === 'ghost'}
                   busy={chakraBusy || busy === 'ghost'}
                   accent="#ff2bd6"
-                  iconSrc="/dhurta-logo.png"
+                  iconSrc="./dhurta-logo.png"
                   iconGlow
                   title="Ghost Mode"
                   subtitle="Extreme — maximum anonymity"

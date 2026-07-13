@@ -296,7 +296,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     logo: (
       <div className="flex flex-col items-center">
         <img
-          src="/dhurta-logo.png"
+          src="./dhurta-logo.png"
           alt="Dhurta"
           draggable={false}
           className={[

@@ -577,7 +577,7 @@ export default function SettingsPanel() {
             <PageTitle>About Dhurta</PageTitle>
             <div className="bg-obsidian border border-border p-5 space-y-3">
               <div className="flex items-center gap-3">
-                <img src="/dhurta-logo.png" alt="Dhurta" className="w-10 h-10 object-contain" />
+                <img src="./dhurta-logo.png" alt="Dhurta" className="w-10 h-10 object-contain" />
                 <div>
                   <p className="text-sm font-mono text-text">Dhurta</p>
                   <p className="text-xs text-muted font-mono">Sovereign Browser · v1.0.0</p>

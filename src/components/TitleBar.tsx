@@ -63,7 +63,7 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
       {/* Logo — sits inside the sidebar width block */}
       <div className="w-16 shrink-0 flex items-center justify-center">
         <img
-          src="/dhurta-logo.png"
+          src="./dhurta-logo.png"
           alt="Dhurta"
           className="w-8 h-8 object-contain drop-shadow-[0_0_6px_#FFB30066]"
           draggable={false}

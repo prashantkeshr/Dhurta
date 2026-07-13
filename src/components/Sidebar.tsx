@@ -121,7 +121,7 @@ export default function Sidebar({
         } : {}}
       >
         <img
-          src="/dhurta-logo.png"
+          src="./dhurta-logo.png"
           alt="Dhurta"
           draggable={false}
           className="w-9 h-9 object-contain transition-all duration-300"
@@ -147,7 +147,7 @@ export default function Sidebar({
         className="w-10 h-10 flex items-center justify-center transition-all duration-300 shrink-0 disabled:opacity-50"
       >
         <img
-          src="/chakra-icon.png"
+          src="./chakra-icon.png"
           alt="Chakra"
           draggable={false}
           className={['w-8 h-8 object-contain', chakraActive ? 'chakra-active' : 'chakra-idle'].join(' ')}

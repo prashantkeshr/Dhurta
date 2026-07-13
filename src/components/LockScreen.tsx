@@ -91,7 +91,7 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
       <div className="relative flex flex-col items-center gap-6 px-8 py-10 w-80">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <img src="/dhurta-logo.png" alt="Dhurta" className="w-14 h-14 object-contain opacity-90"
+          <img src="./dhurta-logo.png" alt="Dhurta" className="w-14 h-14 object-contain opacity-90"
             style={{ filter: 'drop-shadow(0 0 12px #FF450066)' }} />
           <p className="text-[10px] font-mono text-saffron uppercase tracking-[0.3em]">
             {mode === 'show-recovery' ? 'Save Recovery Phrase' :
