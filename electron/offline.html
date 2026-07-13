@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No Connection — Dhurta</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#080808;color:#888;font-family:'Courier New',monospace;user-select:none;-webkit-user-select:none}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+.logo{font-size:10px;letter-spacing:7px;color:#FF4500;margin-bottom:24px;opacity:.5}
+.err-code{font-size:10px;letter-spacing:2px;color:#1E1E1E;margin-bottom:4px}
+.err-title{font-size:20px;font-weight:bold;color:#aaa;margin-bottom:4px}
+.err-url{font-size:10px;color:#282828;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:20px}
+.retry{background:transparent;border:1px solid #FF4500;color:#FF4500;padding:7px 26px;font-family:monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .12s;margin-bottom:6px}
+.retry:hover{background:#FF4500;color:#000}
+.reconnect-note{font-size:9px;color:#232323;letter-spacing:1px;margin-bottom:22px;height:14px}
+canvas{display:block;cursor:pointer;border:1px solid #111}
+.game-ui{display:flex;align-items:center;justify-content:space-between;margin-top:6px;width:640px}
+.hint{font-size:9px;letter-spacing:1px;color:#222}
+.controls{display:flex;align-items:center;gap:8px}
+.diff-btns{display:flex;gap:4px}
+.diff-btn{background:transparent;border:1px solid #1A1A1A;color:#282828;padding:2px 8px;font-family:monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .1s;text-transform:uppercase}
+.diff-btn:hover,.diff-btn.active{border-color:#8833ff;color:#8833ff}
+.pause-btn{background:transparent;border:1px solid #1A1A1A;color:#282828;padding:2px 8px;font-family:monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .1s}
+.pause-btn:hover{border-color:#444;color:#555}
+</style>
+</head>
+<body>
+<div class="logo">D H U R T A</div>
+<div class="err-code" id="eCode">ERR_INTERNET_DISCONNECTED</div>
+<div class="err-title" id="eTitle">No internet connection</div>
+<div class="err-url" id="eUrl"></div>
+<button class="retry" onclick="doRetry()">↺ Try Again</button>
+<div class="reconnect-note" id="reconnNote"></div>
+
+<canvas id="c" width="640" height="180"></canvas>
+<div class="game-ui">
+  <div class="hint" id="hint">SPACE · CLICK · ↑ to jump &nbsp;·&nbsp; DOUBLE-JUMP · ESC/P to pause</div>
+  <div class="controls">
+    <button class="pause-btn" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+    <div class="diff-btns">
+      <button class="diff-btn active" id="dEasy"   onclick="setDiff('easy')">Easy</button>
+      <button class="diff-btn"        id="dMedium" onclick="setDiff('medium')">Med</button>
+      <button class="diff-btn"        id="dHard"   onclick="setDiff('hard')">Hard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Error info ────────────────────────────────────────────────────────────────
+const sp = new URLSearchParams(location.search)
+const code    = sp.get('code') || ''
+const failUrl = sp.get('url')  || ''
+const CODES = {
+  '-2'  :['ERR_FAILED','Connection failed'],
+  '-6'  :['ERR_FILE_NOT_FOUND','Page not found'],
+  '-7'  :['ERR_TIMED_OUT','Request timed out'],
+  '-21' :['ERR_NETWORK_CHANGED','Network changed'],
+  '-100':['ERR_CONNECTION_CLOSED','Connection closed'],
+  '-101':['ERR_CONNECTION_RESET','Connection reset'],
+  '-102':['ERR_CONNECTION_REFUSED','Connection refused'],
+  '-105':['ERR_NAME_NOT_RESOLVED','DNS lookup failed'],
+  '-106':['ERR_INTERNET_DISCONNECTED','No internet connection'],
+  '-109':['ERR_ADDRESS_UNREACHABLE','Address unreachable'],
+  '-118':['ERR_CONNECTION_TIMED_OUT','Connection timed out'],
+  '-137':['ERR_NAME_RESOLUTION_FAILED','Name resolution failed'],
+  '-501':['ERR_INSECURE_RESPONSE','Insecure response'],
+}
+const [errCode, errTitle] = CODES[code] || ['ERR_FAILED','Something went wrong']
+document.getElementById('eCode').textContent  = errCode
+document.getElementById('eTitle').textContent = errTitle
+if (failUrl) document.getElementById('eUrl').textContent = failUrl
+
+function doRetry() {
+  if (failUrl) location.replace(failUrl)
+  else history.back()
+}
+
+// ── Auto-reconnect ────────────────────────────────────────────────────────────
+;(function autoReconn() {
+  let checking = false
+  setInterval(async () => {
+    if (checking) return
+    checking = true
+    try {
+      await fetch('https://www.gstatic.com/generate_204', { mode:'no-cors', cache:'no-store' })
+      document.getElementById('reconnNote').textContent = '✓ Back online — reloading…'
+      setTimeout(doRetry, 800)
+    } catch (_) {
+      document.getElementById('reconnNote').textContent = '⟳ Checking connection…'
+      setTimeout(() => { document.getElementById('reconnNote').textContent = '' }, 1500)
+    }
+    checking = false
+  }, 4000)
+})()
+
+// ── Game ──────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c')
+const ctx    = canvas.getContext('2d')
+const W = 640, H = 180
+const GROUND = 152  // y of ground line
+
+// ── Difficulty presets ────────────────────────────────────────────────────────
+const DIFFS = {
+  easy:   { startSpd:2.5, maxSpd:8,  rampEvery:500, rampBy:0.25, gravity:0.38, jumpVy:-8.5, obsMin:28, obsMax:52 },
+  medium: { startSpd:3.5, maxSpd:11, rampEvery:350, rampBy:0.35, gravity:0.45, jumpVy:-9.5, obsMin:32, obsMax:62 },
+  hard:   { startSpd:5,   maxSpd:14, rampEvery:220, rampBy:0.5,  gravity:0.52, jumpVy:-10.5,obsMin:36, obsMax:72 },
+}
+let diff = DIFFS.easy
+function setDiff(d) {
+  diff = DIFFS[d]
+  ;['easy','medium','hard'].forEach(n => document.getElementById('d'+n[0].toUpperCase()+n.slice(1)).classList.remove('active'))
+  document.getElementById('d'+d[0].toUpperCase()+d.slice(1)).classList.add('active')
+  resetGame()
+}
+
+// ── Game state ────────────────────────────────────────────────────────────────
+let score=0, best=0, speed=0, frame=0, paused=false, dead=false, started=false
+
+// Ghost
+const GHOST_X = 70
+let gy=0, gvy=0, jumpsLeft=0, ghostBob=0
+
+// Obstacles
+let obstacles = []
+let nextObsDist = 0
+
+// Particles (trail + death)
+let particles = []
+
+// Neon scanlines phase
+let scanPhase = 0
+
+function resetGame() {
+  score = 0; speed = diff.startSpd; frame = 0; dead = false; started = false
+  gy = GROUND - 38; gvy = 0; jumpsLeft = 2
+  obstacles = []; nextObsDist = 300; particles = []; ghostBob = 0
+  document.getElementById('pauseBtn').textContent = '⏸ Pause'
+  paused = false
+}
+resetGame()
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+function jump() {
+  if (dead) { resetGame(); return }
+  if (!started) { started = true }
+  if (jumpsLeft > 0) {
+    gvy = diff.jumpVy
+    jumpsLeft--
+    spawnJumpParticles()
+  }
+}
+function togglePause() {
+  if (dead) return
+  paused = !paused
+  document.getElementById('pauseBtn').textContent = paused ? '▶ Resume' : '⏸ Pause'
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { e.preventDefault(); jump() }
+  if (e.code === 'Escape' || e.code === 'KeyP') togglePause()
+})
+canvas.addEventListener('click', jump)
+canvas.addEventListener('touchstart', e => { e.preventDefault(); jump() }, { passive:false })
+
+// ── Particles ─────────────────────────────────────────────────────────────────
+function spawnTrailParticle() {
+  particles.push({
+    x: GHOST_X + 4 + (Math.random()-0.5)*6,
+    y: gy + 22 + Math.random()*8,
+    vx: -(speed * 0.3 + Math.random()*0.5),
+    vy: (Math.random()-0.5)*0.8,
+    life: 1,
+    decay: 0.04 + Math.random()*0.04,
+    r: 2 + Math.random()*2,
+    type: 'trail',
+  })
+}
+
+function spawnJumpParticles() {
+  for (let i=0; i<8; i++) {
+    const a = Math.PI + (Math.random()-0.5)*Math.PI*0.8
+    const v = 1.5 + Math.random()*2.5
+    particles.push({
+      x: GHOST_X + 14, y: gy + 28,
+      vx: Math.cos(a)*v, vy: Math.sin(a)*v,
+      life: 1, decay: 0.06+Math.random()*0.04,
+      r: 1.5+Math.random()*2.5, type: 'jump',
+    })
+  }
+}
+
+function spawnDeathParticles() {
+  for (let i=0; i<22; i++) {
+    const a = (i/22)*Math.PI*2
+    const v = 2 + Math.random()*5
+    particles.push({
+      x: GHOST_X+14, y: gy+16,
+      vx: Math.cos(a)*v, vy: Math.sin(a)*v,
+      life: 1, decay: 0.025+Math.random()*0.03,
+      r: 2+Math.random()*4, type: 'death',
+    })
+  }
+}
+
+// ── Drawing helpers ───────────────────────────────────────────────────────────
+function drawGhost(x, y, bob, isJumping, isDead, frameN) {
+  const w = 28, h = 38
+  const actualY = y + Math.sin(bob) * 1.8
+
+  ctx.save()
+
+  if (isDead) {
+    ctx.globalAlpha = 0.5
+    ctx.translate(x+w/2, actualY+h/2)
+    ctx.rotate(Math.sin(frameN*0.15)*0.3)
+    ctx.translate(-(x+w/2), -(actualY+h/2))
+  }
+
+  // Glow
+  ctx.shadowBlur  = 18
+  ctx.shadowColor = '#99eeff'
+
+  // Body gradient
+  const grad = ctx.createRadialGradient(x+w/2, actualY+h*0.35, 2, x+w/2, actualY+h*0.35, h*0.75)
+  grad.addColorStop(0, '#d8f4ff')
+  grad.addColorStop(0.6, '#a8e0f8')
+  grad.addColorStop(1, '#70b8e8')
+  ctx.fillStyle = grad
+
+  // Ghost shape
+  ctx.beginPath()
+  // Top arc
+  ctx.arc(x+w/2, actualY+w/2, w/2, Math.PI, 0)
+  // Right side down
+  ctx.lineTo(x+w, actualY+h-8)
+  // Wavy bottom — 3 bumps
+  const wv = isJumping ? 0 : Math.sin(frameN*0.18)*3
+  ctx.bezierCurveTo(
+    x+w, actualY+h+2+wv,
+    x+w*0.8, actualY+h-4-wv,
+    x+w*0.65, actualY+h-1
+  )
+  ctx.bezierCurveTo(
+    x+w*0.5+2, actualY+h+5-wv,
+    x+w*0.35-2, actualY+h-6+wv,
+    x+w*0.2, actualY+h-2
+  )
+  ctx.bezierCurveTo(
+    x, actualY+h+3+wv,
+    x, actualY+h-2,
+    x, actualY+h-8
+  )
+  ctx.closePath()
+  ctx.fill()
+
+  // Inner highlight
+  ctx.shadowBlur = 0
+  ctx.fillStyle  = 'rgba(255,255,255,0.35)'
+  ctx.beginPath()
+  ctx.ellipse(x+w*0.38, actualY+w*0.3, 5, 7, -0.3, 0, Math.PI*2)
+  ctx.fill()
+
+  // Eyes
+  const eyeY = actualY + w*0.38
+  if (isDead) {
+    // X eyes
+    ctx.strokeStyle = '#1a3040'; ctx.lineWidth = 2
+    ;[[x+w*0.3, eyeY],[x+w*0.68, eyeY]].forEach(([ex,ey]) => {
+      ctx.beginPath(); ctx.moveTo(ex-4,ey-4); ctx.lineTo(ex+4,ey+4); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(ex+4,ey-4); ctx.lineTo(ex-4,ey+4); ctx.stroke()
+    })
+  } else if (isJumping) {
+    // Wide O eyes
+    ctx.fillStyle = '#1a3040'
+    ctx.beginPath(); ctx.ellipse(x+w*0.3, eyeY, 5, 6.5, 0, 0, Math.PI*2); ctx.fill()
+    ctx.beginPath(); ctx.ellipse(x+w*0.68, eyeY, 5, 6.5, 0, 0, Math.PI*2); ctx.fill()
+    // Shine
+    ctx.fillStyle = 'white'
+    ctx.beginPath(); ctx.arc(x+w*0.3-2, eyeY-2.5, 1.8, 0, Math.PI*2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x+w*0.68-2, eyeY-2.5, 1.8, 0, Math.PI*2); ctx.fill()
+  } else {
+    // Normal round eyes
+    ctx.fillStyle = '#1a3040'
+    ctx.beginPath(); ctx.arc(x+w*0.3, eyeY, 4.2, 0, Math.PI*2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x+w*0.68, eyeY, 4.2, 0, Math.PI*2); ctx.fill()
+    // Shine
+    ctx.fillStyle = 'white'
+    ctx.beginPath(); ctx.arc(x+w*0.3-1.5, eyeY-1.5, 1.5, 0, Math.PI*2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x+w*0.68-1.5, eyeY-1.5, 1.5, 0, Math.PI*2); ctx.fill()
+    // Pupils following direction
+    ctx.fillStyle = '#2a4858'
+    ctx.beginPath(); ctx.arc(x+w*0.32, eyeY, 2, 0, Math.PI*2); ctx.fill()
+    ctx.beginPath(); ctx.arc(x+w*0.7, eyeY, 2, 0, Math.PI*2); ctx.fill()
+  }
+
+  // Mouth
+  if (!isDead) {
+    ctx.fillStyle = '#1a3040'
+    ctx.beginPath()
+    ctx.ellipse(x+w*0.5, actualY+w*0.58, isJumping?3:2, isJumping?4:2.5, 0, 0, Math.PI*2)
+    ctx.fill()
+  }
+
+  ctx.restore()
+}
+
+function drawObstacle(obs) {
+  ctx.save()
+  ctx.shadowBlur = 12; ctx.shadowColor = '#aa44ff'
+  // Body
+  ctx.fillStyle = '#551188'
+  ctx.fillRect(obs.x, obs.y, obs.w, obs.h)
+  // Bright top
+  ctx.shadowBlur = 0
+  ctx.fillStyle = '#cc66ff'
+  ctx.fillRect(obs.x, obs.y, obs.w, 2)
+  // Bright side lines
+  ctx.fillStyle = '#9933cc'
+  ctx.fillRect(obs.x, obs.y+2, 2, obs.h-2)
+  ctx.fillRect(obs.x+obs.w-2, obs.y+2, 2, obs.h-2)
+  ctx.restore()
+}
+
+function drawGround() {
+  // Neon ground line
+  ctx.save()
+  ctx.shadowBlur = 10; ctx.shadowColor = '#6600cc'
+  ctx.strokeStyle = '#5500aa'; ctx.lineWidth = 1.5
+  ctx.beginPath(); ctx.moveTo(0, GROUND+18); ctx.lineTo(W, GROUND+18); ctx.stroke()
+
+  // Ground glow
+  const gg = ctx.createLinearGradient(0, GROUND+18, 0, GROUND+28)
+  gg.addColorStop(0, 'rgba(85,0,170,0.3)')
+  gg.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = gg; ctx.shadowBlur = 0
+  ctx.fillRect(0, GROUND+18, W, 12)
+  ctx.restore()
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.save()
+    ctx.globalAlpha = p.life * (p.type==='trail'?0.5:0.9)
+    if (p.type==='trail') {
+      ctx.fillStyle = '#88ddff'
+      ctx.shadowBlur = 6; ctx.shadowColor = '#44aaff'
+    } else if (p.type==='jump') {
+      ctx.fillStyle = '#aaeeff'
+      ctx.shadowBlur = 4; ctx.shadowColor = '#88ccff'
+    } else {
+      const hues = ['#ff44cc','#cc44ff','#44ffdd','#ffcc44','#ff6644','#44ccff']
+      ctx.fillStyle = hues[Math.floor(Math.random()*hues.length)]
+      ctx.shadowBlur = 8; ctx.shadowColor = ctx.fillStyle
+    }
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r*p.life, 0, Math.PI*2); ctx.fill()
+    ctx.restore()
+  })
+}
+
+function drawHUD() {
+  ctx.save()
+  ctx.font = '10px "Courier New"'; ctx.letterSpacing = '1px'
+
+  // Level
+  const lvl = Math.floor(score/500)+1
+  ctx.fillStyle = '#331155'
+  ctx.fillText('LVL ' + lvl, 10, 18)
+
+  // Score
+  ctx.shadowBlur = 6; ctx.shadowColor = '#8833ff'
+  ctx.fillStyle = '#6622aa'
+  ctx.textAlign = 'right'
+  ctx.fillText(String(score).padStart(5,'0'), W-10, 18)
+
+  // Best
+  ctx.shadowBlur = 0; ctx.fillStyle = '#222'
+  ctx.fillText('BEST ' + String(best).padStart(5,'0'), W-10, 32)
+  ctx.textAlign = 'left'
+
+  // Speed bar
+  const barW = 80, barH = 3
+  const prog = Math.min((speed - diff.startSpd)/(diff.maxSpd - diff.startSpd), 1)
+  ctx.fillStyle = '#111'; ctx.fillRect(10, H-14, barW, barH)
+  ctx.shadowBlur = 4; ctx.shadowColor = '#8833ff'
+  ctx.fillStyle = '#6622aa'; ctx.fillRect(10, H-14, barW*prog, barH)
+  ctx.shadowBlur = 0; ctx.fillStyle = '#221133'
+  ctx.fillText('SPD', 96, H-11)
+
+  ctx.restore()
+}
+
+function drawPaused() {
+  ctx.save()
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'
+  ctx.fillRect(0, 0, W, H)
+  ctx.shadowBlur = 20; ctx.shadowColor = '#8833ff'
+  ctx.fillStyle = '#8833ff'
+  ctx.font = 'bold 18px "Courier New"'
+  ctx.textAlign = 'center'
+  ctx.fillText('PAUSED', W/2, H/2-6)
+  ctx.shadowBlur = 0; ctx.fillStyle = '#444'
+  ctx.font = '9px "Courier New"'
+  ctx.fillText('ESC · P · PAUSE button to resume', W/2, H/2+14)
+  ctx.restore()
+}
+
+function drawStart() {
+  ctx.save()
+  ctx.shadowBlur = 16; ctx.shadowColor = '#88ccff'
+  ctx.fillStyle = '#3a7a99'
+  ctx.font = 'bold 14px "Courier New"'
+  ctx.textAlign = 'center'
+  ctx.fillText('PRESS SPACE or CLICK to start', W/2, H/2+4)
+  ctx.restore()
+}
+
+function drawDead() {
+  ctx.save()
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'
+  ctx.fillRect(0, 0, W, H)
+  ctx.shadowBlur = 20; ctx.shadowColor = '#ff44aa'
+  ctx.fillStyle = '#ff44aa'
+  ctx.font = 'bold 16px "Courier New"'
+  ctx.textAlign = 'center'
+  ctx.fillText('SPOOKED!', W/2, H/2-10)
+  ctx.shadowBlur = 0; ctx.fillStyle = '#553333'
+  ctx.font = '9px "Courier New"'
+  ctx.fillText('SPACE · CLICK to haunt again', W/2, H/2+10)
+  if (score === best && score > 0) {
+    ctx.shadowBlur = 8; ctx.shadowColor = '#ffcc44'
+    ctx.fillStyle = '#ffcc44'
+    ctx.fillText('NEW BEST: ' + score, W/2, H/2+26)
+  }
+  ctx.restore()
+}
+
+// ── Collision ─────────────────────────────────────────────────────────────────
+function collides(obs) {
+  const gx1=GHOST_X+4, gy1=gy+6, gx2=GHOST_X+24, gy2=gy+34
+  return gx2>obs.x && gx1<obs.x+obs.w && gy2>obs.y && gy1<obs.y+obs.h
+}
+
+// ── Main loop ─────────────────────────────────────────────────────────────────
+let lastT = 0
+function loop(ts) {
+  const dt = Math.min((ts-lastT)/16.67, 3)
+  lastT = ts
+
+  // Clear
+  ctx.clearRect(0, 0, W, H)
+
+  // Subtle scanline
+  scanPhase = (scanPhase+0.5)%H
+  for (let y=0; y<H; y+=4) {
+    ctx.fillStyle = 'rgba(0,0,0,0.08)'
+    ctx.fillRect(0, (y+scanPhase)%H, W, 2)
+  }
+
+  drawGround()
+
+  if (!started) {
+    drawGhost(GHOST_X, GROUND-38+Math.sin(frame*0.05)*3, ghostBob, false, false, frame)
+    drawHUD()
+    drawStart()
+    frame++
+    requestAnimationFrame(loop)
+    return
+  }
+
+  if (!paused && !dead) {
+    frame++
+
+    // Score + speed ramp
+    score = Math.floor(frame / 4)
+    if (score > best) best = score
+    if (frame % diff.rampEvery === 0) speed = Math.min(speed + diff.rampBy, diff.maxSpd)
+
+    // Ghost physics
+    gvy += diff.gravity * dt
+    gy  += gvy * dt
+    ghostBob += 0.12 * dt
+
+    // Landing
+    if (gy >= GROUND - 38) {
+      gy = GROUND - 38; gvy = 0; jumpsLeft = 2
+    }
+
+    // Trail particles
+    if (frame % 2 === 0) spawnTrailParticle()
+
+    // Obstacles
+    nextObsDist -= speed * dt
+    if (nextObsDist <= 0) {
+      const h = diff.obsMin + Math.random()*(diff.obsMax-diff.obsMin)
+      const w = 14 + Math.random()*10
+      obstacles.push({ x:W+10, y:GROUND-h+18, w, h })
+      nextObsDist = 180 + Math.random()*240 - Math.min(score*0.05, 80)
+    }
+
+    // Move + cull obstacles
+    obstacles = obstacles.filter(o => {
+      o.x -= speed * dt
+      return o.x > -50
+    })
+
+    // Collision
+    for (const o of obstacles) {
+      if (collides(o)) {
+        dead = true
+        spawnDeathParticles()
+        break
+      }
+    }
+  }
+
+  // Update particles
+  particles = particles.filter(p => {
+    p.x += p.vx * dt; p.y += p.vy * dt
+    if (p.type==='death') p.vy += 0.15*dt
+    p.life -= p.decay * dt
+    return p.life > 0
+  })
+
+  // Draw
+  drawParticles()
+  obstacles.forEach(drawObstacle)
+
+  const onGround = gy >= GROUND - 39
+  drawGhost(GHOST_X, gy, ghostBob, !onGround && gvy<0, dead, frame)
+
+  drawHUD()
+  if (paused) drawPaused()
+  if (dead)   drawDead()
+
+  requestAnimationFrame(loop)
+}
+
+requestAnimationFrame(loop)
+</script>
+</body>
+</html>

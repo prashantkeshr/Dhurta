@@ -1,0 +1,161 @@
+{
+  "name": "dhurta",
+  "version": "1.0.8",
+  "description": "Sovereign Browser — Productivity fortress with Ghost Mode",
+  "main": "dist-electron/main.js",
+  "author": "Shiva",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/core",
+    "packages/ui",
+    "packages/mobile",
+    "packages/connect-pwa"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://localhost:19173 && npm run build:electron && electron .\"",
+    "dev:renderer": "vite",
+    "build": "vite build && npm run build:electron && electron-builder",
+    "build:renderer": "vite build",
+    "build:core": "npm run build -w @dhurta/core",
+    "build:electron": "npm run build:core && tsc -p tsconfig.electron.json && node electron/scripts/genInjection.cjs && node -e \"const fs=require('fs');fs.copyFileSync('electron/webviewPreload.js','dist-electron/webviewPreload.js');fs.copyFileSync('electron/offline.html','dist-electron/offline.html');fs.copyFileSync('electron/popupPreload.js','dist-electron/popupPreload.js');fs.copyFileSync('electron/downloadPopup.html','dist-electron/downloadPopup.html');fs.copyFileSync('electron/warmthPopup.html','dist-electron/warmthPopup.html');fs.copyFileSync('electron/appsPopup.html','dist-electron/appsPopup.html');fs.copyFileSync('electron/toolsPopup.html','dist-electron/toolsPopup.html');fs.copyFileSync('electron/popoutPreload.js','dist-electron/popoutPreload.js');try{fs.copyFileSync('electron/browser-polyfill.min.js','dist-electron/browser-polyfill.min.js')}catch(_){}\"",
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@cliqz/adblocker-electron": "^1.27.0",
+    "better-sqlite3": "^9.4.3",
+    "cross-fetch": "^4.0.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-electron": "^0.28.7",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.shiva.dhurta",
+    "productName": "Dhurta",
+    "copyright": "Copyright © 2026 Shiva",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/tor",
+        "to": "tor"
+      },
+      {
+        "from": "tools/setu",
+        "to": "tools/setu",
+        "filter": [
+          "**/*",
+          "!**/node_modules/**",
+          "!**/.git/**"
+        ]
+      },
+      {
+        "from": "tools/connect",
+        "to": "tools/connect",
+        "filter": [
+          "**/*",
+          "!**/node_modules/**",
+          "!**/.git/**"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Dhurta Browser"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Network",
+      "desktop": {
+        "entry": {
+          "MimeType": "x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/dhurta-connect;",
+          "StartupWMClass": "Dhurta"
+        }
+      }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "releaseType": "draft"
+      }
+    ]
+  }
+}

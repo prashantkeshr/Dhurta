@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dhurta Connect — Offline</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { margin: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0B1120;
+      color: #C9D2E4;
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      padding: 24px;
+      text-align: center;
+    }
+    .card { max-width: 340px; }
+    .mark {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #FF4500;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #E6ECF5;
+    }
+    p { font-size: 14px; line-height: 1.6; color: #7A8BA8; margin-bottom: 20px; }
+    button {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+      background: #FF4500;
+      color: #0B1120;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #FF6020; }
+    button:focus-visible { outline: 2px solid #C9D2E4; outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">Dhurta Connect</div>
+    <h1>You're offline</h1>
+    <p>
+      Connect needs a network to establish a peer-to-peer session. Your data was
+      never stored on a server — nothing is lost. Reconnect and try again.
+    </p>
+    <button onclick="location.reload()">Retry</button>
+  </div>
+</body>
+</html>

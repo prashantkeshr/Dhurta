@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dhurta-renderer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:renderer"],
+      "port": 5173,
+      "cwd": "."
+    },
+    {
+      "name": "offline-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-s", "electron", "-l", "5174", "--no-clipboard"],
+      "port": 5174,
+      "cwd": "."
+    }
+  ]
+}

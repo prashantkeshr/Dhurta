@@ -1,0 +1,12 @@
+{
+  "name": "@dhurta/connect-pwa",
+  "version": "1.0.8",
+  "description": "Installable, offline-first Progressive Web App wrapper for Dhurta Connect — P2P chat, calls, and file share on any device.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node serve.mjs",
+    "preview": "npm run build && npm run serve"
+  }
+}

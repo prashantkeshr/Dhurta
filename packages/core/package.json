@@ -1,0 +1,62 @@
+{
+  "name": "@dhurta/core",
+  "version": "1.0.8",
+  "description": "Platform-agnostic privacy core for the Dhurta browser ecosystem — fingerprint spoofing, WebRTC blocking, tracker blocklist parsing, resource path resolution, and the unified cross-platform IPC schema. Zero Node.js and zero Electron runtime dependencies.",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Prashant Keshri",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./fingerprint": {
+      "types": "./dist/fingerprint/index.d.ts",
+      "import": "./dist/fingerprint/index.js",
+      "require": "./dist/fingerprint/index.cjs"
+    },
+    "./webrtc": {
+      "types": "./dist/webrtc/index.d.ts",
+      "import": "./dist/webrtc/index.js",
+      "require": "./dist/webrtc/index.cjs"
+    },
+    "./blocklist": {
+      "types": "./dist/blocklist/index.d.ts",
+      "import": "./dist/blocklist/index.js",
+      "require": "./dist/blocklist/index.cjs"
+    },
+    "./paths": {
+      "types": "./dist/paths/index.d.ts",
+      "import": "./dist/paths/index.js",
+      "require": "./dist/paths/index.cjs"
+    },
+    "./ipc": {
+      "types": "./dist/ipc/index.d.ts",
+      "import": "./dist/ipc/index.js",
+      "require": "./dist/ipc/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "peerDependencies": {},
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

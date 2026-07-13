@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src * data:">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #141414; --surface: #1e1e1e; --border: #2a2a2a;
+    --text: #d4d4d4; --muted: #606060; --accent: #FF4500;
+  }
+  html, body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px;
+    height: 100%; overflow: hidden; user-select: none;
+  }
+  body { display: flex; flex-direction: column; }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px 8px; border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .header-title { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .close-btn {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 13px; padding: 1px 5px; border-radius: 3px; line-height: 1;
+  }
+  .close-btn:hover { color: var(--accent); }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 10px; }
+
+  .app-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; padding: 8px 4px 6px; border: 1px solid var(--border);
+    background: none; color: var(--text); cursor: pointer; border-radius: 6px;
+    transition: border-color .12s, background .12s; min-height: 68px;
+  }
+  .app-btn:hover { border-color: var(--accent); background: rgba(255,69,0,.07); }
+  .app-btn:active { background: rgba(255,69,0,.14); }
+
+  .icon-wrap { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+  .app-icon { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+  .icon-fallback {
+    width: 22px; height: 22px; border: 1px solid #444; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--accent); font-weight: 600;
+  }
+  .app-name { font-size: 9px; color: var(--muted); text-align: center; line-height: 1.2; max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-btn:hover .app-name { color: var(--text); }
+
+  .footer {
+    border-top: 1px solid var(--border); padding: 6px 10px;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    background: var(--surface);
+  }
+  .footer-note { font-size: 9px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-title">Dhurta Apps</span>
+    <button class="close-btn" onclick="popup.close()">✕</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="footer">
+    <span class="footer-note">Click to open</span>
+  </div>
+
+  <script>
+    var DEFAULT_APPS = [
+      { id: 'setu',     name: 'Dhurta Setu',   url: 'dhurta-tool://setu',               icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2 12 L8 4 L14 12" fill="none" stroke="%23FF4500" stroke-width="1.5" stroke-linejoin="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="%23FF4500" stroke-width="1.2"/><circle cx="8" cy="8" r="1.5" fill="%23FF4500"/></svg>' },
+      { id: 'youtube',  name: 'YouTube',      url: 'https://www.youtube.com',         icon: 'https://www.youtube.com/favicon.ico' },
+      { id: 'google',   name: 'Google',        url: 'https://www.google.com',           icon: 'https://www.google.com/favicon.ico' },
+      { id: 'gmail',    name: 'Gmail',         url: 'https://mail.google.com',          icon: 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico' },
+      { id: 'gdocs',    name: 'Google Docs',   url: 'https://docs.google.com',          icon: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico' },
+      { id: 'gdrive',   name: 'Google Drive',  url: 'https://drive.google.com',         icon: 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png' },
+      { id: 'aistudio', name: 'AI Studio',     url: 'https://aistudio.google.com',      icon: 'https://www.gstatic.com/aistudio/ai_studio_favicon.png' },
+    ]
+
+    function renderApps(apps) {
+      var grid = document.getElementById('grid')
+      grid.innerHTML = ''
+      apps.forEach(function(app) {
+        var btn = document.createElement('button')
+        btn.className = 'app-btn'
+        btn.title = app.url
+
+        var iconWrap = document.createElement('div')
+        iconWrap.className = 'icon-wrap'
+        if (app.icon) {
+          var img = document.createElement('img')
+          img.className = 'app-icon'
+          img.onerror = function() {
+            iconWrap.innerHTML = '<div class="icon-fallback">' + app.name[0].toUpperCase() + '</div>'
+          }
+          iconWrap.appendChild(img)
+
+          // Resolve via the local cache first (instant, works offline) — the
+          // backend only hits the network if this URL was never cached before.
+          // Avoids flashing the fallback letter while a live fetch is pending.
+          if (app.icon.indexOf('data:') === 0) {
+            img.src = app.icon
+          } else {
+            popup.invoke('apps:getIconDataUrl', app.icon).then(function(dataUrl) {
+              img.src = dataUrl || app.icon
+            }).catch(function() {
+              img.src = app.icon
+            })
+          }
+        } else {
+          iconWrap.innerHTML = '<div class="icon-fallback">' + app.name[0].toUpperCase() + '</div>'
+        }
+
+        var nameEl = document.createElement('span')
+        nameEl.className = 'app-name'
+        nameEl.textContent = app.name
+
+        btn.appendChild(iconWrap)
+        btn.appendChild(nameEl)
+        btn.addEventListener('click', function() {
+          popup.invoke('popup:navigateMain', app.url)
+          popup.close()
+        })
+        grid.appendChild(btn)
+      })
+    }
+
+    popup.invoke('popup:getApps').then(function(apps) {
+      renderApps(apps && apps.length ? apps : DEFAULT_APPS)
+    }).catch(function() {
+      renderApps(DEFAULT_APPS)
+    })
+  </script>
+</body>
+</html>

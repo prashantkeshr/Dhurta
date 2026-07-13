@@ -1,0 +1,65 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build output (desktop) — anchored to repo root ────────────
+/dist/
+/dist-electron/
+/release/
+build/icon.ico
+
+# ── Build output (packages) ───────────────────────────────────
+packages/*/dist/
+
+# ── Consolidated tools (tools/setu, tools/connect) ────────────
+# Ship their source + the prebuilt connect client dist, but never their
+# dependencies. NOTE: tools/connect/client/dist IS committed intentionally so
+# the bundled Connect tool works without a build step.
+tools/**/node_modules/
+
+# ── Generated at build time (from @dhurta/core) ───────────────
+electron/injectionScripts.js
+dist-electron/injectionScripts.js
+
+# ── Android (packages/android) ────────────────────────────────
+packages/android/.gradle/
+packages/android/build/
+packages/android/app/build/
+packages/android/local.properties
+packages/android/.idea/
+packages/android/captures/
+*.apk
+*.aab
+*.keystore
+
+# ── iOS (packages/ios) ────────────────────────────────────────
+packages/ios/build/
+packages/ios/DerivedData/
+packages/ios/*.xcworkspace/xcuserdata/
+packages/ios/**/xcuserdata/
+*.ipa
+
+# ── Logs & caches ─────────────────────────────────────────────
+*.log
+dev.log
+dhurta-run.log
+electron.log
+*.tsbuildinfo
+.vite/
+.cache/
+
+# ── Editor / OS ───────────────────────────────────────────────
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ── Secrets / signing (never commit) ──────────────────────────
+.env
+.env.local
+*.pem
+*.p12
+*.mobileprovision
+build/*.p12

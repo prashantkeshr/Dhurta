@@ -1,0 +1,291 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Theme: Dark (default) ─────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+  --color-obsidian: 10 10 10;
+  --color-surface:  17 17 17;
+  --color-surface2: 26 26 26;
+  --color-surface3: 34 34 34;
+  --color-border:   42 42 42;
+  --color-muted:    102 102 102;
+  --color-text:     232 232 232;
+  --color-text-dim: 153 153 153;
+}
+
+/* ── Theme: Light ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+  /* Blue-tinted neutral palette — feels airy and premium against saffron */
+  --color-obsidian: 250 251 252;    /* #FAFBFC — near-white with subtle cool tint */
+  --color-surface:  242 244 248;    /* #F2F4F8 — light panel bg                  */
+  --color-surface2: 232 235 242;    /* #E8EBF2 — nested surfaces                 */
+  --color-surface3: 220 224 234;    /* #DCE0EA — hover surface                   */
+  --color-border:   198 204 218;    /* #C6CCDA — clean visible border             */
+  --color-muted:    130 142 164;    /* #828EA4 — muted icons / secondary text     */
+  --color-text:     13 18 38;       /* #0D1226 — deep navy-black                  */
+  --color-text-dim: 64 78 108;      /* #404E6C — secondary text                   */
+}
+
+body {
+  background: rgb(var(--color-obsidian));
+  color: rgb(var(--color-text));
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgb(var(--color-surface)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+
+/* ── Light mode overrides ──────────────────────────────────────────────────── */
+[data-theme="light"] ::-webkit-scrollbar-track { background: #edeef4; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #bcc3d6; border-radius: 2px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+
+/* Sharp tabs — no border-radius anywhere in tab bar */
+.tab-sharp { border-radius: 0 !important; }
+
+/* Saffron underline for active tab */
+.tab-active {
+  position: relative;
+}
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #FF4500;
+  box-shadow: 0 0 8px #FF4500;
+}
+
+/* Light mode active tab — crisp underline, no dark glow bleed */
+[data-theme="light"] .tab-active::after {
+  box-shadow: 0 0 5px rgba(255, 69, 0, 0.45);
+}
+
+/* Light mode active tab — subtle top shadow for "lifted" feeling */
+[data-theme="light"] .tab-active {
+  box-shadow: 0 -1px 6px rgba(13, 18, 38, 0.06) inset;
+}
+
+/* Sidebar icon glow on hover */
+.sidebar-icon {
+  transition: color 0.15s, filter 0.15s;
+}
+.sidebar-icon:hover {
+  color: #FF4500;
+  filter: drop-shadow(0 0 6px #FF4500);
+}
+
+/* Ghost mode pulse on sidebar icon */
+.ghost-active {
+  color: #FF4500;
+  animation: saffron-pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px #FF4500);
+}
+
+/* Light mode — remove neon glow from sidebar icons (looks harsh on white) */
+[data-theme="light"] .sidebar-icon:hover {
+  color: #FF4500;
+  filter: none;
+}
+[data-theme="light"] .ghost-active {
+  filter: none;
+}
+
+/* Glitch on hover */
+.glitch-hover:hover {
+  animation: glitch 0.4s ease-in-out;
+}
+
+/* Glassmorphism sidebar */
+.glass {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Light mode sidebar — white frosted glass with right-side depth shadow */
+[data-theme="light"] .glass {
+  background: rgba(248, 249, 252, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 2px 0 24px rgba(13, 18, 38, 0.07), 1px 0 0 rgba(13, 18, 38, 0.05);
+  border-right-color: rgba(198, 204, 218, 0.5);
+}
+
+/* Draggable titlebar region */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Input reset */
+input, textarea {
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+/* URL bar font */
+.url-font {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+/* Panel overlay fade-in */
+.panel-overlay {
+  animation: fade-in 0.15s ease-out;
+}
+
+/* Nuclear button pulse */
+.nuclear-btn {
+  transition: all 0.2s;
+}
+.nuclear-btn:hover {
+  background: #FF4500;
+  box-shadow: 0 0 20px #FF4500, 0 0 40px #FF450044;
+}
+
+/* Light mode nuclear — softer glow (dark glow bleeds on white) */
+[data-theme="light"] .nuclear-btn:hover {
+  background: #FF4500;
+  box-shadow: 0 0 14px rgba(255, 69, 0, 0.4), 0 2px 8px rgba(255, 69, 0, 0.25);
+  color: #fff;
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); opacity: 1; }
+  20% { transform: translate(-2px, 1px); opacity: 0.8; }
+  40% { transform: translate(2px, -1px); opacity: 0.9; }
+  60% { transform: translate(-1px, 2px); opacity: 0.85; }
+  80% { transform: translate(1px, -2px); opacity: 0.95; }
+}
+
+@keyframes saffron-pulse {
+  0%, 100% { box-shadow: 0 0 4px #FF4500; }
+  50% { box-shadow: 0 0 12px #FF4500, 0 0 24px #FF450055; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Chakra privacy mode — slow wheel spin, accelerates on first enable then settles */
+@keyframes chakra-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.chakra-active {
+  animation: chakra-spin 6s linear infinite;
+  filter: drop-shadow(0 0 6px #FF4500) drop-shadow(0 0 14px #FF450055);
+}
+
+.chakra-idle {
+  opacity: 0.65;
+  transition: opacity 0.2s;
+}
+
+.chakra-idle:hover {
+  opacity: 1;
+}
+
+/* Tab bar loading progress bar — indeterminate shimmer */
+@keyframes tab-loading-sweep {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(200%); }
+  100% { transform: translateX(200%); }
+}
+
+.tab-loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, #FF4500 40%, #FFB300 60%, transparent 100%);
+  animation: tab-loading-sweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes dl-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* ── Light mode component elevation ───────────────────────────────────────── */
+
+/* Panels slide in with a shadow to "float" above the browser content */
+[data-theme="light"] .panel-overlay {
+  box-shadow: 4px 0 32px rgba(13, 18, 38, 0.1), 1px 0 0 rgba(13, 18, 38, 0.06);
+}
+
+/* URL bar — separate it from the white page content with a crisp bottom shadow */
+[data-theme="light"] .url-bar {
+  background: rgb(var(--color-surface));
+  box-shadow: 0 1px 0 rgba(13, 18, 38, 0.06), 0 2px 8px rgba(13, 18, 38, 0.04);
+  border-bottom-color: rgba(198, 204, 218, 0.7) !important;
+}
+
+/* Tab bar — light mode top border and deeper active-tab separation */
+[data-theme="light"] .tab-bar {
+  background: rgb(var(--color-surface));
+  border-bottom-color: rgba(198, 204, 218, 0.8) !important;
+}
+
+/* Inactive tab hover in light mode — warmer saffron tint */
+[data-theme="light"] .tab-inactive-hover:hover {
+  background: rgb(var(--color-surface2));
+}
+
+/* Download tray popup in light — distinct card shadow */
+[data-theme="light"] .download-tray-popup {
+  box-shadow: 0 8px 32px rgba(13, 18, 38, 0.12), 0 2px 8px rgba(13, 18, 38, 0.06),
+              0 0 0 1px rgba(13, 18, 38, 0.05);
+}
+
+/* URL input box in light — inset shadow for depth, white bg for contrast */
+[data-theme="light"] .url-input-box {
+  background: #ffffff !important;
+  box-shadow: inset 0 1px 3px rgba(13, 18, 38, 0.08), inset 0 0 0 1px rgba(198, 204, 218, 0.8);
+  border-color: transparent !important;
+}
+
+[data-theme="light"] .url-input-box:focus-within {
+  box-shadow: inset 0 1px 3px rgba(13, 18, 38, 0.06),
+              0 0 0 2px rgba(255, 69, 0, 0.18);
+  border-color: transparent !important;
+}
+
+/* Saffron badge / chip — brighter on white backgrounds */
+[data-theme="light"] .chip-saffron {
+  background: rgba(255, 69, 0, 0.08);
+  color: #cc3700;
+  border-color: rgba(255, 69, 0, 0.3);
+}
+
+/* Ghost badge in light mode */
+[data-theme="light"] .ghost-badge {
+  background: rgba(255, 69, 0, 0.06);
+  color: #cc3700;
+  border-color: rgba(255, 69, 0, 0.25);
+}

@@ -1,0 +1,1277 @@
+
+<title>Dhurta Ecosystem — Comprehensive Project Dossier</title>
+<style>
+  /* ── Token System ─────────────────────────────────────────────────── */
+  :root {
+    --ground:        #F5F6F8;
+    --ground-alt:    #ECEEF2;
+    --surface:       #FFFFFF;
+    --border:        #D0D5E0;
+    --border-faint:  #E4E6EC;
+    --text:          #1C2030;
+    --text-muted:    #5A6278;
+    --text-faint:    #8A92A8;
+    --accent-i:      #2C5FA3;       /* Volume I  — institutional blue   */
+    --accent-i-bg:   #EBF1FB;
+    --accent-ii:     #8B1A1A;       /* Volume II — restricted crimson   */
+    --accent-ii-bg:  #FBF0F0;
+    --gold:          #A07820;       /* classification stamps            */
+    --gold-bg:       #FBF5E6;
+    --gold-border:   #C9A840;
+    --danger:        #CC2222;
+    --code-bg:       #F0F2F6;
+    --code-text:     #2C3550;
+    --stamp-color:   rgba(139,26,26,0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:        #0B1120;
+      --ground-alt:    #101828;
+      --surface:       #131C2E;
+      --border:        #2A3550;
+      --border-faint:  #1E2A40;
+      --text:          #C9D2E4;
+      --text-muted:    #7A8BA8;
+      --text-faint:    #4A5870;
+      --accent-i:      #5B90D4;
+      --accent-i-bg:   #0F1E35;
+      --accent-ii:     #C04040;
+      --accent-ii-bg:  #1E0C0C;
+      --gold:          #C9A840;
+      --gold-bg:       #1A1200;
+      --gold-border:   #8B7020;
+      --danger:        #E04444;
+      --code-bg:       #0D1526;
+      --code-text:     #8BBAE0;
+      --stamp-color:   rgba(192,64,64,0.09);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground:        #F5F6F8;
+    --ground-alt:    #ECEEF2;
+    --surface:       #FFFFFF;
+    --border:        #D0D5E0;
+    --border-faint:  #E4E6EC;
+    --text:          #1C2030;
+    --text-muted:    #5A6278;
+    --text-faint:    #8A92A8;
+    --accent-i:      #2C5FA3;
+    --accent-i-bg:   #EBF1FB;
+    --accent-ii:     #8B1A1A;
+    --accent-ii-bg:  #FBF0F0;
+    --gold:          #A07820;
+    --gold-bg:       #FBF5E6;
+    --gold-border:   #C9A840;
+    --danger:        #CC2222;
+    --code-bg:       #F0F2F6;
+    --code-text:     #2C3550;
+    --stamp-color:   rgba(139,26,26,0.07);
+  }
+  :root[data-theme="dark"] {
+    --ground:        #0B1120;
+    --ground-alt:    #101828;
+    --surface:       #131C2E;
+    --border:        #2A3550;
+    --border-faint:  #1E2A40;
+    --text:          #C9D2E4;
+    --text-muted:    #7A8BA8;
+    --text-faint:    #4A5870;
+    --accent-i:      #5B90D4;
+    --accent-i-bg:   #0F1E35;
+    --accent-ii:     #C04040;
+    --accent-ii-bg:  #1E0C0C;
+    --gold:          #C9A840;
+    --gold-bg:       #1A1200;
+    --gold-border:   #8B7020;
+    --danger:        #E04444;
+    --code-bg:       #0D1526;
+    --code-text:     #8BBAE0;
+    --stamp-color:   rgba(192,64,64,0.09);
+  }
+
+  /* ── Reset & Base ─────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body {
+    background: var(--ground);
+    color: var(--text);
+    font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ── Document Wrapper ─────────────────────────────────────────────── */
+  .doc {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── Cover / Masthead ─────────────────────────────────────────────── */
+  .cover {
+    padding: 56px 0 40px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 0;
+  }
+  .cover-classification {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+    background: var(--gold-bg);
+    display: inline-block;
+    padding: 3px 12px;
+    margin-bottom: 24px;
+  }
+  .cover-eyebrow {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
+  .cover-title {
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: normal;
+    line-height: 1.2;
+    color: var(--text);
+    text-wrap: balance;
+    max-width: 680px;
+    margin-bottom: 6px;
+  }
+  .cover-subtitle {
+    font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+    font-size: 17px;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+  .cover-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-faint);
+  }
+  .cover-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .cover-meta-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .cover-meta-value {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Table of Contents ────────────────────────────────────────────── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    margin: 32px 0 48px;
+  }
+  .toc-title {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 20px;
+  }
+  .toc-vol { margin-bottom: 16px; }
+  .toc-vol-label {
+    font-family: Georgia, serif;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+  .toc-vol-label.vi { color: var(--accent-i); }
+  .toc-vol-label.vii { color: var(--accent-ii); }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 2px 0 2px 12px;
+  }
+  .toc-item::before {
+    content: '—';
+    color: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* ── Volume Breaks ─────────────────────────────────────────────────── */
+  .vol-break {
+    margin: 56px -24px 0;
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vol-break.vol-i { background: var(--accent-i-bg); border-top: 3px solid var(--accent-i); border-bottom: 3px solid var(--accent-i); }
+  .vol-break.vol-ii { background: var(--accent-ii-bg); border-top: 3px solid var(--accent-ii); border-bottom: 3px solid var(--accent-ii); }
+  .vol-break-eyebrow {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .vol-i .vol-break-eyebrow { color: var(--accent-i); }
+  .vol-ii .vol-break-eyebrow { color: var(--accent-ii); }
+  .vol-break-title {
+    font-family: Georgia, 'Palatino Linotype', serif;
+    font-size: clamp(18px, 3.5vw, 26px);
+    font-weight: normal;
+    text-wrap: balance;
+  }
+  .vol-i .vol-break-title { color: var(--accent-i); }
+  .vol-ii .vol-break-title { color: var(--accent-ii); }
+  .vol-break-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    max-width: 580px;
+  }
+  /* Watermark stamp on restricted volume */
+  .vol-break.vol-ii::after {
+    content: 'RESTRICTED';
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-8deg);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 48px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    color: var(--stamp-color);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── Classification Banner ─────────────────────────────────────────── */
+  .classification-banner {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    margin: 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .classification-banner.restricted {
+    background: var(--accent-ii-bg);
+    border: 1px solid var(--accent-ii);
+    color: var(--accent-ii);
+  }
+  .classification-banner.notice {
+    background: var(--gold-bg);
+    border: 1px solid var(--gold-border);
+    color: var(--gold);
+  }
+  .classification-banner::before { content: '▶'; font-size: 9px; }
+
+  /* ── Section Headings ─────────────────────────────────────────────── */
+  .section {
+    padding-top: 48px;
+    border-left: 3px solid var(--border-faint);
+    padding-left: 24px;
+    margin-left: -27px;
+  }
+  .section.vol-i-section { border-left-color: var(--accent-i); }
+  .section.vol-ii-section { border-left-color: var(--accent-ii); }
+
+  .section-num {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 4px;
+  }
+  .section-title {
+    font-family: Georgia, 'Palatino Linotype', serif;
+    font-size: clamp(17px, 3vw, 22px);
+    font-weight: normal;
+    line-height: 1.3;
+    text-wrap: balance;
+    margin-bottom: 20px;
+  }
+  .vol-i-section .section-title { color: var(--accent-i); }
+  .vol-ii-section .section-title { color: var(--accent-ii); }
+
+  /* ── Prose ────────────────────────────────────────────────────────── */
+  .prose { max-width: 720px; }
+  .prose p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--text); font-weight: 600; }
+  .prose em { font-style: italic; color: var(--text-muted); }
+
+  /* ── Subsection headings ──────────────────────────────────────────── */
+  h3.sub {
+    font-family: Georgia, serif;
+    font-size: 15px;
+    font-weight: bold;
+    font-style: italic;
+    color: var(--text);
+    margin: 28px 0 10px;
+  }
+
+  /* ── Feature Grid ─────────────────────────────────────────────────── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .feature-card-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent-i);
+    margin-bottom: 6px;
+  }
+  .vol-ii-section .feature-card-label { color: var(--accent-ii); }
+  .feature-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .feature-card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ── SOP Steps ────────────────────────────────────────────────────── */
+  .sop-list { list-style: none; margin: 20px 0; max-width: 720px; }
+  .sop-item {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-faint);
+  }
+  .sop-item:last-child { border-bottom: none; }
+  .sop-num {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    color: var(--text-faint);
+    min-width: 28px;
+    padding-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sop-body { flex: 1; }
+  .sop-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .sop-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .sop-code {
+    display: inline-block;
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    padding: 2px 8px;
+    margin-top: 6px;
+    border: 1px solid var(--border-faint);
+  }
+  .sop-note {
+    font-size: 12px;
+    color: var(--text-faint);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* ── Tables ───────────────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 24px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  thead tr {
+    background: var(--ground-alt);
+    border-bottom: 2px solid var(--border);
+  }
+  th {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 10px 14px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-faint);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--ground-alt); transition: background 0.12s; }
+  .badge {
+    display: inline-block;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .badge-ok    { color: #2A7A40; border-color: #2A7A40; background: #EBF7EF; }
+  .badge-warn  { color: #8B6010; border-color: #C9A020; background: #FBF4E0; }
+  .badge-crit  { color: var(--danger); border-color: var(--danger); background: var(--accent-ii-bg); }
+  .badge-info  { color: var(--accent-i); border-color: var(--accent-i); background: var(--accent-i-bg); }
+  @media (prefers-color-scheme: dark) {
+    .badge-ok  { background: #0A1F10; }
+    .badge-warn{ background: #1A1200; }
+    .badge-crit{ background: var(--accent-ii-bg); }
+    .badge-info{ background: var(--accent-i-bg); }
+  }
+  :root[data-theme="dark"] .badge-ok  { background: #0A1F10; }
+  :root[data-theme="dark"] .badge-warn{ background: #1A1200; }
+
+  /* ── Code blocks ──────────────────────────────────────────────────── */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-ii);
+    padding: 16px 20px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--code-text);
+    overflow-x: auto;
+    margin: 12px 0 20px;
+    white-space: pre;
+  }
+  .code-comment { color: var(--text-faint); }
+
+  /* ── Path Topology Block ──────────────────────────────────────────── */
+  .path-tree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--code-text);
+    overflow-x: auto;
+    margin: 16px 0;
+    white-space: pre;
+  }
+  .path-dir  { color: var(--accent-i); }
+  .path-file { color: var(--text-muted); }
+  .path-note { color: var(--text-faint); }
+
+  /* ── Divider ──────────────────────────────────────────────────────── */
+  .rule { border: none; border-top: 1px solid var(--border-faint); margin: 40px 0; }
+
+  /* ── Footer ───────────────────────────────────────────────────────── */
+  .doc-footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .footer-classification {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .footer-notice {
+    font-size: 11px;
+    color: var(--text-faint);
+    max-width: 500px;
+    line-height: 1.5;
+  }
+
+  /* ── Inline note / callout ────────────────────────────────────────── */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-i);
+    background: var(--surface);
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .callout.warn { border-left-color: var(--gold); background: var(--gold-bg); color: var(--text-muted); }
+  .callout.crit { border-left-color: var(--danger); background: var(--accent-ii-bg); }
+  .callout-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: bold;
+  }
+  .callout.warn .callout-label { color: var(--gold); }
+  .callout.crit .callout-label { color: var(--danger); }
+  .callout:not(.warn):not(.crit) .callout-label { color: var(--accent-i); }
+
+  /* ── Risk severity column ──────────────────────────────────────────── */
+  .sev-critical { color: var(--danger); font-weight: 600; }
+  .sev-high     { color: #C87020; font-weight: 600; }
+  .sev-medium   { color: var(--gold); }
+  .sev-low      { color: var(--text-faint); }
+</style>
+
+<div class="doc">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- COVER                                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="cover">
+    <div class="cover-classification">Confidential — Internal Distribution Only</div>
+    <div class="cover-eyebrow">Project Shiva / Engineering &amp; Product Division</div>
+    <h1 class="cover-title">Dhurta Ecosystem — Comprehensive Project Dossier</h1>
+    <p class="cover-subtitle">Master Reference: Product Specification, Technical Architecture &amp; Operating Procedures</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Document ID</span>
+        <span class="cover-meta-value">SHIVA-DOSSIER-2026-001</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Classification</span>
+        <span class="cover-meta-value">CONFIDENTIAL — TWO VOLUMES</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Revision</span>
+        <span class="cover-meta-value">v1.0 — 2026-07-12</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Owner</span>
+        <span class="cover-meta-value">Prashant Keshri — Principal Engineer</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Volume I Distribution</span>
+        <span class="cover-meta-value">External · Customer-Facing · Unrestricted</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Volume II Distribution</span>
+        <span class="cover-meta-value">Engineering Team · Restricted · Not for Distribution</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE OF CONTENTS ════════════════════════════════════════ -->
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <div class="toc-vol">
+      <div class="toc-vol-label vi">Volume I — External Product Specification</div>
+      <div class="toc-item">§ 1 — Executive Summary &amp; Value Proposition</div>
+      <div class="toc-item">§ 2 — Functional Capabilities</div>
+      <div class="toc-item">§ 3 — Client Standard Operating Procedures (SOPs)</div>
+    </div>
+    <div class="toc-vol">
+      <div class="toc-vol-label vii">Volume II — Internal Technology Architecture (Restricted)</div>
+      <div class="toc-item">§ 4 — Core Technical Stack Matrix</div>
+      <div class="toc-item">§ 5 — System Architecture &amp; Cryptographic Protocols</div>
+      <div class="toc-item">§ 6 — Developer Engineering SOPs</div>
+      <div class="toc-item">§ 7 — Workspace Topology &amp; Local File Paths</div>
+      <div class="toc-item">§ 8 — Attack Surface Assessment &amp; Risk Ledger</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  VOLUME I BREAK                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="vol-break vol-i">
+    <div class="vol-break-eyebrow">Volume I of II</div>
+    <div class="vol-break-title">External Product Specification</div>
+    <p class="vol-break-desc">Customer and user-facing documentation. Approved for public distribution, marketing collateral, and onboarding materials.</p>
+  </div>
+
+  <div class="classification-banner notice">
+    Distribution Clearance: Unrestricted — Suitable for Customer, Partner &amp; Public Communication
+  </div>
+
+
+  <!-- ─── § 1 ────────────────────────────────────────────────────── -->
+  <div class="section vol-i-section">
+    <div class="section-num">Volume I · Section 1</div>
+    <h2 class="section-title">Executive Summary &amp; Value Proposition</h2>
+
+    <div class="prose">
+      <p>
+        The <strong>Dhurta Ecosystem</strong> is a sovereign, privacy-native browser platform engineered for individuals and organisations who regard digital surveillance as an unacceptable operating condition. Unlike conventional browsers that treat privacy as a configurable add-on, Dhurta embeds privacy guarantees at the architectural layer — zero telemetry, zero cloud dependency, and zero negotiation with the attention economy.
+      </p>
+      <p>
+        The ecosystem addresses three compounding market failures. First, the systematic erosion of IP anonymity through persistent browser fingerprinting, WebRTC protocol leaks, and third-party tracker networks that survive even cookie deletion. Second, the absence of a secure, zero-infrastructure communication channel for sensitive peer-to-peer collaboration. Third, the usability gap that has historically made privacy tooling the exclusive domain of technically specialised users.
+      </p>
+      <p>
+        Dhurta resolves these failures through a vertically integrated product suite: a primary <strong>Sovereign Browser</strong> with Chakra Shield privacy mode and one-tap Ghost Mode Tor routing; <strong>Dhurta Connect</strong>, a zero-server P2P encrypted messaging and file-transfer layer; and <strong>Dhurta Setu</strong>, a curated web index and bridge to the open information commons — all unified within a single Electron-native desktop application.
+      </p>
+      <p>
+        The value proposition is singular: <em>the user retains complete sovereignty over every byte of data generated in the course of their digital activity</em>, with no exceptions, no opt-outs required, and no external dependencies that can be compelled, subpoenaed, or compromised.
+      </p>
+    </div>
+
+    <div class="feature-grid" style="margin-top: 28px;">
+      <div class="feature-card">
+        <div class="feature-card-label">Market Problem Solved</div>
+        <div class="feature-card-title">IP Identity Exposure</div>
+        <div class="feature-card-desc">Every unprotected browser session broadcasts a stable IP address to every server contacted. Dhurta's VPN integration and Tor-backed Ghost Mode eliminate this attack vector at the network layer.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Market Problem Solved</div>
+        <div class="feature-card-title">Browser Fingerprinting</div>
+        <div class="feature-card-desc">Screen dimensions, installed fonts, WebGL renderer, hardware concurrency, and 30+ other attributes create a fingerprint more stable than a cookie. Anti-Fingerprint mode spoofs all exposed surfaces.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Market Problem Solved</div>
+        <div class="feature-card-title">Insecure Communication</div>
+        <div class="feature-card-desc">Conventional messaging routes through centralised servers, creating a single point of interception. Dhurta Connect establishes direct encrypted peer-to-peer tunnels that exist only for the session duration.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Market Problem Solved</div>
+        <div class="feature-card-title">Privacy Usability Gap</div>
+        <div class="feature-card-desc">Existing privacy tools require expert configuration. Dhurta's Chakra Shield activates VPN, WebRTC blocking, anti-fingerprint, cookie guard, and ad blocking in a single interaction.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ─── § 2 ────────────────────────────────────────────────────── -->
+  <div class="section vol-i-section">
+    <div class="section-num">Volume I · Section 2</div>
+    <h2 class="section-title">Functional Capabilities</h2>
+
+    <h3 class="sub">2.1 — Sovereign Browser Core</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card-label">Privacy Mode</div>
+        <div class="feature-card-title">Chakra Shield</div>
+        <div class="feature-card-desc">One-tap composite privacy layer. Requires simultaneous activation of VPN, Anti-Fingerprint, and WebRTC Block. Displays animated shield indicator when all three conditions are satisfied. Real-time security breach warnings appear below the address bar if any protection layer goes offline.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Privacy Mode</div>
+        <div class="feature-card-title">Ghost Mode</div>
+        <div class="feature-card-desc">In-memory ephemeral session with no disk writes, fingerprint spoofing enabled, WebRTC fully blocked, and all traffic routed through the Tor onion network. Session state is destroyed completely on deactivation.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Network Security</div>
+        <div class="feature-card-title">VPN Integration</div>
+        <div class="feature-card-desc">Built-in VPN proxy rotation. Country selection for exit node. Real-time public IP verification and comparison against the device's actual IP to confirm masking is active.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Security Layer</div>
+        <div class="feature-card-title">WebRTC Leak Prevention</div>
+        <div class="feature-card-desc">WebRTC STUN/ICE candidates are blocked at the Electron session layer, preventing the protocol from bypassing the VPN tunnel to expose the host device's real network interface address.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Privacy Layer</div>
+        <div class="feature-card-title">Anti-Fingerprint Engine</div>
+        <div class="feature-card-desc">Spoofs screen resolution, hardware concurrency, device memory, WebGL vendor/renderer strings, navigator plugins, timezone, language, and canvas fingerprint. Each session receives a randomised but internally consistent fingerprint set.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Productivity</div>
+        <div class="feature-card-title">Omni Privacy Dashboard</div>
+        <div class="feature-card-desc">Live display of current public IP, geolocation, real IP comparison, blocked request count, active fingerprint surface, and all security layer statuses. Single-screen privacy audit without leaving the browser.</div>
+      </div>
+    </div>
+
+    <h3 class="sub">2.2 — Dhurta Connect: Peer-to-Peer Secure Communications</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card-label">Communication</div>
+        <div class="feature-card-title">P2P Text Chat</div>
+        <div class="feature-card-desc">End-to-end encrypted real-time messaging between two peers with no message storage, no server-side logging, and no account requirement. Messages exist only in the session.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Communication</div>
+        <div class="feature-card-title">Voice &amp; Video Calls</div>
+        <div class="feature-card-desc">Direct WebRTC-based encrypted audio and video calls established through the secure P2P signalling relay. Zero third-party media servers; media streams flow peer-to-peer after handshake.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">File Transfer</div>
+        <div class="feature-card-title">Secure File Sharing</div>
+        <div class="feature-card-desc">File transmission occurs directly between peers over the encrypted channel. Supports share-by-direct-link and share-by-numeric-code workflows. No file data transits through any cloud intermediary.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-label">Access Model</div>
+        <div class="feature-card-title">Numeric Code Pairing</div>
+        <div class="feature-card-desc">Connections are established through short numeric session codes. No user accounts, no phone numbers, no email addresses. The pairing code is the only shared credential and expires with the session.</div>
+      </div>
+    </div>
+
+    <h3 class="sub">2.3 — Dhurta Setu: Web Index &amp; Information Bridge</h3>
+    <div class="prose">
+      <p>Dhurta Setu is the ecosystem's curated information gateway — a locally served web index that provides access to the open information commons without routing queries through centralised search infrastructure. Setu runs entirely within the local Dhurta context, rendering from a file-based entry point with no external API dependency. It is accessible directly from the browser's home tab Favourites dock, loading instantly as a native tool.</p>
+    </div>
+  </div>
+
+
+  <!-- ─── § 3 ────────────────────────────────────────────────────── -->
+  <div class="section vol-i-section">
+    <div class="section-num">Volume I · Section 3</div>
+    <h2 class="section-title">Client Standard Operating Procedures (SOPs)</h2>
+
+    <h3 class="sub">SOP-C01 — Initialising a Secure Browsing Session</h3>
+    <ol class="sop-list">
+      <li class="sop-item">
+        <span class="sop-num">01</span>
+        <div class="sop-body">
+          <div class="sop-title">Launch the Dhurta Application</div>
+          <div class="sop-desc">Open Dhurta from your system's application directory. The browser will initialise to the Home Tab, displaying the Trishula identity mark, a live clock, and the Favourites dock. Allow 3–5 seconds for background security services to complete initialisation.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">02</span>
+        <div class="sop-body">
+          <div class="sop-title">Activate Chakra Shield for Standard Privacy</div>
+          <div class="sop-desc">Click the Chakra icon (the spinning wheel symbol) in the left sidebar. The system will automatically connect to the VPN, enable Anti-Fingerprint, and block WebRTC. The icon will begin its active animation once all three layers confirm. If any layer fails, a security breach warning will appear below the address bar with a one-click remediation button.</div>
+          <div class="sop-note">Note: Chakra Shield requires VPN connectivity. Ensure your network allows outbound VPN connections on standard ports.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">03</span>
+        <div class="sop-body">
+          <div class="sop-title">Activate Ghost Mode for Maximum Anonymity</div>
+          <div class="sop-desc">Click the Trishula logo at the top of the sidebar. Ghost Mode creates an in-memory browser session, routes all traffic through Tor, and spoofs your fingerprint. The sidebar will glow red when Ghost Mode is active. Tor routing may take 10–30 seconds to establish on first activation.</div>
+          <div class="sop-note">Note: Ghost Mode and Chakra Shield are mutually exclusive — activating one will gracefully deactivate the other.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">04</span>
+        <div class="sop-body">
+          <div class="sop-title">Verify Your Privacy Status</div>
+          <div class="sop-desc">Click the Omni icon (shield with dot) in the sidebar to open the Privacy Dashboard. Confirm your displayed Public IP differs from your Real IP, that the Blocked Count is actively incrementing on pages with trackers, and that all shield layers show a green status indicator.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">05</span>
+        <div class="sop-body">
+          <div class="sop-title">Navigate and Browse</div>
+          <div class="sop-desc">Use the Search or URL bar to navigate. The address bar's security badge reflects the current page's certificate status. Use the Favourites dock on the Home Tab for quick access to Dhurta tools (Setu, Connect, Omni) and your saved sites.</div>
+        </div>
+      </li>
+    </ol>
+
+    <h3 class="sub">SOP-C02 — Establishing a Dhurta Connect Secure Communication Session</h3>
+    <ol class="sop-list">
+      <li class="sop-item">
+        <span class="sop-num">01</span>
+        <div class="sop-body">
+          <div class="sop-title">Open Dhurta Connect</div>
+          <div class="sop-desc">From the Home Tab Favourites dock, click the Dhurta Connect tile (linked circles icon). Alternatively, click the Tools icon in the sidebar to open the Tools popup and select Connect. The Connect interface will load within the current tab.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">02</span>
+        <div class="sop-body">
+          <div class="sop-title">Generate a Session Code (Host Role)</div>
+          <div class="sop-desc">If you are the session initiator, click <strong>Host Session</strong>. The system generates a short numeric session code. Share this code with your intended peer through any out-of-band channel (phone, in-person, another messaging platform).</div>
+          <div class="sop-code">Example code format: 4829</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">03</span>
+        <div class="sop-body">
+          <div class="sop-title">Join via Session Code (Peer Role)</div>
+          <div class="sop-desc">If you are the session joiner, enter the numeric code provided by the host into the <strong>Join Session</strong> field and confirm. The P2P handshake will complete, establishing a direct encrypted connection between both endpoints.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">04</span>
+        <div class="sop-body">
+          <div class="sop-title">Communicate and Transfer Files</div>
+          <div class="sop-desc">Once connected, use the chat panel for text messages, the call controls for voice and video, and the file panel to select files for direct transfer. All data flows directly between the two endpoints. No data is stored or logged by any intermediary.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">05</span>
+        <div class="sop-body">
+          <div class="sop-title">Terminate the Session</div>
+          <div class="sop-desc">Click <strong>End Session</strong> to close the P2P connection. The session code immediately becomes invalid. No session history, message logs, or transferred file metadata are retained in the application after session termination.</div>
+        </div>
+      </li>
+    </ol>
+
+    <div class="callout warn">
+      <div class="callout-label">Client Advisory</div>
+      Session codes are single-use identifiers valid only for the duration of the connection. Never re-use a session code across separate communication events. Generate a fresh code for each new session.
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!--  VOLUME II BREAK                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="vol-break vol-ii">
+    <div class="vol-break-eyebrow">Volume II of II — Proprietary &amp; Restricted</div>
+    <div class="vol-break-title">Internal Technology Architecture</div>
+    <p class="vol-break-desc">Engineering documentation. Distribution strictly limited to authorised development personnel. Do not reproduce, forward, or store on shared or cloud-connected systems.</p>
+  </div>
+
+  <div class="classification-banner restricted">
+    Restricted — Authorised Engineering Personnel Only — Not for External Distribution
+  </div>
+
+
+  <!-- ─── § 4 ────────────────────────────────────────────────────── -->
+  <div class="section vol-ii-section">
+    <div class="section-num">Volume II · Section 4</div>
+    <h2 class="section-title">Core Technical Stack Matrix</h2>
+
+    <div class="callout">
+      <div class="callout-label">Scope</div>
+      Covers the complete runtime, build, and persistence environment across the Dhurta Browser host process, the renderer process, and the Dhurta Connect relay/client sub-stack.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Technology</th>
+            <th>Version / Spec</th>
+            <th>Role</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Runtime — Host</strong></td>
+            <td>Node.js</td>
+            <td>v20 LTS+</td>
+            <td>Electron main process, IPC handlers, native OS integration</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Desktop Shell</strong></td>
+            <td>Electron</td>
+            <td>30.5.1</td>
+            <td>BrowserWindow (React chrome) + BrowserView (web content) architecture</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Renderer Framework</strong></td>
+            <td>React</td>
+            <td>18.x</td>
+            <td>All UI — sidebar, tab bar, URL bar, panels, home tab, Omni page</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Type System</strong></td>
+            <td>TypeScript</td>
+            <td>5.x</td>
+            <td>Full coverage across renderer and main process; dual tsconfig compilation</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Build / Bundler</strong></td>
+            <td>Vite</td>
+            <td>5.x</td>
+            <td>Renderer process bundling and hot-module reload during development</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Package Manager</strong></td>
+            <td>pnpm (monorepo)</td>
+            <td>9.x</td>
+            <td>Workspace management across Browser, Setu, and Connect sub-projects</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Styling</strong></td>
+            <td>Tailwind CSS</td>
+            <td>3.x</td>
+            <td>Utility-first component styling; custom tokens for saffron accent, obsidian ground</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Local Persistence</strong></td>
+            <td>better-sqlite3</td>
+            <td>9.x</td>
+            <td>Embedded SQLite for bookmarks, history, settings, app-lock, downloads metadata</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>IPC Bridge</strong></td>
+            <td>Electron contextBridge</td>
+            <td>Electron API</td>
+            <td>Exposes <code>window.dhurta</code> API to renderer; contextIsolation: true enforced</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>P2P Signalling</strong></td>
+            <td>Dhurta Connect Relay</td>
+            <td>Internal v1</td>
+            <td>Node.js WebSocket relay on port 8080; bootstraps P2P WebRTC handshake, exits after connection</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>P2P Transport</strong></td>
+            <td>WebRTC (simple-peer)</td>
+            <td>9.x</td>
+            <td>Encrypted data channels for chat, file transfer; getUserMedia for voice/video</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Connect Client</strong></td>
+            <td>Local HTTP Server</td>
+            <td>Node http</td>
+            <td>Serves Connect SPA on port 17710; MIME-typed, SPA fallback routing</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Anonymity Layer</strong></td>
+            <td>Tor (tor.exe)</td>
+            <td>Latest Stable</td>
+            <td>Ghost Mode onion routing; SOCKS5 proxy applied to BrowserView session</td>
+            <td><span class="badge badge-warn">Optional</span></td>
+          </tr>
+          <tr>
+            <td><strong>Electron Packaging</strong></td>
+            <td>electron-builder</td>
+            <td>24.x</td>
+            <td>Windows NSIS installer; code-signing pipeline; auto-update manifest</td>
+            <td><span class="badge badge-info">Build</span></td>
+          </tr>
+          <tr>
+            <td><strong>Custom Protocol</strong></td>
+            <td>dhurta-tool://</td>
+            <td>Internal</td>
+            <td>Routes home-tab Favourite clicks to local tool URLs; resolved by <code>resolveToolUrl()</code></td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+          <tr>
+            <td><strong>Custom Protocol</strong></td>
+            <td>dhurta://</td>
+            <td>Internal</td>
+            <td>Routes to React-rendered internal pages (omni, history, bookmarks, downloads)</td>
+            <td><span class="badge badge-ok">Production</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ─── § 5 ────────────────────────────────────────────────────── -->
+  <div class="section vol-ii-section">
+    <div class="section-num">Volume II · Section 5</div>
+    <h2 class="section-title">System Architecture &amp; Cryptographic Protocols</h2>
+
+    <h3 class="sub">5.1 — Process Architecture</h3>
+    <div class="prose">
+      <p>Dhurta runs as a two-process Electron application. The <strong>Main Process</strong> (Node.js) manages all OS-level operations: BrowserWindow/BrowserView lifecycle, IPC handler registration, SQLite access via <code>electron/db.ts</code>, security service coordination, custom protocol registration, and child process spawning for Tor and Connect relay. The <strong>Renderer Process</strong> (React/Chromium) is isolated by <code>contextIsolation: true</code> and communicates exclusively through the <code>window.dhurta</code> API surface exposed by <code>electron/preload.ts</code>. No renderer code has direct access to Node.js APIs or the filesystem.</p>
+      <p>Web content is displayed within <strong>BrowserView</strong> instances — separate Chromium views attached to the main BrowserWindow. Each tab maintains its own BrowserView, allowing independent session isolation, per-tab zoom, and security policy application. Internal <code>dhurta://</code> pages suppress the BrowserView entirely and render the React component tree directly, improving performance and eliminating the BrowserView stack-layer race conditions that affected navigation from the home tab.</p>
+    </div>
+
+    <h3 class="sub">5.2 — Zero-Cloud P2P Transport (Dhurta Connect)</h3>
+    <div class="prose">
+      <p>Dhurta Connect achieves zero-cloud, untraceable connectivity through a two-phase architecture. In <strong>Phase 1 (Signalling)</strong>, a lightweight WebSocket relay spawned locally on port <code>8080</code> brokers the initial ICE candidate exchange between two peers. This relay handles only the 4–8 signalling messages required for WebRTC handshake and carries no application data. In <strong>Phase 2 (Direct Transport)</strong>, the WebRTC data channel establishes a direct peer-to-peer DTLS-SRTP encrypted connection between the two endpoints. The relay may be shut down after handshake completes; the channel persists independently.</p>
+      <p>All file data, message content, and media streams are encrypted in transit by the WebRTC DTLS-SRTP layer. No message persistence layer exists; content exists only within the live session context. Session codes are short-lived, single-use identifiers with no persistent mapping. There is no user account database, no message store, and no audit trail for any communication event.</p>
+    </div>
+
+    <h3 class="sub">5.3 — Security Layer Architecture (Chakra Shield)</h3>
+    <div class="prose">
+      <p>The Chakra Shield composite state is computed as a derived boolean: <code>ipRotation &amp;&amp; antiFingerprint &amp;&amp; blockWebRTC</code>. All three conditions must be simultaneously satisfied. The state is not stored — it is recomputed from the <code>chakraSnapshot</code> object which stays synchronised to the underlying security settings via the <code>dhurta:settingChanged</code> custom event bus. This prevents stale-state divergence between the sidebar indicator and the actual security posture.</p>
+      <p>WebRTC blocking is enforced at the Electron <code>session</code> level, preventing the Chromium engine from exposing STUN/ICE candidates regardless of page-level JavaScript. Anti-Fingerprint spoofing is injected as a content script into every BrowserView before any page code executes, ensuring the spoofed values cannot be read by any site script during the page-load cycle.</p>
+    </div>
+  </div>
+
+
+  <!-- ─── § 6 ────────────────────────────────────────────────────── -->
+  <div class="section vol-ii-section">
+    <div class="section-num">Volume II · Section 6</div>
+    <h2 class="section-title">Developer Engineering SOPs</h2>
+
+    <div class="classification-banner restricted" style="margin-bottom: 24px;">
+      Internal Use Only — Not for Client or Third-Party Distribution
+    </div>
+
+    <h3 class="sub">SOP-D01 — Initial Local Stack Initialisation</h3>
+    <ol class="sop-list">
+      <li class="sop-item">
+        <span class="sop-num">01</span>
+        <div class="sop-body">
+          <div class="sop-title">Verify Runtime Prerequisites</div>
+          <div class="sop-desc">Confirm Node.js v20 LTS or higher and pnpm v9+ are installed and available on the system PATH.</div>
+          <div class="sop-code">node --version   <span class="code-comment"># must be >= 20.0.0</span>
+pnpm --version   <span class="code-comment"># must be >= 9.0.0</span></div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">02</span>
+        <div class="sop-body">
+          <div class="sop-title">Install Monorepo Dependencies</div>
+          <div class="sop-desc">Execute from the repository root. The <code>--frozen-lockfile</code> flag prevents unintended dependency resolution changes in the shared lockfile.</div>
+          <div class="sop-code">cd P:\Project\Shiva\Dhurta
+pnpm install --frozen-lockfile</div>
+          <div class="sop-note">Warning: Do not use npm or yarn. The pnpm workspace protocol in package.json will produce incorrect resolution with other package managers.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">03</span>
+        <div class="sop-body">
+          <div class="sop-title">Compile the Electron Main Process</div>
+          <div class="sop-desc">TypeScript compilation of the main process uses the separate <code>tsconfig.electron.json</code> configuration. Both configs must pass clean before the application can be started.</div>
+          <div class="sop-code">npx tsc -p tsconfig.electron.json --noEmit   <span class="code-comment"># verify main</span>
+npx tsc --noEmit                             <span class="code-comment"># verify renderer</span></div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">04</span>
+        <div class="sop-body">
+          <div class="sop-title">Start Development Orchestration</div>
+          <div class="sop-desc">The development environment requires two concurrent processes: the Vite renderer dev server and the Electron host process. Start them in separate terminal instances in the following order.</div>
+          <div class="sop-code"><span class="code-comment"># Terminal 1 — Renderer</span>
+pnpm dev
+
+<span class="code-comment"># Terminal 2 — Electron (after Vite is listening)</span>
+pnpm electron</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">05</span>
+        <div class="sop-body">
+          <div class="sop-title">Initialise Sub-Project Dependencies (Dhurta Connect)</div>
+          <div class="sop-desc">Dhurta Connect maintains its own <code>node_modules</code>. Navigate to the sub-project root and install independently before the Electron process attempts to spawn the relay.</div>
+          <div class="sop-code">cd P:\Project\Shiva\Dhurta Connect
+pnpm install --frozen-lockfile</div>
+        </div>
+      </li>
+    </ol>
+
+    <h3 class="sub">SOP-D02 — Building a Production Distribution</h3>
+    <ol class="sop-list">
+      <li class="sop-item">
+        <span class="sop-num">01</span>
+        <div class="sop-body">
+          <div class="sop-title">Run Full TypeScript Validation</div>
+          <div class="sop-desc">Both tsconfig files must emit zero errors before initiating a build. Do not proceed with a failing type check.</div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">02</span>
+        <div class="sop-body">
+          <div class="sop-title">Build Renderer Bundle</div>
+          <div class="sop-code">pnpm build   <span class="code-comment"># outputs to dist/</span></div>
+        </div>
+      </li>
+      <li class="sop-item">
+        <span class="sop-num">03</span>
+        <div class="sop-body">
+          <div class="sop-title">Package with electron-builder</div>
+          <div class="sop-code">pnpm dist   <span class="code-comment"># produces NSIS installer in release/</span></div>
+          <div class="sop-note">Ensure code-signing certificates are configured in electron-builder.yml before distributing externally.</div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+
+  <!-- ─── § 7 ────────────────────────────────────────────────────── -->
+  <div class="section vol-ii-section">
+    <div class="section-num">Volume II · Section 7</div>
+    <h2 class="section-title">Workspace Topology &amp; Local File Paths</h2>
+
+    <div class="callout warn">
+      <div class="callout-label">Path Configuration Notice</div>
+      All internal path references in the codebase and configuration files use Windows absolute paths anchored at <code>P:\Project\Shiva\</code>. These paths must not be modified in version-controlled files. Developer machines joining the project must mirror this drive and directory structure exactly, or update <code>electron/tools/</code> configs to reflect their local drive letter.
+    </div>
+
+    <div class="path-tree"><span class="path-dir">P:\Project\Shiva\</span>                          <span class="path-note">← Workspace Root</span>
+│
+<span class="path-dir">├── Dhurta\</span>                                   <span class="path-note">← Dhurta Browser (primary)</span>
+│   <span class="path-dir">├── electron\</span>                             <span class="path-note">← Main process source</span>
+│   │   <span class="path-file">├── main.ts</span>                          <span class="path-note">App entry, lifecycle, tool shutdown</span>
+│   │   <span class="path-file">├── ipc.ts</span>                           <span class="path-note">All IPC handlers (nav, tabs, security…)</span>
+│   │   <span class="path-file">├── preload.ts</span>                       <span class="path-note">contextBridge → window.dhurta API</span>
+│   │   <span class="path-file">├── db.ts</span>                            <span class="path-note">SQLite schema, seeds, migrations</span>
+│   │   <span class="path-dir">└── tools\</span>                           <span class="path-note">Tool registry (one file per tool)</span>
+│   │       <span class="path-file">├── index.ts</span>                     <span class="path-note">resolveToolUrl(), shutdownAllTools()</span>
+│   │       <span class="path-file">├── types.ts</span>                     <span class="path-note">ToolEntry interface</span>
+│   │       <span class="path-file">├── setu.ts</span>                      <span class="path-note">Dhurta Setu config (static type)</span>
+│   │       <span class="path-file">└── connect.ts</span>                   <span class="path-note">Dhurta Connect config (server type)</span>
+│   <span class="path-dir">├── src\</span>                                  <span class="path-note">← Renderer process source</span>
+│   │   <span class="path-dir">├── components\</span>                      <span class="path-note">UI components (Sidebar, URLBar…)</span>
+│   │   <span class="path-dir">├── pages\</span>                           <span class="path-note">Full-page React pages (OmniPage…)</span>
+│   │   <span class="path-dir">├── store\</span>                           <span class="path-note">State management (useBrowser.ts)</span>
+│   │   <span class="path-file">└── types.ts</span>                         <span class="path-note">DhurtaAPI interface, shared types</span>
+│   <span class="path-file">├── tsconfig.json</span>                         <span class="path-note">Renderer TypeScript config</span>
+│   <span class="path-file">└── tsconfig.electron.json</span>               <span class="path-note">Main process TypeScript config</span>
+│
+<span class="path-dir">├── Dhurta Setu\</span>                              <span class="path-note">← Dhurta Setu (static type tool)</span>
+│   <span class="path-file">└── index.html</span>                           <span class="path-note">Entry point; loaded via file:// by browser</span>
+│
+<span class="path-dir">├── Dhurta Connect\</span>                           <span class="path-note">← Dhurta Connect (server type tool)</span>
+│   <span class="path-dir">├── relay\</span>                               <span class="path-note">WebSocket signalling relay (port 8080)</span>
+│   <span class="path-dir">└── client\</span>                              <span class="path-note">React SPA served on port 17710</span>
+│       <span class="path-dir">└── dist\</span>                            <span class="path-note">Built client assets (served by Node http)</span>
+│
+<span class="path-dir">└── hyperlocal-express\</span>                       <span class="path-note">← Separate project (unrelated to Dhurta)</span></div>
+
+    <h3 class="sub">7.1 — Tool Registry Path Configuration</h3>
+    <div class="prose">
+      <p>Each tool's absolute path is declared in <code>electron/tools/{toolName}.ts</code> as the <code>projectRoot</code> field of the <code>ToolEntry</code> interface. Static-type tools (Setu) specify an <code>entryFile</code> resolved relative to <code>projectRoot</code>, loaded as a <code>file://</code> URL. Server-type tools (Connect) specify <code>relayEntry</code>, <code>relayPort</code>, and <code>clientPort</code>; the relay is spawned as a child process and the client SPA is served by an in-process Node HTTP server.</p>
+      <p>The <code>resolveToolUrl(id)</code> function in <code>electron/tools/index.ts</code> is the single resolution point for all <code>dhurta-tool://</code> protocol navigation. It handles both tool types and returns a <code>Promise&lt;string | null&gt;</code> — null indicates the tool could not be started and navigation should be aborted.</p>
+    </div>
+  </div>
+
+
+  <!-- ─── § 8 ────────────────────────────────────────────────────── -->
+  <div class="section vol-ii-section">
+    <div class="section-num">Volume II · Section 8</div>
+    <h2 class="section-title">Attack Surface Assessment &amp; Risk Ledger</h2>
+
+    <div class="callout crit">
+      <div class="callout-label">Classification — Restricted</div>
+      This section documents known vulnerabilities, their mitigations, and residual risk. Do not share outside the engineering team. Do not commit this section unredacted to any repository accessible beyond the core team.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Attack Vector / Risk</th>
+            <th>Severity</th>
+            <th>Surface</th>
+            <th>Mitigation Implemented</th>
+            <th>Residual Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>R-01</strong></td>
+            <td><strong>WebRTC IP Leak</strong> — WebRTC STUN/ICE negotiation exposes host device real IP and LAN IP, bypassing VPN tunnel at the OS network layer.</td>
+            <td><span class="sev-critical">Critical</span></td>
+            <td>Browser engine (Chromium)</td>
+            <td>WebRTC blocked at Electron <code>session</code> level when <code>blockWebRTC</code> is true. Applied before any page code executes. Real-time breach warning banner displayed if <code>blockWebRTC</code> goes false while browsing.</td>
+            <td><span class="sev-low">Low</span> — Residual only if user explicitly disables the setting or if a future Chromium update changes the session API surface.</td>
+          </tr>
+          <tr>
+            <td><strong>R-02</strong></td>
+            <td><strong>Browser Fingerprint Persistence</strong> — Stable fingerprint across sessions (screen, WebGL, canvas, navigator) allows cross-site re-identification without cookies or local storage.</td>
+            <td><span class="sev-critical">Critical</span></td>
+            <td>Renderer, BrowserView</td>
+            <td>Anti-Fingerprint content script injected before page load when enabled. Randomises screen dimensions, hardware concurrency, device memory, WebGL strings, navigator plugins, and canvas noise per session. Breach banner triggers if setting is off.</td>
+            <td><span class="sev-medium">Medium</span> — Font enumeration and timing-based fingerprinting remain partially exploitable by sophisticated adversaries. Full mitigation requires Ghost Mode.</td>
+          </tr>
+          <tr>
+            <td><strong>R-03</strong></td>
+            <td><strong>VPN Split-Tunnel / Connection Failure</strong> — VPN proxy fails to connect (no provider configured, network block), leaving IP unmasked while user believes they are protected.</td>
+            <td><span class="sev-critical">Critical</span></td>
+            <td>Network layer, IPC</td>
+            <td>Chakra Shield requires confirmed VPN connection (<code>vpnConnect()</code> success) before activating. Shield icon remains idle on failure. <code>SecurityBreachBanner</code> displays an IP-exposed warning with one-click fix. Chakra state strictly gated on <code>ipRotation &amp;&amp; antiFingerprint &amp;&amp; blockWebRTC</code>.</td>
+            <td><span class="sev-medium">Medium</span> — Depends on external VPN provider reliability. Tor-backed Ghost Mode eliminates this residual.</td>
+          </tr>
+          <tr>
+            <td><strong>R-04</strong></td>
+            <td><strong>Windows Child-Process Spawn Failure</strong> — Node.js <code>child_process.spawn()</code> on Windows fails silently or with ENOENT when the target script path contains spaces, uses an incorrect working directory, or when the Node.js runtime is not on the system PATH in the Electron context.</td>
+            <td><span class="sev-high">High</span></td>
+            <td>Electron main process, tool relay spawn</td>
+            <td>Relay spawn in <code>electron/tools/index.ts</code> uses explicit <code>cwd</code> option set to the tool's <code>projectRoot</code>. All paths are passed as absolute strings. Runtime is resolved to the Electron-bundled Node binary, not the system PATH. Spawn errors are caught and logged to the main process console; <code>resolveToolUrl()</code> returns <code>null</code> on failure to prevent navigation hang.</td>
+            <td><span class="sev-low">Low</span> — Known edge case on paths containing Unicode characters or exceeding 260 chars (MAX_PATH). Mitigated by the <code>P:\Project\Shiva\</code> path convention which stays within limits.</td>
+          </tr>
+          <tr>
+            <td><strong>R-05</strong></td>
+            <td><strong>BrowserView Visibility Race</strong> — Navigating to a <code>dhurta-tool://</code> URL from the home tab (where all BrowserViews are removed) loads content into a hidden BrowserView, resulting in blank tab display with active background load.</td>
+            <td><span class="sev-high">High</span></td>
+            <td>Electron BrowserView lifecycle, IPC nav handler</td>
+            <td>The <code>nav:loadURL</code> IPC handler explicitly sequences: remove all BrowserViews → <code>addBrowserView(tab.view)</code> → <code>setBounds()</code> → <code>setAutoResize()</code> → <code>loadURL()</code> before initiating the load. The sequence is atomic within the IPC call.</td>
+            <td><span class="sev-low">Low</span> — Fixed. Regression risk if the nav handler is modified without preserving the show-before-load sequence.</td>
+          </tr>
+          <tr>
+            <td><strong>R-06</strong></td>
+            <td><strong>IPC Channel Accumulation</strong> — Repeated tab switches without correctly removing <code>ipcRenderer.on()</code> listeners cause duplicate event handlers, resulting in <code>N</code> copies of callbacks firing (e.g., N new tabs opened per <code>window.open()</code> call).</td>
+            <td><span class="sev-high">High</span></td>
+            <td>Renderer preload, IPC listener registry</td>
+            <td>Preload implements a <code>_wrappers</code> Map tracking the anonymous wrapper function created by each <code>.on()</code> call. The <code>.off()</code> implementation retrieves and removes the exact wrapper. Guard on <code>.on()</code> de-registers any existing wrapper for the same channel+callback before adding a new one, preventing accumulation even if <code>off()</code> is skipped.</td>
+            <td><span class="sev-low">Low</span> — Fixed. Only re-emerges if a new channel is added to <code>VALID_CHANNELS</code> without following the established wrapper pattern.</td>
+          </tr>
+          <tr>
+            <td><strong>R-07</strong></td>
+            <td><strong>P2P Relay Port Conflict</strong> — Dhurta Connect relay binds to port 8080 on localhost. If another process occupies this port, relay spawn silently fails or crashes, leaving the user unable to establish Connect sessions.</td>
+            <td><span class="sev-medium">Medium</span></td>
+            <td>Dhurta Connect, tool relay</td>
+            <td>Runtime state map in <code>electron/tools/index.ts</code> tracks relay process health. <code>ensureServerTool()</code> checks whether the relay is already running before spawning a second instance. On <code>before-quit</code>, <code>shutdownAllTools()</code> terminates all relay processes and closes HTTP servers cleanly.</td>
+            <td><span class="sev-medium">Medium</span> — No automatic port fallback implemented. Manual conflict resolution required. Future: dynamic port allocation with relay advertising the selected port to the client.</td>
+          </tr>
+          <tr>
+            <td><strong>R-08</strong></td>
+            <td><strong>Chakra State Divergence</strong> — Security settings modified from multiple surfaces (sidebar, Omni page, Security panel) could produce inconsistent displayed state if each surface maintains independent local state not synchronised to a single source of truth.</td>
+            <td><span class="sev-medium">Medium</span></td>
+            <td>State management (useBrowser.ts, OmniPage)</td>
+            <td>All security setting mutations dispatch <code>dhurta:settingChanged</code> custom events. All consumers (sidebar store, Omni page, App.tsx <code>securityStatus</code>) subscribe to the same event bus and update their local derived state reactively. <code>chakraActive</code> is never stored; it is derived on every render from the live snapshot.</td>
+            <td><span class="sev-low">Low</span> — Eliminated by the event-bus pattern. Residual risk only if a new settings surface is added without dispatching the event.</td>
+          </tr>
+          <tr>
+            <td><strong>R-09</strong></td>
+            <td><strong>Contextual Isolation Bypass Risk</strong> — Malicious page JavaScript attempting to access Electron internals or Node.js APIs through the renderer process.</td>
+            <td><span class="sev-critical">Critical</span></td>
+            <td>Electron security model</td>
+            <td><code>contextIsolation: true</code> enforced on all BrowserView instances. <code>nodeIntegration: false</code>. Only the explicit <code>window.dhurta</code> API surface is exposed via <code>contextBridge</code>. No arbitrary IPC channels are exposed. All handler inputs are validated type-narrowed before use.</td>
+            <td><span class="sev-low">Low</span> — Standard Electron security best practices followed. Risk increases only if <code>contextIsolation</code> is ever disabled for debugging and not re-enabled.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- ═══ FOOTER ═══════════════════════════════════════════════════ -->
+  <div class="doc-footer">
+    <div>
+      <div class="footer-classification">Dhurta Ecosystem — Comprehensive Project Dossier</div>
+      <div class="footer-classification" style="margin-top:4px;">SHIVA-DOSSIER-2026-001 · Rev 1.0 · 2026-07-12</div>
+    </div>
+    <div class="footer-notice">
+      This document contains two volumes of differing classification. Volume II is proprietary and restricted to authorised engineering personnel. Unauthorised reproduction, forwarding, or storage on externally accessible systems is strictly prohibited. All technical specifications are subject to change without notice as the platform evolves.
+    </div>
+  </div>
+
+</div>

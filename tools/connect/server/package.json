@@ -1,0 +1,14 @@
+{
+  "name": "dhurta-connect-relay",
+  "version": "1.0.0",
+  "description": "Ephemeral, in-memory WebRTC signaling relay for Dhurta Connect. Stores nothing, logs no payload content, forgets rooms on disconnect.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

@@ -1,0 +1,135 @@
+name: Build Dhurta (cross-platform)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ── @dhurta/core — build + typecheck the shared package once, upstream of all ──
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build @dhurta/core
+        working-directory: packages/core
+        run: |
+          npm install
+          npm run typecheck
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dhurta-core-dist
+          path: packages/core/dist
+
+  # ── Desktop: Windows, macOS (universal), Linux x64+arm64 (Pi/ChromeOS) ──
+  desktop:
+    needs: core
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+          - os: macos-latest
+            name: macos
+          - os: ubuntu-latest
+            name: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Linux ARM cross-compile toolchain (Raspberry Pi / ChromeOS arm64).
+      - name: Enable ARM cross-build deps (Linux)
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo dpkg --add-architecture arm64 || true
+          sudo apt-get install -y --no-install-recommends rpm
+
+      - name: Install dependencies
+        # The workspace has a known React peer-version mismatch; legacy resolution
+        # is the standard fix (matches local dev). npm ci would fail on it.
+        run: npm install --legacy-peer-deps
+
+      - name: Typecheck
+        run: |
+          node ./node_modules/typescript/bin/tsc --noEmit
+          node ./node_modules/typescript/bin/tsc -p tsconfig.electron.json --noEmit
+
+      - name: Build renderer + main (no packaging)
+        run: |
+          npm run build:renderer
+          npm run build:electron
+
+      - name: Package + publish to GitHub Release
+        # On a tag push → publish a DRAFT GitHub Release with installers attached
+        # (owner/repo auto-detected from the checkout). Otherwise just build.
+        run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
+        env:
+          # GITHUB_TOKEN is provided automatically; contents:write (set above)
+          # lets electron-builder create/upload the release.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional signing secrets — used only if you add them in repo settings.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+
+      # Also keep raw artifacts on the workflow run itself (handy for testing).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dhurta-${{ matrix.name }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+            release/*.deb
+            release/*.rpm
+          if-no-files-found: ignore
+
+  # ── Android: GeckoView host via Gradle ──
+  # Expansion scope — not part of the desktop release. Runs only on a manual
+  # dispatch, never on release tags, so tagged desktop releases stay green.
+  android:
+    needs: core
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Build APK
+        working-directory: packages/android
+        run: ./gradlew assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dhurta-android
+          path: packages/android/app/build/outputs/apk/release/*.apk
+
+  # ── iOS: WebKit host via xcodebuild (requires macOS runner + provisioning) ──
+  # Expansion scope — manual dispatch only, excluded from the desktop release.
+  ios:
+    needs: core
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (unsigned archive)
+        working-directory: packages/ios
+        run: |
+          xcodebuild -scheme Dhurta -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO clean build
