@@ -130,6 +130,14 @@ sudo dpkg -i dhurta_1.0.8_amd64.deb
 | ⚙️ Settings | Full browser settings |
 | 🔒 Lock | PIN lock the session |
 
+### Dhurta Omni Dashboard Unified place for Network detection.
+DHURTA :: OMNI
+
+<div align="center">
+<img src=".github/assets/omni-dashboard.png" alt="Dhurta Browser — real Network protection dashboard screenshot showing the Real time security Survilance, security breach warnings, and other security feature with & Network overview" width="92%"/>
+</div>
+Dhurta Browser — real Network protection dashboard screenshot showing the Real time security Survilance, security breach warnings, and other security feature with & Network overview
+
 ### Security Breach Banners
 
 When Dhurta detects an unprotected state, it fires a **real-time warning banner** below the address bar:
