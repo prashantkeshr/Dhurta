@@ -19,10 +19,12 @@ import DataHubPanel from './components/panels/DataHubPanel'
 import TransparencyPanel from './components/panels/TransparencyPanel'
 import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
+import UpdateBanner from './components/UpdateBanner'
 import HistoryPage from './pages/HistoryPage'
 import BookmarksPage from './pages/BookmarksPage'
 import DownloadsPage from './pages/DownloadsPage'
 import OmniPage from './pages/OmniPage'
+import UpdatePage from './pages/UpdatePage'
 import type { SecuritySettings, Extension, LockStatus, Download } from './types'
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
@@ -214,7 +216,7 @@ export default function App() {
   }, [loadWallpapers])
 
   // Internal dhurta:// pages rendered as React full-page components (no BrowserView)
-  const DHURTA_PAGES = ['dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni'] as const
+  const DHURTA_PAGES = ['dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni', 'dhurta://update'] as const
   const activeDhurtaPage = activeTab?.url && (DHURTA_PAGES as readonly string[]).includes(activeTab.url)
     ? activeTab.url as typeof DHURTA_PAGES[number]
     : null
@@ -480,6 +482,11 @@ export default function App() {
             />
           )}
 
+          {/* Auto-update notification — shown when a new version is downloading or ready */}
+          {!isVideoFullscreen && (
+            <UpdateBanner onOpenUpdatePage={() => handleNavigate('dhurta://update')} />
+          )}
+
           {/* Content area */}
           <div className="flex-1 relative bg-obsidian overflow-hidden">
             {/* Page-load progress bar — Chrome-style thin bar at the top */}
@@ -511,6 +518,9 @@ export default function App() {
               )}
               {activeDhurtaPage === 'dhurta://omni' && (
                 <OmniPage activeTabId={activeTabId} theme={theme} />
+              )}
+              {activeDhurtaPage === 'dhurta://update' && (
+                <UpdatePage />
               )}
             </div>
             {/* BrowserView overlays this area for real pages */}

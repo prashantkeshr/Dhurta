@@ -16,6 +16,8 @@ const VALID_CHANNELS = new Set([
   'pip:loadInMain', 'menu:action', 'context-menu:action',
   'extension:installed', 'appLock:locked',
   'ghost:tor-crashed', 'pip:opened', 'pip:closed',
+  'update:checking', 'update:available', 'update:not-available',
+  'update:progress', 'update:downloaded', 'update:error',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -195,6 +197,10 @@ contextBridge.exposeInMainWorld('dhurta', {
   // PiP controls from the main window (tab-bar chip)
   closePip: () => ipcRenderer.invoke('pip:close'),
   focusMain: () => ipcRenderer.invoke('window:focusMain'),
+
+  // Auto-updater
+  checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  installUpdate:   () => ipcRenderer.invoke('update:install'),
 
   // Bridge — browser-to-browser connect
   bridgeHost: () => ipcRenderer.invoke('bridge:host'),

@@ -15,6 +15,7 @@ import { initDatabase } from './db'
 import { setupAdBlocker } from './adBlocker'
 import { registerIpcHandlers, saveSession, loadInstalledExtensions, setupWindowListeners } from './ipc'
 import { shutdownAllTools } from './tools'
+import { setupAutoUpdater } from './updater'
 
 const isDev = !app.isPackaged
 
@@ -212,6 +213,9 @@ app.whenReady().then(async () => {
   createWindow()
   // Attach BrowserView-bounds and VPN-restoration listeners now that the window exists.
   setupWindowListeners()
+
+  // Auto-updater — only in packaged builds; electron-updater throws in dev
+  if (!isDev) setupAutoUpdater()
 
   // Block telemetry and tracking hosts
   session.defaultSession.webRequest.onBeforeRequest(
