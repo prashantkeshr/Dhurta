@@ -539,19 +539,25 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
   return unique
 }
 
-// Test a proxy by performing a raw SOCKS5 handshake over a plain TCP socket.
-// This avoids Electron session overhead entirely and correctly isolates each
-// proxy test — the previous approach shared one session across parallel tests,
-// causing all 12 concurrent setProxy() calls to clobber each other.
-// The handshake is just 2 packets (greeting + server choice) so it completes
-// in <1 s for live proxies and times out quickly for dead ones.
-async function testProxyCandidate(proxy: string, timeoutMs = 4000): Promise<boolean> {
+// Full end-to-end proxy verification over raw TCP — no Electron sessions.
+// Protocol:  SOCKS5 greeting → SOCKS5 CONNECT → HTTP GET → HTTP 200
+// This proves the proxy can actually tunnel traffic to the internet, not just
+// that it accepts a TCP connection (a handshake-only test lets through proxies
+// that silently drop all forwarded packets, making the browser go offline).
+// Each call owns its own socket so 24 can race in parallel safely.
+const PROBE_HOST = 'api.ipify.org'  // plain HTTP, tiny response, highly available
+const PROBE_PORT = 80
+
+async function testProxyCandidate(proxy: string, timeoutMs = 7000): Promise<boolean> {
   const [host, portStr] = proxy.split(':')
   const port = parseInt(portStr, 10)
   if (!host || !port) return false
 
   return new Promise<boolean>((resolve) => {
     let settled = false
+    let step = 0
+    let buf = Buffer.alloc(0)
+
     const done = (result: boolean) => {
       if (settled) return
       settled = true
@@ -564,15 +570,53 @@ async function testProxyCandidate(proxy: string, timeoutMs = 4000): Promise<bool
     const timer = setTimeout(() => done(false), timeoutMs)
 
     socket.on('connect', () => {
-      // SOCKS5 client greeting: version=5, nMethods=1, method=0 (no auth)
+      // Step 0 → send SOCKS5 greeting (VER=5, NMETHODS=1, METHOD=0 no-auth)
       socket.write(Buffer.from([0x05, 0x01, 0x00]))
     })
-    socket.on('data', (data: Buffer) => {
-      // Server must reply: version=5, chosen-method=0 (no auth accepted)
-      done(data.length >= 2 && data[0] === 0x05 && data[1] === 0x00)
+
+    socket.on('data', (chunk: Buffer) => {
+      buf = Buffer.concat([buf, chunk])
+
+      if (step === 0 && buf.length >= 2) {
+        // Expect VER=5, METHOD=0 (no-auth accepted)
+        if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
+        step = 1
+        buf = Buffer.alloc(0)
+        // Send CONNECT request for PROBE_HOST:80 using domain-name address type
+        const hostBuf = Buffer.from(PROBE_HOST, 'ascii')
+        const req = Buffer.alloc(7 + hostBuf.length)
+        req[0] = 0x05        // VER
+        req[1] = 0x01        // CMD = CONNECT
+        req[2] = 0x00        // RSV
+        req[3] = 0x03        // ATYP = domain name
+        req[4] = hostBuf.length
+        hostBuf.copy(req, 5)
+        req.writeUInt16BE(PROBE_PORT, 5 + hostBuf.length)
+        socket.write(req)
+        return
+      }
+
+      if (step === 1 && buf.length >= 2) {
+        // Expect VER=5, REP=0 (success)
+        if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
+        step = 2
+        buf = Buffer.alloc(0)
+        // Tunnel is open — send a minimal HTTP GET
+        socket.write(
+          `GET / HTTP/1.0\r\nHost: ${PROBE_HOST}\r\nConnection: close\r\n\r\n`
+        )
+        return
+      }
+
+      if (step === 2) {
+        // Any HTTP response that starts with "HTTP/" is proof of live traffic
+        const text = buf.toString('ascii', 0, Math.min(buf.length, 16))
+        if (text.startsWith('HTTP/')) done(true)
+        // Keep accumulating until timeout if response hasn't arrived yet
+      }
     })
+
     socket.on('error', () => done(false))
-    socket.on('timeout', () => done(false))
   })
 }
 
