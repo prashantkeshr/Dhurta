@@ -519,166 +519,25 @@ function getSearchUrl(query: string): string {
   } catch { return `https://www.google.com/search?q=${q}` }
 }
 
-import { createConnection } from 'net'
-
-async function fetchProxyPool(country = 'all'): Promise<string[]> {
+async function fetchFreeProxy(country = 'all'): Promise<string | null> {
   const cc = country === 'all' ? 'all' : country.toUpperCase()
   const sources = [
-    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
-    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
-    `https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt`,
-    `https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt`,
-    `https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt`,
-    `https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt`,
+    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
+    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
   ]
-  const parseProxies = (text: string) =>
-    text.split('\n').map(l => l.trim()).filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
-
-  const results = await Promise.allSettled(
-    sources.map(url => fetch(url, { signal: AbortSignal.timeout(8000) }).then(r => r.text()))
-  )
-  const all: string[] = []
-  for (const r of results) {
-    if (r.status === 'fulfilled') all.push(...parseProxies(r.value))
-  }
-  const unique = [...new Set(all)]
-  for (let i = unique.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [unique[i], unique[j]] = [unique[j], unique[i]]
-  }
-  return unique
-}
-
-// Proxy probe: SOCKS5 greeting → CONNECT (IPv4, ATYP=0x01) → TLS ClientHello → response.
-//
-// KEY DESIGN CHOICES vs previous iterations:
-// • ATYP=0x01 (IPv4 hardcoded) — mirrors exactly what socks5:// sends to the proxy.
-//   ATYP=0x03 (domain name) is what socks5:// uses; most free SOCKS5 proxies reject
-//   it with REP=0x08 (address type not supported), causing ERR_TUNNEL_CONNECTION_FAILED.
-//   Testing with IPv4 ensures the probe accepts the same proxy Chromium will accept.
-// • 93.184.216.34 = example.com (IANA-assigned, extremely stable, never reallocated).
-// • TLS probe proves data flows end-to-end, not just that the CONNECT handshake completed.
-
-const PROBE_IP  = [93, 184, 216, 34] as const   // example.com — IANA-managed, stable
-const PROBE_PORT = 443
-
-// Minimal TLS 1.2 ClientHello (52 bytes). The server's TLS response (0x16 ServerHello
-// or 0x15 Alert) proves data is flowing bidirectionally through the HTTPS tunnel.
-const TLS_CLIENT_HELLO = Buffer.from([
-  0x16, 0x03, 0x01, 0x00, 0x2f,   // TLS record: Handshake, TLS 1.0 compat, len=47
-  0x01, 0x00, 0x00, 0x2b,          // ClientHello, len=43
-  0x03, 0x03,                       // TLS 1.2
-  0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
-  0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
-  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
-  0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,  // 32-byte static random
-  0x00,                             // session ID: empty
-  0x00, 0x04, 0xc0, 0x2c, 0x00, 0xff,        // 2 cipher suites
-  0x01, 0x00,                       // null compression
-])
-
-async function testProxyCandidate(proxy: string, timeoutMs = 7000): Promise<boolean> {
-  const [host, portStr] = proxy.split(':')
-  const port = parseInt(portStr, 10)
-  if (!host || !port) return false
-
-  return new Promise<boolean>((resolve) => {
-    let settled = false
-    let step = 0
-    let buf = Buffer.alloc(0)
-
-    const done = (result: boolean) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timer)
-      try { socket.destroy() } catch { /* ignore */ }
-      resolve(result)
-    }
-
-    const socket = createConnection({ host, port })
-    const timer = setTimeout(() => done(false), timeoutMs)
-
-    socket.on('connect', () => {
-      socket.write(Buffer.from([0x05, 0x01, 0x00]))  // SOCKS5 greeting, no-auth
-    })
-
-    socket.on('data', (chunk: Buffer) => {
-      buf = Buffer.concat([buf, chunk])
-
-      if (step === 0) {
-        if (buf.length < 2) return
-        if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
-        step = 1
-        buf = Buffer.alloc(0)
-        // SOCKS5 CONNECT using IPv4 (ATYP=0x01) — what socks5:// actually sends
-        const req = Buffer.alloc(10)
-        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x01  // VER CMD RSV ATYP
-        req[4] = PROBE_IP[0]; req[5] = PROBE_IP[1]
-        req[6] = PROBE_IP[2]; req[7] = PROBE_IP[3]
-        req.writeUInt16BE(PROBE_PORT, 8)
-        socket.write(req)
-        return
-      }
-
-      if (step === 1) {
-        // IPv4 CONNECT response is always exactly 10 bytes (VER+REP+RSV+ATYP+4+2)
-        if (buf.length < 10) return
-        if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
-        step = 2
-        buf = buf.slice(10)   // trim response; keep any data already in tunnel
-        socket.write(TLS_CLIENT_HELLO)
-      }
-
-      if (step === 2) {
-        // 0x16 = TLS ServerHello, 0x15 = TLS Alert — either proves data flows end-to-end
-        if (buf.length > 0 && (buf[0] === 0x16 || buf[0] === 0x15)) done(true)
-      }
-    })
-
-    socket.on('error', () => done(false))
-  })
-}
-
-async function findWorkingProxy(pool: string[]): Promise<string | null> {
-  // Fast path: cached proxy — re-test it first for instant reconnect
-  const cached = (() => {
+  for (const src of sources) {
     try {
-      return (getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any)?.value as string | undefined
-    } catch { return undefined }
-  })()
-  if (cached && await testProxyCandidate(cached)) return cached
-
-  // Race batches of 48 candidates at a time with Promise.any — exits the moment
-  // the first passing proxy is found without waiting for the rest of the batch.
-  // No pool-size cap: with a ~2-5% pass rate on public SOCKS5 lists we need to
-  // scan broadly, and a 90-second total deadline keeps this bounded.
-  const BATCH = 48
-  const deadline = Date.now() + 90_000
-  for (let i = 0; i < pool.length && Date.now() < deadline; i += BATCH) {
-    const batch = pool.slice(i, i + BATCH)
-    try {
-      return await Promise.any(
-        batch.map(async (p) => {
-          const ok = await testProxyCandidate(p)
-          if (!ok) throw new Error('dead')
-          return p
-        })
-      )
+      const resp = await fetch(src, { signal: AbortSignal.timeout(8000) })
+      const text = await resp.text()
+      const proxies = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
+      if (proxies.length > 0) {
+        return proxies[Math.floor(Math.random() * Math.min(proxies.length, 30))]
+      }
     } catch { continue }
   }
   return null
-}
-
-async function fetchFreeProxy(country = 'all'): Promise<string | null> {
-  const pool = await fetchProxyPool(country)
-  return findWorkingProxy(pool)
-}
-
-async function verifyProxy(): Promise<boolean> {
-  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
-  const proxy = row?.value as string | undefined
-  if (!proxy) return false
-  return testProxyCandidate(proxy, 6_000)
 }
 
 
@@ -3344,14 +3203,9 @@ export function registerIpcHandlers() {
 
   // VPN — free public proxy with optional country selection
   ipcMain.handle('vpn:connect', async (_e, country?: string) => {
-    const pool = await fetchProxyPool(country)
-    if (pool.length === 0) {
-      return { success: false, error: 'Could not fetch proxy list. Check your internet connection.' }
-    }
-    const proxy = await findWorkingProxy(pool)
+    const proxy = await fetchFreeProxy(country)
     if (!proxy) {
-      await applyProxyToAllSessions('direct://')
-      return { success: false, error: `No working server found in pool of ${pool.length} candidates${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
+      return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
     }
     await applyProxyToAllSessions(`socks5://${proxy}`)
     getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'true')
@@ -3369,13 +3223,9 @@ export function registerIpcHandlers() {
   ipcMain.handle('vpn:rotate', async () => {
     const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('vpnCountry') as any
     const country = row?.value ?? 'all'
-    const pool = await fetchProxyPool(country)
-    if (pool.length === 0) {
-      return { success: false, error: 'Could not fetch proxy list. Check your internet connection.' }
-    }
-    const proxy = await findWorkingProxy(pool)
+    const proxy = await fetchFreeProxy(country)
     if (!proxy) {
-      return { success: false, error: 'No working server found. Try again or switch country.' }
+      return { success: false, error: 'No servers available right now. Try again.' }
     }
     await applyProxyToAllSessions(`socks5://${proxy}`)
     getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
@@ -3728,36 +3578,11 @@ export function setupWindowListeners() {
   }
 
   // ── VPN restoration ───────────────────────────────────────────────────────
-  // Re-apply a previously active proxy so VPN + anonymity survive app restarts.
-  // On first launch (chakra just initialized above), activeProxy is empty so we
-  // fetch a fresh one. On restart, we verify the saved proxy is still alive and
-  // rotate to a new one if it is dead — ensuring VPN is never silently broken.
+  // Re-apply the saved proxy so VPN survives app restarts.
   if (getSecurityFlag('security_ipRotation')) {
     const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
     if (proxyRow?.value) {
-      // Verify the saved proxy is still alive before restoring it; rotate if dead
-      applyProxyToAllSessions(`socks5://${proxyRow.value}`)
-        .then(() => verifyProxy())
-        .then(alive => {
-          if (alive) return
-          // Saved proxy is dead — fetch a new one transparently
-          return fetchFreeProxy().then(proxy => {
-            if (!proxy) return
-            return applyProxyToAllSessions(`socks5://${proxy}`).then(() => {
-              getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-            })
-          })
-        })
-        .catch(() => {})
-    } else {
-      fetchFreeProxy().then((proxy) => {
-        if (!proxy) return
-        return applyProxyToAllSessions(`socks5://${proxy}`).then(() => {
-          getDb()
-            .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
-            .run('activeProxy', proxy)
-        })
-      }).catch(() => {})
+      applyProxyToAllSessions(`socks5://${proxyRow.value}`).catch(() => {})
     }
   }
 }
