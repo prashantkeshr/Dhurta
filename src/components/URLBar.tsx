@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import type { SecuritySettings, Extension, Download } from '../types'
+import SiteInfoPanel from './SiteInfoPanel'
 
 interface Props {
   url: string
@@ -36,6 +37,7 @@ export default function URLBar({
   loading,
   ghost,
   jsDisabled,
+  activeTabId,
   zoomLevel,
   securityStatus,
   extensions = [],
@@ -63,13 +65,30 @@ export default function URLBar({
   const [bookmarkFlash, setBookmarkFlash] = useState(false)
   const [findMode, setFindMode] = useState(false)
   const [findText, setFindText] = useState('')
+  const [showSiteInfo, setShowSiteInfo] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const findRef = useRef<HTMLInputElement>(null)
 
-  // Sync input when url changes from outside
+  const openSiteInfo = useCallback(async () => {
+    if (showSiteInfo) {
+      setShowSiteInfo(false)
+      if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {})
+      return
+    }
+    if (isElectron) await (window as any).dhurta.concealBrowserView().catch(() => {})
+    setShowSiteInfo(true)
+  }, [showSiteInfo])
+
+  const closeSiteInfo = useCallback(() => {
+    setShowSiteInfo(false)
+    if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {})
+  }, [])
+
+  // Sync input when url changes from outside; also close site panel on navigation
   useEffect(() => {
     if (!editing) setInput(url)
-  }, [url, editing])
+    if (showSiteInfo) { setShowSiteInfo(false); if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {}) }
+  }, [url]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check bookmark state when URL changes
   useEffect(() => {
@@ -177,11 +196,18 @@ export default function URLBar({
         </div>
       )}
 
-      {/* URL input */}
-      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-surface-3 focus-within:border-saffron transition-colors px-2 h-6 min-w-0">
-        <span className="mr-1.5 text-muted shrink-0">
+      {/* URL input — lock icon is clickable and opens Site Info Panel */}
+      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-surface-3 focus-within:border-saffron transition-colors px-2 h-6 min-w-0 relative">
+        <button
+          onClick={openSiteInfo}
+          title="Site information and controls"
+          className={[
+            'mr-1.5 shrink-0 flex items-center justify-center transition-colors',
+            showSiteInfo ? 'text-saffron' : 'text-muted hover:text-saffron',
+          ].join(' ')}
+        >
           {url.startsWith('https://') ? (
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#4CAF50" strokeWidth="1.2">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke={showSiteInfo ? '#FF4500' : '#4CAF50'} strokeWidth="1.2">
               <rect x="2" y="4" width="6" height="5" /><path d="M3 4V3a2 2 0 0 1 4 0v1" />
             </svg>
           ) : url.startsWith('file://') ? (
@@ -189,12 +215,12 @@ export default function URLBar({
               <path d="M2 1h4l2 2v6H2z" /><polyline points="6,1 6,3 8,3" />
             </svg>
           ) : (
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#666" strokeWidth="1.2">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke={showSiteInfo ? '#FF4500' : '#666'} strokeWidth="1.2">
               <circle cx="5" cy="5" r="4" /><line x1="5" y1="3" x2="5" y2="5.5" />
-              <circle cx="5" cy="7" r="0.5" fill="#666" />
+              <circle cx="5" cy="7" r="0.5" fill={showSiteInfo ? '#FF4500' : '#666'} />
             </svg>
           )}
-        </span>
+        </button>
         <input
           ref={inputRef}
           className="url-font flex-1 text-text-dim focus:text-text bg-transparent text-xs h-full min-w-0"
@@ -206,6 +232,15 @@ export default function URLBar({
           spellCheck={false}
           autoComplete="off"
         />
+        {/* Site Info Panel */}
+        {showSiteInfo && (
+          <SiteInfoPanel
+            activeTabId={activeTabId}
+            url={url}
+            theme={theme}
+            onClose={closeSiteInfo}
+          />
+        )}
       </div>
 
       {/* Find in page bar (inline, appears when active) */}

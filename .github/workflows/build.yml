@@ -17,7 +17,6 @@ permissions:
 env:
   APP_NAME: Dhurta
   ORG_NAME: Dhurta.inc
-  APP_VERSION: 1.0.8.0
   HOMEPAGE: https://dhurta.com
 
 jobs:
@@ -45,14 +44,17 @@ jobs:
           name: dhurta-core-dist
           path: packages/core/dist
 
-  # ── Desktop: Windows, macOS (universal), Linux x64+arm64 (Pi/ChromeOS) ──
+  # ── Desktop: Windows, macOS, Linux ──
   desktop:
     needs: core
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          # windows-2022 is the stable LTS runner; windows-latest now maps to
+          # windows-2025 which has changed default toolchain configuration and
+          # can cause "Set up job" failures for native Node module builds.
+          - os: windows-2022
             name: windows
           - os: macos-latest
             name: macos
@@ -61,9 +63,28 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      # Python 3 is required by node-gyp to compile better-sqlite3 on Windows.
+      # windows-2022 runners ship Python 3.x but pip may not find it by default.
+      - name: Setup Python (Windows — node-gyp native build)
+        if: matrix.name == 'windows'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Point node-gyp at the Visual Studio 2022 build tools that ship on
+      # windows-2022 runners. Avoids "Could not find any Visual Studio" errors
+      # when compiling better-sqlite3.
+      - name: Configure node-gyp for MSVC (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          npm config set msvs_version 2022
+          npm config set python python
 
       # Linux ARM cross-compile toolchain (Raspberry Pi / ChromeOS arm64).
       - name: Enable ARM cross-build deps (Linux)
@@ -77,6 +98,14 @@ jobs:
         # The workspace has a known React peer-version mismatch; legacy resolution
         # is the standard fix (matches local dev). npm ci would fail on it.
         run: npm install --legacy-peer-deps
+
+      # Explicit rebuild of native modules against the packaged Electron ABI.
+      # The postinstall script already attempts this but is non-fatal. Re-running
+      # here guarantees better-sqlite3 is correctly linked before electron-builder
+      # packages the asar — especially important on Windows where the first run
+      # may have used the wrong MSVS version.
+      - name: Rebuild native modules for Electron
+        run: npx electron-builder install-app-deps
 
       - name: Typecheck
         run: |

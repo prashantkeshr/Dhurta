@@ -3459,6 +3459,9 @@ export function registerIpcHandlers() {
     switch (engine) {
       case 'google':     url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${enc}`; break
       case 'bing':       url = `https://api.bing.com/osjson.aspx?query=${enc}`; break
+      case 'ecosia':     url = `https://ac.ecosia.org/?q=${enc}&type=list`; break
+      case 'yahoo':      url = `https://ff.search.yahoo.com/gossip?command=${enc}&output=fxjson`; break
+      // startpage, qwant, brave, duckduckgo, custom all fall through to DDG
       default:           url = `https://duckduckgo.com/ac/?q=${enc}&type=list`; break
     }
     try {
@@ -3472,6 +3475,45 @@ export function registerIpcHandlers() {
         return (json as Array<{ phrase: string }>).map(x => x.phrase).slice(0, 8)
       return []
     } catch { return [] }
+  })
+
+  // Site info — connection, cookie count, and permission status for the active tab's origin
+  ipcMain.handle('site:getInfo', async (_e, tabId: number) => {
+    const tab = tabs.get(tabId) ?? tabs.get(activeTabId)
+    if (!tab) return null
+    const url = tab.view.webContents.getURL()
+    if (!url || url.startsWith('dhurta://') || url === 'about:blank' || url === '') return null
+    let domain = '', isHttps = false, origin = ''
+    try {
+      const u = new URL(url)
+      domain = u.hostname
+      isHttps = u.protocol === 'https:'
+      origin = u.origin
+    } catch { return null }
+    const ses = tab.view.webContents.session
+    const cookies = await ses.cookies.get({ domain }).catch(() => [] as any[])
+    return { url, domain, isHttps, origin, cookieCount: cookies.length }
+  })
+
+  // Clear cookies + storage for the active tab's origin
+  ipcMain.handle('site:clearData', async (_e, tabId: number) => {
+    const tab = tabs.get(tabId) ?? tabs.get(activeTabId)
+    if (!tab) return false
+    const url = tab.view.webContents.getURL()
+    if (!url || url.startsWith('dhurta://')) return false
+    let origin = ''
+    try { origin = new URL(url).origin } catch { return false }
+    const ses = tab.view.webContents.session
+    await ses.clearStorageData({ origin, storages: ['cookies', 'localstorage', 'indexdb', 'cachestorage', 'serviceworkers'] }).catch(() => {})
+    await ses.clearCache().catch(() => {})
+    return true
+  })
+
+  // Clear site from history by domain
+  ipcMain.handle('site:clearHistory', async (_e, domain: string) => {
+    if (!domain) return
+    const db = getDb()
+    db.prepare("DELETE FROM history WHERE url LIKE ?").run(`%${domain}%`)
   })
 }
 

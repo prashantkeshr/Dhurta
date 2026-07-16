@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { Bookmark } from '../types'
 import SmartFavicon from './SmartFavicon'
+import { SEARCH_ENGINES } from './panels/SettingsPanel'
 
 const isElectron = typeof window !== 'undefined' && typeof window.dhurta !== 'undefined'
+
+// Ordered list of engine IDs for cycler — excludes 'custom'
+const CYCLE_ENGINES = SEARCH_ENGINES.filter(e => e.value !== 'custom').map(e => e.value)
 
 // ── Built-in themes ─────────────────────────────────────────────────────────
 export interface ThemeDef {
@@ -113,6 +117,9 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
   const [showSugg,     setShowSugg]     = useState(false)
   const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Engine switcher animation
+  const [engineFlip, setEngineFlip] = useState(false)
+
   const reload = useCallback(async () => {
     if (!isElectron || ghost) return
     const [bms, order] = await Promise.all([
@@ -185,6 +192,17 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     setWpIdx(i => Math.min(i, Math.max(0, wallpapers.length - 1)))
   }, [wallpapers.length])
 
+  const cycleEngine = useCallback(() => {
+    const cur = CYCLE_ENGINES.indexOf(searchEngine)
+    const next = CYCLE_ENGINES[(cur + 1) % CYCLE_ENGINES.length]
+    setSearchEngine(next)
+    setSuggestions([]); setShowSugg(false)
+    if (isElectron) window.dhurta.setSetting('searchEngine', next)
+    window.dispatchEvent(new CustomEvent('dhurta:settingChanged', { detail: { key: 'searchEngine', value: next } }))
+    setEngineFlip(true)
+    setTimeout(() => setEngineFlip(false), 300)
+  }, [searchEngine])
+
   const doSearch = useCallback((s: string) => {
     setSuggestions([]); setShowSugg(false); setSuggIdx(-1)
     const trimmed = s.trim()
@@ -201,6 +219,10 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
       case 'google':     url = `https://www.google.com/search?q=${q}`; break
       case 'bing':       url = `https://www.bing.com/search?q=${q}`; break
       case 'duckduckgo': url = `https://duckduckgo.com/?q=${q}`; break
+      case 'startpage':  url = `https://www.startpage.com/search?q=${q}`; break
+      case 'qwant':      url = `https://www.qwant.com/?q=${q}`; break
+      case 'ecosia':     url = `https://www.ecosia.org/search?q=${q}`; break
+      case 'yahoo':      url = `https://search.yahoo.com/search?p=${q}`; break
       case 'custom':     url = customSearchUrl ? customSearchUrl.replace('%s', trimmed) : `https://search.brave.com/search?q=${q}`; break
       default:           url = `https://search.brave.com/search?q=${q}`
     }
@@ -366,12 +388,40 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
       </div>
     ),
 
-    search: (
+    search: (() => {
+      const eng = SEARCH_ENGINES.find(e => e.value === searchEngine) ?? SEARCH_ENGINES[0]
+      return (
       <form onSubmit={handleSearch} className="w-full max-w-lg relative">
         <div className={`flex border ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md focus-within:border-[#FF4500] transition-colors ${isLight ? 'shadow-sm' : ''} relative z-20`}>
+          {/* Engine switcher button */}
+          <button
+            type="button"
+            onClick={cycleEngine}
+            title={`Search engine: ${eng.label} — click to switch`}
+            className={[
+              'flex items-center gap-1.5 pl-2.5 pr-2 py-2 border-r shrink-0 transition-all',
+              tt.borderGlass,
+              engineFlip ? 'scale-90 opacity-60' : 'opacity-100',
+              isLight ? 'hover:bg-black/5' : 'hover:bg-white/5',
+            ].join(' ')}
+          >
+            <span
+              className="w-5 h-5 flex items-center justify-center text-[9px] font-mono font-bold border leading-none"
+              style={{ color: eng.letterColor, borderColor: eng.letterColor + '55', background: eng.letterColor + '18' }}
+            >
+              {eng.letter}
+            </span>
+            {/* <> icon */}
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"
+              className={tt.textMuted}>
+              <polyline points="3,1.5 1,4.5 3,7.5" />
+              <polyline points="6,1.5 8,4.5 6,7.5" />
+            </svg>
+          </button>
+
           <input
-            className={`flex-1 bg-transparent px-4 py-2.5 text-sm font-mono outline-none ${tt.text} ${tt.textPlaceholder}`}
-            placeholder={ghost ? 'Search anonymously…' : 'Search or enter URL…'}
+            className={`flex-1 bg-transparent px-3 py-2.5 text-sm font-mono outline-none ${tt.text} ${tt.textPlaceholder}`}
+            placeholder={ghost ? `Search anonymously via ${eng.label}…` : `Search ${eng.label} or enter URL…`}
             value={search}
             onChange={e => { setSearch(e.target.value); setSuggIdx(-1); fetchSuggestions(e.target.value) }}
             onKeyDown={e => {
@@ -411,7 +461,8 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           </div>
         )}
       </form>
-    ),
+      )
+    })(),
 
     favourites: !ghost ? (
       <div className="w-full max-w-lg">

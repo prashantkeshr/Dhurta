@@ -206,6 +206,11 @@ contextBridge.exposeInMainWorld('dhurta', {
   fetchSuggestions: (engine: string, query: string) =>
     ipcRenderer.invoke('suggest:fetch', engine, query) as Promise<string[]>,
 
+  // Site info panel — connection, cookie count, clear data, history wipe
+  siteGetInfo:      (tabId: number) => ipcRenderer.invoke('site:getInfo', tabId),
+  siteClearData:    (tabId: number) => ipcRenderer.invoke('site:clearData', tabId) as Promise<boolean>,
+  siteClearHistory: (domain: string) => ipcRenderer.invoke('site:clearHistory', domain),
+
   // Bridge — browser-to-browser connect
   bridgeHost: () => ipcRenderer.invoke('bridge:host'),
   bridgeStop: () => ipcRenderer.invoke('bridge:stop'),

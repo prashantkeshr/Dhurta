@@ -4,12 +4,20 @@ import { useTheme } from '../../store/useTheme'
 
 const api = () => window.dhurta
 
-const SEARCH_ENGINES = [
-  { value: 'brave',      label: 'Brave Search', url: 'search.brave.com' },
-  { value: 'google',     label: 'Google',       url: 'google.com' },
-  { value: 'duckduckgo', label: 'DuckDuckGo',   url: 'duckduckgo.com' },
-  { value: 'bing',       label: 'Bing',         url: 'bing.com' },
-  { value: 'custom',     label: 'Custom URL',   url: '' },
+export const SEARCH_ENGINES = [
+  // ── Privacy-first ──
+  { value: 'brave',      label: 'Brave Search',  url: 'search.brave.com',    badge: '⭐ Privacy Pick',  badgeColor: '#22c55e', letter: 'B',  letterColor: '#FF4500', desc: 'Independent index, no Google tracking' },
+  { value: 'duckduckgo', label: 'DuckDuckGo',    url: 'duckduckgo.com',      badge: '⭐ Privacy Pick',  badgeColor: '#22c55e', letter: 'D',  letterColor: '#DE5833', desc: 'No personal data stored, ever' },
+  { value: 'startpage',  label: 'Startpage',     url: 'startpage.com',       badge: '🔒 Private Google', badgeColor: '#3b82f6', letter: 'S',  letterColor: '#4285f4', desc: 'Google results without the tracking' },
+  { value: 'qwant',      label: 'Qwant',         url: 'qwant.com',           badge: '🔒 Privacy',       badgeColor: '#8b5cf6', letter: 'Q',  letterColor: '#8b5cf6', desc: 'EU-based, zero tracking policy' },
+  // ── Eco-friendly ──
+  { value: 'ecosia',     label: 'Ecosia',        url: 'ecosia.org',          badge: '🌱 Eco-Friendly',  badgeColor: '#16a34a', letter: 'E',  letterColor: '#16a34a', desc: 'Plants trees with ad revenue' },
+  // ── Popular ──
+  { value: 'google',     label: 'Google',        url: 'google.com',          badge: '🌐 Popular',       badgeColor: '#f59e0b', letter: 'G',  letterColor: '#4285f4', desc: 'Most comprehensive web index' },
+  { value: 'bing',       label: 'Bing',          url: 'bing.com',            badge: '🌐 Popular',       badgeColor: '#f59e0b', letter: 'Bi', letterColor: '#0078d4', desc: 'Microsoft — strong image & video search' },
+  { value: 'yahoo',      label: 'Yahoo',         url: 'search.yahoo.com',    badge: null,               badgeColor: '',        letter: 'Y',  letterColor: '#720e9e', desc: 'Classic search portal' },
+  // ── Custom ──
+  { value: 'custom',     label: 'Custom URL',    url: '',                    badge: null,               badgeColor: '',        letter: '⚙',  letterColor: '#888',    desc: 'Use any search engine with %s placeholder' },
 ]
 
 const MAX_WALLPAPERS = 5
@@ -196,12 +204,20 @@ export default function SettingsPanel() {
             <PageTitle>General</PageTitle>
 
             <SettingGroup title="Search Engine">
-              <p className="text-[9px] text-muted font-mono mb-2">
+              <p className="text-[9px] text-muted font-mono mb-3">
                 Used when typing a query in the home page or address bar.
               </p>
               <div className="grid grid-cols-1 gap-1">
                 {SEARCH_ENGINES.map(e => (
-                  <label key={e.value} className="flex items-center gap-3 p-2 border border-transparent hover:border-border cursor-pointer group transition-colors">
+                  <label
+                    key={e.value}
+                    className={[
+                      'flex items-center gap-3 p-2 border cursor-pointer group transition-colors',
+                      searchEngine === e.value
+                        ? 'border-saffron bg-saffron/5'
+                        : 'border-transparent hover:border-border',
+                    ].join(' ')}
+                  >
                     <input
                       type="radio"
                       name="searchEngine"
@@ -210,9 +226,26 @@ export default function SettingsPanel() {
                       onChange={() => { setSearchEngine(e.value); saveAndNotify('searchEngine', e.value) }}
                       className="accent-saffron shrink-0"
                     />
-                    <div>
-                      <p className="text-xs font-mono text-text group-hover:text-saffron transition-colors">{e.label}</p>
-                      {e.url && <p className="text-[10px] text-muted font-mono">{e.url}</p>}
+                    {/* Engine letter icon */}
+                    <span
+                      className="w-6 h-6 shrink-0 flex items-center justify-center text-[10px] font-mono font-bold border"
+                      style={{ color: e.letterColor, borderColor: e.letterColor + '55', background: e.letterColor + '11' }}
+                    >
+                      {e.letter}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-mono text-text group-hover:text-saffron transition-colors">{e.label}</p>
+                        {e.badge && (
+                          <span
+                            className="text-[8px] font-mono px-1 py-px leading-tight border shrink-0"
+                            style={{ color: e.badgeColor, borderColor: e.badgeColor + '60', background: e.badgeColor + '15' }}
+                          >
+                            {e.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-muted font-mono truncate">{e.desc || e.url}</p>
                     </div>
                   </label>
                 ))}
