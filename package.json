@@ -117,6 +117,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Dhurta Browser",
+      "uninstallDisplayName": "Dhurta",
       "installerIcon": "build/icon.png",
       "uninstallerIcon": "build/icon.png",
       "license": "LICENSE"
@@ -161,7 +162,7 @@
     "publish": [
       {
         "provider": "github",
-        "releaseType": "release"
+        "releaseType": "draft"
       }
     ]
   }
