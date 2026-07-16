@@ -656,29 +656,78 @@ async function testProxyCandidate(proxy: string, timeoutMs = 8000): Promise<bool
   })
 }
 
+// ── Electron-backed proxy verification ───────────────────────────────────────
+// Five dedicated memory partitions — each maps to exactly one parallel candidate
+// so concurrent setProxy() calls can never clobber each other.
+// Must be initialised inside IPC handlers (after app.ready), never at module load.
+const _probeSessionPool: (Electron.Session | null)[] = Array(5).fill(null)
+
+function _getProbeSession(slot: number): Electron.Session {
+  if (!_probeSessionPool[slot]) {
+    _probeSessionPool[slot] = session.fromPartition(`memory:probe-${slot}`)
+  }
+  return _probeSessionPool[slot]!
+}
+
+// The conclusive test: route a real HTTPS request through Chromium's own
+// network stack (same code path as BrowserView). If this passes, the browser
+// WILL work through the proxy — no TCP-layer illusions possible.
+async function verifyProxyElectron(proxy: string, slot: number, timeoutMs = 12_000): Promise<boolean> {
+  const sess = _getProbeSession(slot % 5)
+  try {
+    await sess.setProxy({ proxyRules: `socks5h://${proxy}`, proxyBypassRules: '' })
+    const resp = await (net.fetch as any)('https://example.com/', {
+      session: sess,
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+    return (resp as Response).status > 0
+  } catch {
+    return false
+  }
+}
+
 async function findWorkingProxy(pool: string[], batchSize = 24): Promise<string | null> {
-  // Try last known-good proxy first — instant reconnect if still alive
+  // Fast path: re-verify the cached proxy — TCP pre-filter then Electron check
   const cached = (() => {
     try {
       return (getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any)?.value as string | undefined
     } catch { return undefined }
   })()
   if (cached) {
-    const ok = await testProxyCandidate(cached)
-    if (ok) return cached
+    const tcpOk = await testProxyCandidate(cached)
+    if (tcpOk && await verifyProxyElectron(cached, 0)) return cached
   }
 
-  // Race large batches — SOCKS5 handshake is fast enough to test 24 at once
+  // Scan pool in batches:
+  // 1. TCP test (raw socket, fast, 24 in parallel) — coarse pre-filter
+  // 2. Race ≤5 TCP-passing candidates through Electron — definitive check
+  // Only a proxy that clears BOTH layers is returned.
   const maxProxies = Math.min(pool.length, 200)
   for (let i = 0; i < maxProxies; i += batchSize) {
     const batch = pool.slice(i, i + batchSize)
+
+    const tcpResults = await Promise.allSettled(
+      batch.map(async (p) => {
+        const ok = await testProxyCandidate(p)
+        if (!ok) throw new Error('dead')
+        return p
+      })
+    )
+    const candidates = tcpResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map(r => r.value)
+      .slice(0, 5)
+
+    if (candidates.length === 0) continue
+
     try {
       return await Promise.any(
-        batch.map(async (p) => {
-          const ok = await testProxyCandidate(p)
-          if (!ok) throw new Error('dead')
-          return p
-        })
+        candidates.map((p, slot) =>
+          verifyProxyElectron(p, slot).then(ok => {
+            if (!ok) throw new Error('electron-rejected')
+            return p
+          })
+        )
       )
     } catch { continue }
   }
@@ -691,11 +740,10 @@ async function fetchFreeProxy(country = 'all'): Promise<string | null> {
 }
 
 async function verifyProxy(): Promise<boolean> {
-  // Verify the currently-active proxy by checking through Electron's net
   const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
   const proxy = row?.value as string | undefined
   if (!proxy) return false
-  return testProxyCandidate(proxy, 6000)
+  return verifyProxyElectron(proxy, 0, 8_000)
 }
 
 
@@ -1171,7 +1219,7 @@ function attachViewEvents(tab: Tab) {
     ) {
       const now = Date.now()
       const lastRotate = _lastProxyRotate.get(tab.id) ?? 0
-      if (now - lastRotate > 30_000) {
+      if (now - lastRotate > 10_000) {
         _lastProxyRotate.set(tab.id, now)
         const retryUrl = url
         fetchFreeProxy().then(async (proxy) => {
