@@ -146,10 +146,15 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
+      - uses: actions/checkout@v4
       - name: Publish GitHub Release
         # All desktop builds succeeded — promote the draft to a real release.
-        # gh cli is pre-installed on all GitHub-hosted runners.
-        run: gh release edit "${{ github.ref_name }}" --draft=false --repo "${{ github.repository }}"
+        # electron-builder names the release after the package.json version (not
+        # necessarily the git tag), so we read the version from package.json to
+        # find the right release rather than using github.ref_name directly.
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh release edit "v${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
