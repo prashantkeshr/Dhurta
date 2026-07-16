@@ -509,23 +509,13 @@ function getSearchUrl(query: string): string {
   } catch { return `https://www.google.com/search?q=${q}` }
 }
 
-// Lightweight HTTP endpoints used to verify a proxy is alive.
-// HTTP (not HTTPS) is intentional — HTTPS requires CONNECT tunnelling which
-// many free proxies don't support. We just need proof the proxy forwards
-// traffic; the actual VPN session uses socks5h:// for all real browsing.
-const PROBE_ENDPOINTS = [
-  'http://api.ipify.org',          // returns bare IP string — tiny payload
-  'http://checkip.amazonaws.com',  // AWS — highly available
-  'http://ifconfig.me/ip',         // Cloudflare-backed — fast
-]
+import { createConnection } from 'net'
 
 async function fetchProxyPool(country = 'all'): Promise<string[]> {
   const cc = country === 'all' ? 'all' : country.toUpperCase()
   const sources = [
-    // proxyscrape — filter recently-alive proxies (timeout=5000ms on their side)
     `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
     `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
-    // GitHub raw lists — updated frequently by the community
     `https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt`,
     `https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt`,
     `https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt`,
@@ -542,7 +532,6 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
     if (r.status === 'fulfilled') all.push(...parseProxies(r.value))
   }
   const unique = [...new Set(all)]
-  // Fisher-Yates shuffle for random ordering
   for (let i = unique.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [unique[i], unique[j]] = [unique[j], unique[i]]
@@ -550,63 +539,67 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
   return unique
 }
 
-// Reuse a single shared test session — avoids per-proxy partition overhead.
-// The proxy rules are swapped before each test so partitions don't bleed.
-let _testSession: Electron.Session | null = null
-function getTestSession(): Electron.Session {
-  if (!_testSession) {
-    _testSession = session.fromPartition('memory:vpn-probe', { cache: false })
-  }
-  return _testSession
+// Test a proxy by performing a raw SOCKS5 handshake over a plain TCP socket.
+// This avoids Electron session overhead entirely and correctly isolates each
+// proxy test — the previous approach shared one session across parallel tests,
+// causing all 12 concurrent setProxy() calls to clobber each other.
+// The handshake is just 2 packets (greeting + server choice) so it completes
+// in <1 s for live proxies and times out quickly for dead ones.
+async function testProxyCandidate(proxy: string, timeoutMs = 4000): Promise<boolean> {
+  const [host, portStr] = proxy.split(':')
+  const port = parseInt(portStr, 10)
+  if (!host || !port) return false
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false
+    const done = (result: boolean) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      try { socket.destroy() } catch { /* ignore */ }
+      resolve(result)
+    }
+
+    const socket = createConnection({ host, port })
+    const timer = setTimeout(() => done(false), timeoutMs)
+
+    socket.on('connect', () => {
+      // SOCKS5 client greeting: version=5, nMethods=1, method=0 (no auth)
+      socket.write(Buffer.from([0x05, 0x01, 0x00]))
+    })
+    socket.on('data', (data: Buffer) => {
+      // Server must reply: version=5, chosen-method=0 (no auth accepted)
+      done(data.length >= 2 && data[0] === 0x05 && data[1] === 0x00)
+    })
+    socket.on('error', () => done(false))
+    socket.on('timeout', () => done(false))
+  })
 }
 
-async function testProxyCandidate(proxy: string): Promise<boolean> {
-  const testSess = getTestSession()
-  try {
-    await testSess.setProxy({ proxyRules: `socks5://${proxy}` })
-    // Race multiple lightweight HTTP endpoints — first response wins.
-    // Using plain HTTP avoids TLS CONNECT which many free proxies reject.
-    const result = await Promise.any(
-      PROBE_ENDPOINTS.map(url =>
-        net.fetch(url, {
-          session: testSess,
-          signal: AbortSignal.timeout(8000),
-        } as any).then(r => {
-          if (!r.ok && r.status !== 200) throw new Error('bad status')
-          return true
-        })
-      )
-    )
-    return result
-  } catch {
-    return false
-  }
-}
-
-async function findWorkingProxy(pool: string[], batchSize = 12): Promise<string | null> {
-  // Try the last known-good proxy first — avoids full pool scan on rotate
+async function findWorkingProxy(pool: string[], batchSize = 24): Promise<string | null> {
+  // Try last known-good proxy first — instant reconnect if still alive
   const cached = (() => {
     try {
       return (getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any)?.value as string | undefined
     } catch { return undefined }
   })()
-  if (cached && pool.includes(cached)) {
+  if (cached) {
     const ok = await testProxyCandidate(cached)
     if (ok) return cached
   }
 
-  const maxProxies = Math.min(pool.length, 120)
+  // Race large batches — SOCKS5 handshake is fast enough to test 24 at once
+  const maxProxies = Math.min(pool.length, 200)
   for (let i = 0; i < maxProxies; i += batchSize) {
     const batch = pool.slice(i, i + batchSize)
     try {
-      const winner = await Promise.any(
+      return await Promise.any(
         batch.map(async (p) => {
           const ok = await testProxyCandidate(p)
           if (!ok) throw new Error('dead')
           return p
         })
       )
-      return winner
     } catch { continue }
   }
   return null
@@ -618,19 +611,11 @@ async function fetchFreeProxy(country = 'all'): Promise<string | null> {
 }
 
 async function verifyProxy(): Promise<boolean> {
-  try {
-    // Race all probe endpoints — if any respond the proxy is alive
-    return await Promise.any(
-      PROBE_ENDPOINTS.map(url =>
-        net.fetch(url, { signal: AbortSignal.timeout(6000) } as any).then(r => {
-          if (!r.ok) throw new Error('bad')
-          return true
-        })
-      )
-    )
-  } catch {
-    return false
-  }
+  // Verify the currently-active proxy by checking through Electron's net
+  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
+  const proxy = row?.value as string | undefined
+  if (!proxy) return false
+  return testProxyCandidate(proxy, 6000)
 }
 
 
