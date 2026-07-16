@@ -76,14 +76,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Point node-gyp at the Visual Studio 2022 build tools that ship on
-      # windows-2022 runners. Avoids "Could not find any Visual Studio" errors
-      # when compiling better-sqlite3. Using env vars is more reliable than
-      # `npm config set` because they apply to the install step immediately.
-      - name: Configure node-gyp for MSVC (Windows)
-        if: matrix.name == 'windows'
-        run: echo "MSVS config applied via env vars in Install step"
-
       # Linux ARM cross-compile toolchain (Raspberry Pi / ChromeOS arm64).
       - name: Enable ARM cross-build deps (Linux)
         if: matrix.name == 'linux'
@@ -95,8 +87,9 @@ jobs:
       - name: Install dependencies
         # The workspace has a known React peer-version mismatch; legacy resolution
         # is the standard fix (matches local dev). npm ci would fail on it.
-        # npm_config_* env vars are the reliable cross-shell way to pass node-gyp
-        # settings on Windows (avoids pwsh/bash shell compat issues).
+        # npm_config_* env vars pass node-gyp settings cross-shell on all OSes.
+        # msvs_version=2022 points node-gyp at the VS2022 toolchain that ships on
+        # windows-2022 runners, avoiding "Could not find Visual Studio" errors.
         run: npm install --legacy-peer-deps
         env:
           npm_config_msvs_version: "2022"
@@ -121,9 +114,10 @@ jobs:
           npm run build:renderer
           npm run build:electron
 
-      - name: Package + publish to GitHub Release
-        # On a tag push → publish a DRAFT GitHub Release with installers attached
-        # (owner/repo auto-detected from the checkout). Otherwise just build.
+      - name: Package + upload to GitHub Release (draft)
+        # On a tag push → upload installers to a DRAFT GitHub Release.
+        # The separate 'publish' job below promotes it to a real release
+        # only after all three OS builds succeed.
         run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
         env:
           # GITHUB_TOKEN is provided automatically; contents:write (set above)
@@ -145,6 +139,19 @@ jobs:
             release/*.deb
             release/*.rpm
           if-no-files-found: ignore
+
+  # ── Promote draft → published release (runs only when all 3 OS builds pass) ──
+  publish:
+    needs: desktop
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Publish GitHub Release
+        # All desktop builds succeeded — promote the draft to a real release.
+        # gh cli is pre-installed on all GitHub-hosted runners.
+        run: gh release edit "${{ github.ref_name }}" --draft=false --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Android: GeckoView host via Gradle ──
   # Expansion scope — not part of the desktop release. Runs only on a manual
