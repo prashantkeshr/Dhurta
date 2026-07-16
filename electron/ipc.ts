@@ -431,20 +431,6 @@ let ghostEnabled = false
 let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
 
-// VPN auto-rotation: network error codes that indicate a proxy failure or blocked route.
-// -101 CONNECTION_RESET,      -102 CONNECTION_REFUSED,    -103 CONNECTION_ABORTED,
-// -104 CONNECTION_FAILED,     -105 NAME_NOT_RESOLVED,     -106 INTERNET_DISCONNECTED,
-// -109 ADDRESS_UNREACHABLE,   -110 CONNECTION_TIMED_OUT,  -118 EMPTY_RESPONSE,
-// -130 PROXY_CONNECTION_FAILED, -133 TUNNEL_CONNECTION_FAILED, -135 PROXY_AUTH_UNSUPPORTED,
-// -200 CERT_COMMON_NAME_INVALID, -201 CERT_DATE_INVALID, -202 CERT_AUTHORITY_INVALID
-// (cert codes catch MITM proxies that pass the TCP test but fail Chromium TLS validation)
-const PROXY_NET_ERRORS = new Set([
-  -101, -102, -103, -104, -105, -106, -109, -110, -118,
-  -130, -133, -135,
-  -200, -201, -202,
-])
-// Rate-limit auto-rotation to once per 30 s per tab to break retry loops
-const _lastProxyRotate = new Map<number, number>()
 
 // Warmth is now managed by webviewPreload.js via ipcRenderer.
 // Main process only needs to push level changes to each tab's webContents.
@@ -1002,53 +988,19 @@ function attachViewEvents(tab: Tab) {
     if (code === -3 || !isMainFrame) return
     if (wc.isDestroyed()) return
     win.webContents.send('tab:loadError', { id: tab.id, code, desc, url })
-
-    const showOffline = () => {
+    const offlinePage = path.join(__dirname, 'offline.html')
+    wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
       if (wc.isDestroyed()) return
-      const offlinePage = path.join(__dirname, 'offline.html')
-      wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
-        if (wc.isDestroyed()) return
-        const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
-          `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
-          `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
-          `<div style="font-size:18px;margin-bottom:8px">No internet connection</div>` +
-          `<div style="font-size:10px;color:#444;margin-bottom:20px">${esc(url || '')}</div>` +
-          `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Try Again</button>` +
-          `</html>`
-        )).catch(() => {})
-      })
-    }
-
-    // VPN auto-failover: when a network/proxy error occurs and VPN is active,
-    // silently rotate to a new proxy server and retry the failed URL.
-    // This mirrors Chrome's behavior of recovering from proxy failures automatically.
-    // Guarded by a 30 s cooldown per tab to prevent infinite retry loops.
-    if (
-      PROXY_NET_ERRORS.has(code) &&
-      getSecurityFlag('security_ipRotation') &&
-      !tab.ghost &&
-      url
-    ) {
-      const now = Date.now()
-      const lastRotate = _lastProxyRotate.get(tab.id) ?? 0
-      if (now - lastRotate > 10_000) {
-        _lastProxyRotate.set(tab.id, now)
-        const retryUrl = url
-        fetchFreeProxy().then(async (proxy) => {
-          if (wc.isDestroyed()) return
-          if (!proxy) { showOffline(); return }
-          await applyProxyToAllSessions(`socks5://${proxy}`)
-          getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-          if (wc.isDestroyed()) return
-          // Reload the failed URL with the new proxy — user sees a seamless recovery
-          await wc.loadURL(retryUrl).catch(() => showOffline())
-        }).catch(() => showOffline())
-        return // Don't show offline page yet — wait for rotation result
-      }
-    }
-
-    showOffline()
+      const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
+        `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
+        `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
+        `<div style="font-size:18px;margin-bottom:8px">No internet connection</div>` +
+        `<div style="font-size:10px;color:#444;margin-bottom:20px">${esc(url || '')}</div>` +
+        `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Try Again</button>` +
+        `</html>`
+      )).catch(() => {})
+    })
   })
 
   // Popup windows: explicitly-sized popups (OAuth, install dialogs, payment flows, etc.)
