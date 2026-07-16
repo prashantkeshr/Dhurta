@@ -107,6 +107,12 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [showToolPicker, setShowToolPicker] = useState(false)
 
+  // Search suggestions
+  const [suggestions,  setSuggestions]  = useState<string[]>([])
+  const [suggIdx,      setSuggIdx]      = useState(-1)
+  const [showSugg,     setShowSugg]     = useState(false)
+  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const reload = useCallback(async () => {
     if (!isElectron || ghost) return
     const [bms, order] = await Promise.all([
@@ -179,27 +185,47 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     setWpIdx(i => Math.min(i, Math.max(0, wallpapers.length - 1)))
   }, [wallpapers.length])
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    const s = search.trim()
-    if (!s) return
-    const isUrl = s.startsWith('http://') || s.startsWith('https://') ||
-      (s.includes('.') && !s.includes(' '))
+  const doSearch = useCallback((s: string) => {
+    setSuggestions([]); setShowSugg(false); setSuggIdx(-1)
+    const trimmed = s.trim()
+    if (!trimmed) return
+    const isUrl = trimmed.startsWith('http://') || trimmed.startsWith('https://') ||
+      (trimmed.includes('.') && !trimmed.includes(' '))
     if (isUrl) {
-      onNavigate(s.startsWith('http') ? s : 'https://' + s)
+      onNavigate(trimmed.startsWith('http') ? trimmed : 'https://' + trimmed)
       return
     }
-    const q = encodeURIComponent(s)
+    const q = encodeURIComponent(trimmed)
     let url: string
     switch (searchEngine) {
       case 'google':     url = `https://www.google.com/search?q=${q}`; break
       case 'bing':       url = `https://www.bing.com/search?q=${q}`; break
       case 'duckduckgo': url = `https://duckduckgo.com/?q=${q}`; break
-      case 'custom':     url = customSearchUrl ? customSearchUrl.replace('%s', s) : `https://search.brave.com/search?q=${q}`; break
+      case 'custom':     url = customSearchUrl ? customSearchUrl.replace('%s', trimmed) : `https://search.brave.com/search?q=${q}`; break
       default:           url = `https://search.brave.com/search?q=${q}`
     }
     onNavigate(url)
-  }, [search, onNavigate, searchEngine, customSearchUrl])
+  }, [onNavigate, searchEngine, customSearchUrl])
+
+  const handleSearch = useCallback((e: React.FormEvent) => {
+    e.preventDefault()
+    doSearch(suggIdx >= 0 && suggestions[suggIdx] ? suggestions[suggIdx] : search)
+  }, [search, doSearch, suggIdx, suggestions])
+
+  const fetchSuggestions = useCallback((q: string) => {
+    if (suggestTimer.current) clearTimeout(suggestTimer.current)
+    if (!q.trim() || q.startsWith('http') || (q.includes('.') && !q.includes(' '))) {
+      setSuggestions([]); setShowSugg(false); return
+    }
+    suggestTimer.current = setTimeout(async () => {
+      if (!isElectron) return
+      try {
+        const results = await (window.dhurta as any).fetchSuggestions(searchEngine, q)
+        setSuggestions(results ?? [])
+        setShowSugg((results ?? []).length > 0)
+      } catch { setSuggestions([]); setShowSugg(false) }
+    }, 220)
+  }, [searchEngine])
 
   const handleDelete = useCallback(async (id: number) => {
     if (!isElectron) return
@@ -263,8 +289,8 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     })
   }
 
-  const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
-  const dateStr = `${DAY[now.getDay()]}, ${MON[now.getMonth()]} ${now.getDate()}`
+  const timeStr = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`
+  const dateStr = `${DAY[now.getUTCDay()]}, ${MON[now.getUTCMonth()]} ${now.getUTCDate()}`
   const pinned  = bookmarks.slice(0, 8)
   const activeThemeObj   = THEMES.find(t => t.id === themeId)
   const activeWallpaper  = wallpapers[wpIdx] ?? ''           // user-uploaded
@@ -328,9 +354,12 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
 
     clock: (
       <div className="flex flex-col items-center">
-        <p className={`text-5xl font-mono font-light tracking-[0.15em] tabular-nums ${isLight ? '' : 'drop-shadow-lg'} ${tt.text}`}>
-          {timeStr}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className={`text-5xl font-mono font-light tracking-[0.15em] tabular-nums ${isLight ? '' : 'drop-shadow-lg'} ${tt.text}`}>
+            {timeStr}
+          </p>
+          <span className={`text-[8px] font-mono px-1.5 py-0.5 border ${tt.borderGlass} ${tt.textDim} tracking-widest`}>UTC</span>
+        </div>
         <p className={`text-[11px] font-mono mt-1 tracking-widest uppercase ${tt.textDim}`}>
           {dateStr}
         </p>
@@ -338,20 +367,49 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     ),
 
     search: (
-      <form onSubmit={handleSearch} className="w-full max-w-lg">
-        <div className={`flex border ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md focus-within:border-[#FF4500] transition-colors ${isLight ? 'shadow-sm' : ''}`}>
+      <form onSubmit={handleSearch} className="w-full max-w-lg relative">
+        <div className={`flex border ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md focus-within:border-[#FF4500] transition-colors ${isLight ? 'shadow-sm' : ''} relative z-20`}>
           <input
             className={`flex-1 bg-transparent px-4 py-2.5 text-sm font-mono outline-none ${tt.text} ${tt.textPlaceholder}`}
             placeholder={ghost ? 'Search anonymously…' : 'Search or enter URL…'}
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setSuggIdx(-1); fetchSuggestions(e.target.value) }}
+            onKeyDown={e => {
+              if (!showSugg || suggestions.length === 0) return
+              if (e.key === 'ArrowDown') { e.preventDefault(); setSuggIdx(i => Math.min(i + 1, suggestions.length - 1)) }
+              else if (e.key === 'ArrowUp') { e.preventDefault(); setSuggIdx(i => Math.max(i - 1, -1)) }
+              else if (e.key === 'Escape') { setShowSugg(false); setSuggIdx(-1) }
+            }}
+            onFocus={() => { if (suggestions.length > 0) setShowSugg(true) }}
+            onBlur={() => setTimeout(() => { setShowSugg(false); setSuggIdx(-1) }, 150)}
             autoFocus={!customizing}
+            autoComplete="off"
           />
           <button
             type="submit"
             className="bg-[#FF4500] hover:bg-orange-500 text-white px-5 py-2.5 text-xs font-mono tracking-widest transition-colors shrink-0"
           >GO</button>
         </div>
+        {/* Suggestions dropdown */}
+        {showSugg && suggestions.length > 0 && (
+          <div className={`absolute left-0 right-0 top-full z-10 border-x border-b ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md shadow-lg overflow-hidden`}>
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onMouseDown={() => { setSearch(s); doSearch(s) }}
+                className={[
+                  'w-full text-left px-4 py-2 text-sm font-mono transition-colors',
+                  i === suggIdx
+                    ? 'bg-[#FF4500]/20 text-[#FF4500]'
+                    : `${tt.text} hover:bg-[#FF4500]/10 hover:text-[#FF4500]`,
+                ].join(' ')}
+              >
+                <span className={`mr-2 text-[10px] ${tt.textMuted}`}>⌕</span>{s}
+              </button>
+            ))}
+          </div>
+        )}
       </form>
     ),
 

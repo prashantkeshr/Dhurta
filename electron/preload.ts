@@ -202,6 +202,10 @@ contextBridge.exposeInMainWorld('dhurta', {
   checkForUpdates: () => ipcRenderer.invoke('update:check'),
   installUpdate:   () => ipcRenderer.invoke('update:install'),
 
+  // Search suggestions (fetched via main process to bypass CORS)
+  fetchSuggestions: (engine: string, query: string) =>
+    ipcRenderer.invoke('suggest:fetch', engine, query) as Promise<string[]>,
+
   // Bridge — browser-to-browser connect
   bridgeHost: () => ipcRenderer.invoke('bridge:host'),
   bridgeStop: () => ipcRenderer.invoke('bridge:stop'),

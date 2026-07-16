@@ -3448,6 +3448,31 @@ export function registerIpcHandlers() {
   addTorExitListener(() => {
     getMainWindow()?.webContents.send('ghost:tor-crashed')
   })
+
+  // Search suggestions — fetched server-side so CORS never blocks the renderer.
+  // Returns up to 8 suggestion strings in OpenSearch list format.
+  ipcMain.handle('suggest:fetch', async (_e, engine: string, query: string) => {
+    const q = query?.trim()
+    if (!q) return []
+    const enc = encodeURIComponent(q)
+    let url: string
+    switch (engine) {
+      case 'google':     url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${enc}`; break
+      case 'bing':       url = `https://api.bing.com/osjson.aspx?query=${enc}`; break
+      default:           url = `https://duckduckgo.com/ac/?q=${enc}&type=list`; break
+    }
+    try {
+      const resp = await net.fetch(url, { signal: AbortSignal.timeout(3000) } as any)
+      if (!resp.ok) return []
+      const json = await resp.json() as any
+      // OpenSearch format: [queryStr, [s1, s2, ...]]
+      if (Array.isArray(json) && Array.isArray(json[1])) return (json[1] as string[]).slice(0, 8)
+      // DDG ac format: [{phrase: "..."}, ...]
+      if (Array.isArray(json) && json.length > 0 && json[0]?.phrase)
+        return (json as Array<{ phrase: string }>).map(x => x.phrase).slice(0, 8)
+      return []
+    } catch { return [] }
+  })
 }
 
 // ── Post-window setup ─────────────────────────────────────────────────────────
