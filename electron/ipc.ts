@@ -3579,10 +3579,20 @@ export function setupWindowListeners() {
 
   // ── VPN restoration ───────────────────────────────────────────────────────
   // Re-apply the saved proxy so VPN survives app restarts.
+  // On first launch / after Nuclear Wipe, Chakra sets security_ipRotation=true
+  // but activeProxy is empty — fetch a fresh proxy in the background so VPN
+  // is actually active from the start, not just flagged as active in the DB.
   if (getSecurityFlag('security_ipRotation')) {
     const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
     if (proxyRow?.value) {
       applyProxyToAllSessions(`socks5://${proxyRow.value}`).catch(() => {})
+    } else {
+      fetchFreeProxy().then(proxy => {
+        if (!proxy) return
+        return applyProxyToAllSessions(`socks5://${proxy}`).then(() => {
+          getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+        })
+      }).catch(() => {})
     }
   }
 }
