@@ -107,9 +107,7 @@
       ],
       "icon": "build/icon.png",
       "requestedExecutionLevel": "asInvoker",
-      "publisherName": "Dhurta.inc",
-      "fileVersion": "1.0.8.0",
-      "productVersion": "1.0.8.0"
+      "publisherName": "Dhurta.inc"
     },
     "nsis": {
       "oneClick": false,
