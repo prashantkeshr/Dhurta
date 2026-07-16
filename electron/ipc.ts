@@ -432,7 +432,11 @@ let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
 
 // VPN auto-rotation: network error codes that indicate a proxy failure or blocked route
-const PROXY_NET_ERRORS = new Set([-101, -102, -105, -106, -109, -110, -130, -133, -135])
+// -101 CONNECTION_RESET, -102 CONNECTION_REFUSED, -103 CONNECTION_ABORTED,
+// -104 CONNECTION_FAILED, -105 NAME_NOT_RESOLVED, -106 INTERNET_DISCONNECTED,
+// -109 ADDRESS_UNREACHABLE, -110 CONNECTION_TIMED_OUT, -118 EMPTY_RESPONSE,
+// -130 PROXY_CONNECTION_FAILED, -133 TUNNEL_CONNECTION_FAILED, -135 PROXY_AUTH_UNSUPPORTED
+const PROXY_NET_ERRORS = new Set([-101, -102, -103, -104, -105, -106, -109, -110, -118, -130, -133, -135])
 // Rate-limit auto-rotation to once per 30 s per tab to break retry loops
 const _lastProxyRotate = new Map<number, number>()
 
@@ -540,15 +544,40 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
 }
 
 // Full end-to-end proxy verification over raw TCP — no Electron sessions.
-// Protocol:  SOCKS5 greeting → SOCKS5 CONNECT → HTTP GET → HTTP 200
-// This proves the proxy can actually tunnel traffic to the internet, not just
-// that it accepts a TCP connection (a handshake-only test lets through proxies
-// that silently drop all forwarded packets, making the browser go offline).
-// Each call owns its own socket so 24 can race in parallel safely.
-const PROBE_HOST = 'api.ipify.org'  // plain HTTP, tiny response, highly available
-const PROBE_PORT = 80
+// Tests port 443 (HTTPS) because that is what Electron actually uses for
+// virtually every page load. Many free SOCKS5 proxies pass a port-80 test
+// but block port 443, causing the browser to go offline immediately after
+// VPN is enabled. Protocol: SOCKS5 greeting → SOCKS5 CONNECT to port 443 →
+// TLS ClientHello → TLS ServerHello/Alert response. Each call owns its own
+// socket so 24 can race in parallel safely.
+const PROBE_HOST = 'example.com'
+const PROBE_PORT = 443
 
-async function testProxyCandidate(proxy: string, timeoutMs = 7000): Promise<boolean> {
+// Minimal TLS 1.2 ClientHello (52 bytes). The server's TLS response proves
+// the HTTPS tunnel is delivering real application-layer data end-to-end.
+const TLS_CLIENT_HELLO = Buffer.from([
+  // TLS record: Handshake (0x16), TLS 1.0 compat (0x03,0x01), length 47
+  0x16, 0x03, 0x01, 0x00, 0x2f,
+  // Handshake: ClientHello (0x01), length 43
+  0x01, 0x00, 0x00, 0x2b,
+  // TLS 1.2
+  0x03, 0x03,
+  // 32-byte random (static is fine for probing)
+  0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+  0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
+  0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
+  // Session ID: empty
+  0x00,
+  // Cipher suites: 2 suites (4 bytes)
+  0x00, 0x04,
+  0xc0, 0x2c,  // TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+  0x00, 0xff,  // TLS_EMPTY_RENEGOTIATION_INFO_SCSV
+  // Compression: null only
+  0x01, 0x00,
+])
+
+async function testProxyCandidate(proxy: string, timeoutMs = 8000): Promise<boolean> {
   const [host, portStr] = proxy.split(':')
   const port = parseInt(portStr, 10)
   if (!host || !port) return false
@@ -570,25 +599,22 @@ async function testProxyCandidate(proxy: string, timeoutMs = 7000): Promise<bool
     const timer = setTimeout(() => done(false), timeoutMs)
 
     socket.on('connect', () => {
-      // Step 0 → send SOCKS5 greeting (VER=5, NMETHODS=1, METHOD=0 no-auth)
+      // Step 0: SOCKS5 greeting (VER=5, NMETHODS=1, METHOD=0 no-auth)
       socket.write(Buffer.from([0x05, 0x01, 0x00]))
     })
 
     socket.on('data', (chunk: Buffer) => {
       buf = Buffer.concat([buf, chunk])
 
-      if (step === 0 && buf.length >= 2) {
-        // Expect VER=5, METHOD=0 (no-auth accepted)
+      if (step === 0) {
+        if (buf.length < 2) return
         if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
         step = 1
         buf = Buffer.alloc(0)
-        // Send CONNECT request for PROBE_HOST:80 using domain-name address type
+        // Step 1: SOCKS5 CONNECT to PROBE_HOST:443 using domain-name address type
         const hostBuf = Buffer.from(PROBE_HOST, 'ascii')
         const req = Buffer.alloc(7 + hostBuf.length)
-        req[0] = 0x05        // VER
-        req[1] = 0x01        // CMD = CONNECT
-        req[2] = 0x00        // RSV
-        req[3] = 0x03        // ATYP = domain name
+        req[0] = 0x05; req[1] = 0x01; req[2] = 0x00; req[3] = 0x03
         req[4] = hostBuf.length
         hostBuf.copy(req, 5)
         req.writeUInt16BE(PROBE_PORT, 5 + hostBuf.length)
@@ -596,23 +622,33 @@ async function testProxyCandidate(proxy: string, timeoutMs = 7000): Promise<bool
         return
       }
 
-      if (step === 1 && buf.length >= 2) {
-        // Expect VER=5, REP=0 (success)
+      if (step === 1) {
+        // Parse the FULL SOCKS5 CONNECT response before proceeding — response
+        // length depends on ATYP. Partial reads confuse the TLS data in step 2.
+        if (buf.length < 4) return
         if (buf[0] !== 0x05 || buf[1] !== 0x00) { done(false); return }
+        const atyp = buf[3]
+        let totalLen: number
+        if (atyp === 0x01) {
+          totalLen = 4 + 4 + 2        // IPv4: header(4) + addr(4) + port(2)
+        } else if (atyp === 0x04) {
+          totalLen = 4 + 16 + 2       // IPv6: header(4) + addr(16) + port(2)
+        } else if (atyp === 0x03) {
+          if (buf.length < 5) return  // need domain-length byte
+          totalLen = 4 + 1 + buf[4] + 2
+        } else { done(false); return }
+        if (buf.length < totalLen) return
         step = 2
-        buf = Buffer.alloc(0)
-        // Tunnel is open — send a minimal HTTP GET
-        socket.write(
-          `GET / HTTP/1.0\r\nHost: ${PROBE_HOST}\r\nConnection: close\r\n\r\n`
-        )
-        return
+        // Slice off the CONNECT response; keep any surplus bytes already in tunnel
+        buf = buf.slice(totalLen)
+        socket.write(TLS_CLIENT_HELLO)
+        // Fall through: if surplus bytes are already in buf, check them now
       }
 
       if (step === 2) {
-        // Any HTTP response that starts with "HTTP/" is proof of live traffic
-        const text = buf.toString('ascii', 0, Math.min(buf.length, 16))
-        if (text.startsWith('HTTP/')) done(true)
-        // Keep accumulating until timeout if response hasn't arrived yet
+        // TLS Handshake (0x16 = ServerHello) or TLS Alert (0x15) both prove
+        // the HTTPS tunnel is live and delivering application-layer data.
+        if (buf.length > 0 && (buf[0] === 0x16 || buf[0] === 0x15)) done(true)
       }
     })
 
