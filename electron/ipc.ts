@@ -431,6 +431,11 @@ let ghostEnabled = false
 let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
 
+// VPN auto-rotation: network error codes that indicate a proxy failure or blocked route
+const PROXY_NET_ERRORS = new Set([-101, -102, -105, -106, -109, -110, -130, -133, -135])
+// Rate-limit auto-rotation to once per 30 s per tab to break retry loops
+const _lastProxyRotate = new Map<number, number>()
+
 // Warmth is now managed by webviewPreload.js via ipcRenderer.
 // Main process only needs to push level changes to each tab's webContents.
 function applyWarmthToWebContents(wc: Electron.WebContents) {
@@ -632,7 +637,7 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
     const vpnActive = getSecurityFlag('security_ipRotation')
     if (vpnActive) {
       const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
-      if (proxyRow?.value) await sess.setProxy({ proxyRules: `socks5://${proxyRow.value}` })
+      if (proxyRow?.value) await sess.setProxy({ proxyRules: `socks5h://${proxyRow.value}` })
     } else {
       await sess.setProxy({ proxyRules: 'direct://' })
     }
@@ -984,31 +989,53 @@ function attachViewEvents(tab: Tab) {
   })
 
   wc.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
-    // -3 = ERR_ABORTED (user navigated away) — not a real error, ignore.
-    // isMainFrame=false means a SUB-RESOURCE failed (an ad/tracker blocked by our
-    // own ad blocker, a slow analytics script, a broken font CDN, etc.) — that is
-    // normal and expected on almost every page load, NOT a reason to replace the
-    // whole tab with the offline error screen. Without this check, the ad blocker
-    // blocking a single tracking pixel would nuke the entire page.
+    // -3 = ERR_ABORTED (user navigated away) — not a real error.
+    // isMainFrame=false = sub-resource (ad/tracker blocked by ad-blocker) — not a page error.
     if (code === -3 || !isMainFrame) return
     win.webContents.send('tab:loadError', { id: tab.id, code, desc, url })
 
-    // For network/DNS errors, load our offline page into the BrowserView so the
-    // user sees a helpful message + mini-game instead of a blank white page.
-    const offlinePage = path.join(__dirname, 'offline.html')
-    const q = { code: String(code), url: url || '' }
-    wc.loadFile(offlinePage, { query: q }).catch(() => {
-      // Fallback: data URI with minimal message if the file isn't found yet (e.g. first dev run)
-      const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
-        `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
-        `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
-        `<div style="font-size:18px;margin-bottom:8px">No internet connection</div>` +
-        `<div style="font-size:10px;color:#444;margin-bottom:20px">${esc(url||'')}</div>` +
-        `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Try Again</button>` +
-        `</html>`
-      )).catch(() => {})
-    })
+    const showOffline = () => {
+      const offlinePage = path.join(__dirname, 'offline.html')
+      wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
+        const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
+          `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
+          `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
+          `<div style="font-size:18px;margin-bottom:8px">No internet connection</div>` +
+          `<div style="font-size:10px;color:#444;margin-bottom:20px">${esc(url || '')}</div>` +
+          `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Try Again</button>` +
+          `</html>`
+        )).catch(() => {})
+      })
+    }
+
+    // VPN auto-failover: when a network/proxy error occurs and VPN is active,
+    // silently rotate to a new proxy server and retry the failed URL.
+    // This mirrors Chrome's behavior of recovering from proxy failures automatically.
+    // Guarded by a 30 s cooldown per tab to prevent infinite retry loops.
+    if (
+      PROXY_NET_ERRORS.has(code) &&
+      getSecurityFlag('security_ipRotation') &&
+      !tab.ghost &&
+      url
+    ) {
+      const now = Date.now()
+      const lastRotate = _lastProxyRotate.get(tab.id) ?? 0
+      if (now - lastRotate > 30_000) {
+        _lastProxyRotate.set(tab.id, now)
+        const retryUrl = url
+        fetchFreeProxy().then(async (proxy) => {
+          if (!proxy) { showOffline(); return }
+          await applyProxyToAllSessions(`socks5h://${proxy}`)
+          getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+          // Reload the failed URL with the new proxy — user sees a seamless recovery
+          await wc.loadURL(retryUrl).catch(() => showOffline())
+        }).catch(() => showOffline())
+        return // Don't show offline page yet — wait for rotation result
+      }
+    }
+
+    showOffline()
   })
 
   // Popup windows: explicitly-sized popups (OAuth, install dialogs, payment flows, etc.)
@@ -1405,11 +1432,15 @@ function openPopoutWindow(url: string) {
 }
 
 async function applyProxyToAllSessions(proxyRules: string) {
-  const config = proxyRules === 'direct://' ? { proxyRules: 'direct://' } : { proxyRules }
+  // proxyBypassRules: '' — empty string means NO bypass exceptions; every request,
+  // including loopback and link-local, goes through the proxy. Without this,
+  // Chromium's default bypass list (localhost, 127.0.0.1, etc.) can leak requests.
+  const config = proxyRules === 'direct://'
+    ? { proxyRules: 'direct://' }
+    : { proxyRules, proxyBypassRules: '' }
   await Promise.all([
     session.defaultSession.setProxy(config),
     session.fromPartition('persist:default').setProxy(config),
-    // Also update any currently open non-ghost tabs' sessions
     ...[...tabs.values()].filter(t => !t.ghost).map(t => t.view.webContents.session.setProxy(config)),
   ])
 }
@@ -2147,7 +2178,7 @@ export function registerIpcHandlers() {
     if (enabled) {
       const proxy = await fetchFreeProxy()
       if (proxy) {
-        await applyProxyToAllSessions(`socks5://${proxy}`)
+        await applyProxyToAllSessions(`socks5h://${proxy}`)
         getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
         return { success: true, proxy }
       }
@@ -2163,7 +2194,7 @@ export function registerIpcHandlers() {
   ipcMain.handle('security:rotateProxy', async () => {
     const proxy = await fetchFreeProxy()
     if (proxy) {
-      await applyProxyToAllSessions(`socks5://${proxy}`)
+      await applyProxyToAllSessions(`socks5h://${proxy}`)
       getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
       return { success: true, proxy }
     }
@@ -3189,7 +3220,7 @@ export function registerIpcHandlers() {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const proxy = await fetchFreeProxy(country)
       if (!proxy) continue
-      await applyProxyToAllSessions(`socks5://${proxy}`)
+      await applyProxyToAllSessions(`socks5h://${proxy}`)
       // Health check: verify the proxy actually works before declaring success
       const alive = await verifyProxy()
       if (alive) {
@@ -3218,7 +3249,7 @@ export function registerIpcHandlers() {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const proxy = await fetchFreeProxy(country)
       if (!proxy) continue
-      await applyProxyToAllSessions(`socks5://${proxy}`)
+      await applyProxyToAllSessions(`socks5h://${proxy}`)
       const alive = await verifyProxy()
       if (alive) {
         getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
@@ -3482,18 +3513,56 @@ export function setupWindowListeners() {
     else if (direction === 'right') tab.view.webContents.goForward()
   })
 
+  // ── Chakra Shield startup defaults ────────────────────────────────────────
+  // On a brand-new install OR after Nuclear Wipe (which deletes the entire DB),
+  // the 'chakra_initialized' key is absent. Write all Chakra security flags as
+  // enabled so the browser launches with full protection by default — the user
+  // never has to manually activate it. The VPN-restoration block below will see
+  // security_ipRotation=true and connect a proxy automatically.
+  {
+    const initialized = getDb()
+      .prepare('SELECT value FROM settings WHERE key = ?')
+      .get('chakra_initialized') as { value: string } | undefined
+    if (!initialized) {
+      const db = getDb()
+      const set = (k: string, v: string) =>
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(k, v)
+      set('security_antiFingerprint', 'true')
+      set('security_blockWebRTC',     'true')
+      set('security_autoClean',       'true')
+      set('cookieGuard',              'true')
+      set('adBlocker',                'true')
+      set('security_ipRotation',      'true')
+      set('chakra_initialized',       'true')
+    }
+  }
+
   // ── VPN restoration ───────────────────────────────────────────────────────
-  // Re-apply a previously active proxy so VPN survives app restarts.
+  // Re-apply a previously active proxy so VPN + anonymity survive app restarts.
+  // On first launch (chakra just initialized above), activeProxy is empty so we
+  // fetch a fresh one. On restart, we verify the saved proxy is still alive and
+  // rotate to a new one if it is dead — ensuring VPN is never silently broken.
   if (getSecurityFlag('security_ipRotation')) {
     const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
     if (proxyRow?.value) {
-      applyProxyToAllSessions(`socks5://${proxyRow.value}`).catch(() => {})
+      // Verify the saved proxy is still alive before restoring it; rotate if dead
+      applyProxyToAllSessions(`socks5h://${proxyRow.value}`)
+        .then(() => verifyProxy())
+        .then(alive => {
+          if (alive) return
+          // Saved proxy is dead — fetch a new one transparently
+          return fetchFreeProxy().then(proxy => {
+            if (!proxy) return
+            return applyProxyToAllSessions(`socks5h://${proxy}`).then(() => {
+              getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+            })
+          })
+        })
+        .catch(() => {})
     } else {
-      // VPN flag is on but no proxy was ever saved (e.g. fresh install with VPN
-      // pre-enabled) — fetch one now.
       fetchFreeProxy().then((proxy) => {
         if (!proxy) return
-        return applyProxyToAllSessions(`socks5://${proxy}`).then(() => {
+        return applyProxyToAllSessions(`socks5h://${proxy}`).then(() => {
           getDb()
             .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
             .run('activeProxy', proxy)

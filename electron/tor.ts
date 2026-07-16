@@ -64,7 +64,8 @@ export function getTorSocksPort() {
  *  Always returns the SOCKS5 address — callers should apply this even before
  *  Tor is running. Chromium will ECONNREFUSED until Tor bootstraps (fail-closed). */
 export function getTorProxyRules() {
-  return `socks5://127.0.0.1:${SOCKS_PORT}`
+  // socks5h = DNS resolved by the proxy (Tor), not locally — prevents DNS leaks
+  return `socks5h://127.0.0.1:${SOCKS_PORT}`
 }
 
 export function startTor(): Promise<{ socksPort: number }> {
