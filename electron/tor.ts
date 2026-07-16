@@ -74,13 +74,15 @@ export function startTor(): Promise<{ socksPort: number }> {
 
   startPromise = new Promise((resolve, reject) => {
     const resDir = torResourceDir()
-    const torExe = path.join(resDir, 'tor', 'tor.exe')
-    const geoip  = path.join(resDir, 'data', 'geoip')
-    const geoip6 = path.join(resDir, 'data', 'geoip6')
+    // tor.exe lives in resDir/tor/ alongside its DLLs and GeoIP files
+    const torDir = path.join(resDir, 'tor')
+    const torExe = path.join(torDir, 'tor.exe')
+    const geoip  = path.join(torDir, 'geoip')
+    const geoip6 = path.join(torDir, 'geoip6')
 
     if (!fs.existsSync(torExe)) {
       startPromise = null
-      reject(new Error('Tor binary not found'))
+      reject(new Error(`Tor binary not found at: ${torExe}`))
       return
     }
 
@@ -93,7 +95,9 @@ export function startTor(): Promise<{ socksPort: number }> {
       // preventing cross-site correlation attacks (same technique Tor Browser uses).
       `SocksPort 127.0.0.1:${SOCKS_PORT} IsolateDestDomain`,
       `DataDirectory ${dataDir}`,
-      `GeoIPFile ${geoip}`,
+      // Only include GeoIP directives if the files actually exist — a missing
+      // GeoIPFile in torrc causes Tor to refuse to start entirely.
+      ...(fs.existsSync(geoip) ? [`GeoIPFile ${geoip}`] : []),
       ...(fs.existsSync(geoip6) ? [`GeoIPv6File ${geoip6}`] : []),
       'Log notice stdout',
       'ClientOnly 1',
@@ -118,7 +122,8 @@ export function startTor(): Promise<{ socksPort: number }> {
 
     const proc = spawn(torExe, ['-f', torrcPath, '--ignore-missing-torrc'], {
       windowsHide: true,
-      cwd: resDir,
+      // cwd must be torDir (not resDir) so Windows finds co-located DLLs
+      cwd: torDir,
     })
     torProcess = proc
 
