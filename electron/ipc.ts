@@ -507,11 +507,11 @@ function getSearchUrl(query: string): string {
 
 async function fetchFreeProxy(country = 'all'): Promise<string | null> {
   const cc = country === 'all' ? 'all' : country.toUpperCase()
-  const sources = [
+  const urls = [
     `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
     `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
   ]
-  for (const src of sources) {
+  for (const src of urls) {
     try {
       const resp = await fetch(src, { signal: AbortSignal.timeout(8000) })
       const text = await resp.text()
@@ -971,15 +971,16 @@ function attachViewEvents(tab: Tab) {
     if (wc.isDestroyed()) return
     const crashPage = path.join(__dirname, 'offline.html')
     wc.loadFile(crashPage, { query: { code: 'CRASH', url: wc.getURL() || '' } }).catch(() => {
+      if (wc.isDestroyed()) return
       wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
         `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
         `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
         `<div style="font-size:18px;margin-bottom:8px">Tab crashed — ${details.reason}</div>` +
-        `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Reload</button>` +
+        `<button onclick="location.reload()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Reload</button>` +
         `</html>`
       )).catch(() => {})
     })
-    win.webContents.send('tab:loadError', { id: tab.id, code: -2, desc: 'Renderer crashed: ' + details.reason, url: '' })
+    win.webContents.send('tab:loadError', { id: tab.id, code: -2, desc: 'Renderer crashed', url: '' })
   })
 
   wc.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
@@ -3197,9 +3198,7 @@ export function registerIpcHandlers() {
     const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('vpnCountry') as any
     const country = row?.value ?? 'all'
     const proxy = await fetchFreeProxy(country)
-    if (!proxy) {
-      return { success: false, error: 'No servers available right now. Try again.' }
-    }
+    if (!proxy) return { success: false, error: 'No servers available right now. Try again.' }
     await applyProxyToAllSessions(`socks5://${proxy}`)
     getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
     return { success: true, proxy }
@@ -3551,10 +3550,8 @@ export function setupWindowListeners() {
   }
 
   // ── VPN restoration ───────────────────────────────────────────────────────
-  // Re-apply the saved proxy so VPN survives app restarts.
-  // On first launch / after Nuclear Wipe, Chakra sets security_ipRotation=true
-  // but activeProxy is empty — fetch a fresh proxy in the background so VPN
-  // is actually active from the start, not just flagged as active in the DB.
+  // Re-apply a previously active proxy so VPN survives app restarts.
+  // On first launch (Chakra just set VPN=ON), activeProxy is empty so fetch fresh.
   if (getSecurityFlag('security_ipRotation')) {
     const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
     if (proxyRow?.value) {
