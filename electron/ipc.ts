@@ -980,15 +980,34 @@ function attachViewEvents(tab: Tab) {
     }
   })
 
+  wc.on('render-process-gone', (_e, details) => {
+    console.error(`[Dhurta] Tab renderer crashed (tab ${tab.id}):`, JSON.stringify(details))
+    if (wc.isDestroyed()) return
+    const crashPage = path.join(__dirname, 'offline.html')
+    wc.loadFile(crashPage, { query: { code: 'CRASH', url: wc.getURL() || '' } }).catch(() => {
+      wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
+        `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
+        `<div style="font-size:13px;letter-spacing:3px;color:#FF4500;margin-bottom:12px">DHURTA</div>` +
+        `<div style="font-size:18px;margin-bottom:8px">Tab crashed — ${details.reason}</div>` +
+        `<button onclick="history.back()" style="background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:monospace;cursor:pointer">↺ Reload</button>` +
+        `</html>`
+      )).catch(() => {})
+    })
+    win.webContents.send('tab:loadError', { id: tab.id, code: -2, desc: 'Renderer crashed: ' + details.reason, url: '' })
+  })
+
   wc.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
     // -3 = ERR_ABORTED (user navigated away) — not a real error.
     // isMainFrame=false = sub-resource (ad/tracker blocked by ad-blocker) — not a page error.
     if (code === -3 || !isMainFrame) return
+    if (wc.isDestroyed()) return
     win.webContents.send('tab:loadError', { id: tab.id, code, desc, url })
 
     const showOffline = () => {
+      if (wc.isDestroyed()) return
       const offlinePage = path.join(__dirname, 'offline.html')
       wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
+        if (wc.isDestroyed()) return
         const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
         wc.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
           `<html style="background:#0A0A0A;color:#C0C0C0;font-family:monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">` +
@@ -1017,9 +1036,11 @@ function attachViewEvents(tab: Tab) {
         _lastProxyRotate.set(tab.id, now)
         const retryUrl = url
         fetchFreeProxy().then(async (proxy) => {
+          if (wc.isDestroyed()) return
           if (!proxy) { showOffline(); return }
           await applyProxyToAllSessions(`socks5://${proxy}`)
           getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+          if (wc.isDestroyed()) return
           // Reload the failed URL with the new proxy — user sees a seamless recovery
           await wc.loadURL(retryUrl).catch(() => showOffline())
         }).catch(() => showOffline())
@@ -1428,7 +1449,7 @@ async function applyProxyToAllSessions(proxyRules: string) {
   await Promise.all([
     session.defaultSession.setProxy(config),
     session.fromPartition('persist:default').setProxy(config),
-    ...[...tabs.values()].filter(t => !t.ghost).map(t => t.view.webContents.session.setProxy(config)),
+    ...[...tabs.values()].filter(t => !t.ghost && !t.view.webContents.isDestroyed()).map(t => t.view.webContents.session.setProxy(config)),
   ])
 }
 

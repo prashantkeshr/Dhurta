@@ -192,12 +192,16 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
 
   const connectVpn = async () => {
     setBusy('ipRotation')
+    setVpnMsg('Connecting…')
     try {
       const res = await api().vpnConnect()
       if (res.success) {
         setSettings(s => ({ ...s, ipRotation: true }))
         notify('security_ipRotation', 'true')
+        setVpnMsg(`Connected via ${res.proxy}`)
         checkIp()
+      } else {
+        setVpnMsg(res.error ?? 'Failed to connect')
       }
     } finally {
       setBusy(null)
