@@ -509,13 +509,27 @@ function getSearchUrl(query: string): string {
   } catch { return `https://www.google.com/search?q=${q}` }
 }
 
+// Lightweight HTTP endpoints used to verify a proxy is alive.
+// HTTP (not HTTPS) is intentional — HTTPS requires CONNECT tunnelling which
+// many free proxies don't support. We just need proof the proxy forwards
+// traffic; the actual VPN session uses socks5h:// for all real browsing.
+const PROBE_ENDPOINTS = [
+  'http://api.ipify.org',          // returns bare IP string — tiny payload
+  'http://checkip.amazonaws.com',  // AWS — highly available
+  'http://ifconfig.me/ip',         // Cloudflare-backed — fast
+]
+
 async function fetchProxyPool(country = 'all'): Promise<string[]> {
   const cc = country === 'all' ? 'all' : country.toUpperCase()
   const sources = [
-    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=all`,
-    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=all`,
+    // proxyscrape — filter recently-alive proxies (timeout=5000ms on their side)
+    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
+    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=5000&country=${cc}&ssl=all&anonymity=all`,
+    // GitHub raw lists — updated frequently by the community
     `https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt`,
     `https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt`,
+    `https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt`,
+    `https://raw.githubusercontent.com/zloi-user/hideip.me/main/socks5.txt`,
   ]
   const parseProxies = (text: string) =>
     text.split('\n').map(l => l.trim()).filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
@@ -527,8 +541,8 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
   for (const r of results) {
     if (r.status === 'fulfilled') all.push(...parseProxies(r.value))
   }
-  // Deduplicate and shuffle
   const unique = [...new Set(all)]
+  // Fisher-Yates shuffle for random ordering
   for (let i = unique.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [unique[i], unique[j]] = [unique[j], unique[i]]
@@ -536,25 +550,52 @@ async function fetchProxyPool(country = 'all'): Promise<string[]> {
   return unique
 }
 
+// Reuse a single shared test session — avoids per-proxy partition overhead.
+// The proxy rules are swapped before each test so partitions don't bleed.
+let _testSession: Electron.Session | null = null
+function getTestSession(): Electron.Session {
+  if (!_testSession) {
+    _testSession = session.fromPartition('memory:vpn-probe', { cache: false })
+  }
+  return _testSession
+}
+
 async function testProxyCandidate(proxy: string): Promise<boolean> {
-  const partition = `memory:vpn-test-${proxy.replace(/[:.]/g, '-')}-${Date.now()}`
-  const testSess = session.fromPartition(partition)
+  const testSess = getTestSession()
   try {
-    await testSess.setProxy({ proxyRules: `socks5h://${proxy}` })
-    const resp = await net.fetch('https://api.ipify.org?format=json', {
-      session: testSess,
-      signal: AbortSignal.timeout(5000),
-    } as any)
-    return resp.ok
+    await testSess.setProxy({ proxyRules: `socks5://${proxy}` })
+    // Race multiple lightweight HTTP endpoints — first response wins.
+    // Using plain HTTP avoids TLS CONNECT which many free proxies reject.
+    const result = await Promise.any(
+      PROBE_ENDPOINTS.map(url =>
+        net.fetch(url, {
+          session: testSess,
+          signal: AbortSignal.timeout(8000),
+        } as any).then(r => {
+          if (!r.ok && r.status !== 200) throw new Error('bad status')
+          return true
+        })
+      )
+    )
+    return result
   } catch {
     return false
-  } finally {
-    try { await testSess.clearStorageData() } catch { /* ignore */ }
   }
 }
 
-async function findWorkingProxy(pool: string[], batchSize = 8): Promise<string | null> {
-  const maxProxies = Math.min(pool.length, 80)
+async function findWorkingProxy(pool: string[], batchSize = 12): Promise<string | null> {
+  // Try the last known-good proxy first — avoids full pool scan on rotate
+  const cached = (() => {
+    try {
+      return (getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any)?.value as string | undefined
+    } catch { return undefined }
+  })()
+  if (cached && pool.includes(cached)) {
+    const ok = await testProxyCandidate(cached)
+    if (ok) return cached
+  }
+
+  const maxProxies = Math.min(pool.length, 120)
   for (let i = 0; i < maxProxies; i += batchSize) {
     const batch = pool.slice(i, i + batchSize)
     try {
@@ -577,17 +618,19 @@ async function fetchFreeProxy(country = 'all'): Promise<string | null> {
 }
 
 async function verifyProxy(): Promise<boolean> {
-  const endpoints = [
-    'https://api.ipify.org?format=json',
-    'http://ip-api.com/json/',
-  ]
-  for (const url of endpoints) {
-    try {
-      const resp = await net.fetch(url, { signal: AbortSignal.timeout(5000) } as any)
-      if (resp.ok) return true
-    } catch { continue }
+  try {
+    // Race all probe endpoints — if any respond the proxy is alive
+    return await Promise.any(
+      PROBE_ENDPOINTS.map(url =>
+        net.fetch(url, { signal: AbortSignal.timeout(6000) } as any).then(r => {
+          if (!r.ok) throw new Error('bad')
+          return true
+        })
+      )
+    )
+  } catch {
+    return false
   }
-  return false
 }
 
 
