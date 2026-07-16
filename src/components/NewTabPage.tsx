@@ -391,37 +391,59 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     search: (() => {
       const eng = SEARCH_ENGINES.find(e => e.value === searchEngine) ?? SEARCH_ENGINES[0]
       return (
-      <form onSubmit={handleSearch} className="w-full max-w-lg relative">
-        <div className={`flex border ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md focus-within:border-[#FF4500] transition-colors ${isLight ? 'shadow-sm' : ''} relative z-20`}>
+      <form onSubmit={handleSearch} className="w-full max-w-xl relative">
+        {/* Focus glow ring */}
+        <div className={[
+          'flex border rounded-lg overflow-hidden transition-all duration-200',
+          tt.borderGlass,
+          tt.bgGlass,
+          'backdrop-blur-md',
+          'focus-within:border-[#FF4500]/70',
+          isLight
+            ? 'shadow-md focus-within:shadow-[0_0_0_3px_rgba(255,69,0,0.12)]'
+            : 'shadow-lg shadow-black/30 focus-within:shadow-[0_0_0_3px_rgba(255,69,0,0.18)]',
+          'relative z-20',
+        ].join(' ')}>
           {/* Engine switcher button */}
           <button
             type="button"
             onClick={cycleEngine}
             title={`Search engine: ${eng.label} — click to switch`}
             className={[
-              'flex items-center gap-1.5 pl-2.5 pr-2 py-2 border-r shrink-0 transition-all',
+              'flex items-center gap-2 pl-3 pr-2.5 py-2.5 border-r shrink-0 transition-all duration-150',
               tt.borderGlass,
-              engineFlip ? 'scale-90 opacity-60' : 'opacity-100',
-              isLight ? 'hover:bg-black/5' : 'hover:bg-white/5',
+              engineFlip ? 'scale-90 opacity-50' : 'opacity-100',
+              isLight ? 'hover:bg-black/6' : 'hover:bg-white/8',
             ].join(' ')}
           >
-            <span
-              className="w-5 h-5 flex items-center justify-center text-[9px] font-mono font-bold border leading-none"
-              style={{ color: eng.letterColor, borderColor: eng.letterColor + '55', background: eng.letterColor + '18' }}
-            >
-              {eng.letter}
+            <span className="w-[22px] h-[22px] flex items-center justify-center relative shrink-0">
+              <img
+                src={eng.logo}
+                alt={eng.label}
+                className="w-[22px] h-[22px] object-contain"
+                onError={(ev) => {
+                  const t = ev.currentTarget
+                  t.style.display = 'none'
+                  const fb = t.nextElementSibling as HTMLElement | null
+                  if (fb) fb.style.display = 'flex'
+                }}
+              />
+              <span
+                className="w-[22px] h-[22px] hidden absolute inset-0 items-center justify-center text-[9px] font-mono font-bold border leading-none"
+                style={{ color: eng.letterColor, borderColor: eng.letterColor + '55', background: eng.letterColor + '18' }}
+              >{eng.letter}</span>
             </span>
-            {/* <> icon */}
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"
-              className={tt.textMuted}>
-              <polyline points="3,1.5 1,4.5 3,7.5" />
-              <polyline points="6,1.5 8,4.5 6,7.5" />
+            {/* chevrons icon */}
+            <svg width="8" height="10" viewBox="0 0 8 10" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+              className={`${tt.textMuted} shrink-0`}>
+              <polyline points="2.5,1 0.5,3 2.5,5" />
+              <polyline points="5.5,5 7.5,7 5.5,9" />
             </svg>
           </button>
 
           <input
-            className={`flex-1 bg-transparent px-3 py-2.5 text-sm font-mono outline-none ${tt.text} ${tt.textPlaceholder}`}
-            placeholder={ghost ? `Search anonymously via ${eng.label}…` : `Search ${eng.label} or enter URL…`}
+            className={`flex-1 bg-transparent px-3.5 py-3 text-[15px] font-mono outline-none tracking-wide ${tt.text} ${tt.textPlaceholder}`}
+            placeholder={ghost ? `Search anonymously via ${eng.label}…` : `Search with ${eng.label}…`}
             value={search}
             onChange={e => { setSearch(e.target.value); setSuggIdx(-1); fetchSuggestions(e.target.value) }}
             onKeyDown={e => {
@@ -437,25 +459,28 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           />
           <button
             type="submit"
-            className="bg-[#FF4500] hover:bg-orange-500 text-white px-5 py-2.5 text-xs font-mono tracking-widest transition-colors shrink-0"
+            className="bg-[#FF4500] hover:bg-[#e03d00] active:scale-95 text-white px-5 py-3 text-[11px] font-mono tracking-[0.18em] font-semibold transition-all shrink-0"
           >GO</button>
         </div>
         {/* Suggestions dropdown */}
         {showSugg && suggestions.length > 0 && (
-          <div className={`absolute left-0 right-0 top-full z-10 border-x border-b ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md shadow-lg overflow-hidden`}>
+          <div className={`absolute left-0 right-0 top-[calc(100%+4px)] z-10 border rounded-lg ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md shadow-xl overflow-hidden`}>
             {suggestions.map((s, i) => (
               <button
                 key={i}
                 type="button"
                 onMouseDown={() => { setSearch(s); doSearch(s) }}
                 className={[
-                  'w-full text-left px-4 py-2 text-sm font-mono transition-colors',
+                  'w-full text-left px-4 py-2.5 text-sm font-mono transition-colors flex items-center gap-2.5',
                   i === suggIdx
-                    ? 'bg-[#FF4500]/20 text-[#FF4500]'
-                    : `${tt.text} hover:bg-[#FF4500]/10 hover:text-[#FF4500]`,
+                    ? 'bg-[#FF4500]/15 text-[#FF4500]'
+                    : `${tt.text} hover:bg-[#FF4500]/8 hover:text-[#FF4500]`,
                 ].join(' ')}
               >
-                <span className={`mr-2 text-[10px] ${tt.textMuted}`}>⌕</span>{s}
+                <svg className={`w-3 h-3 shrink-0 ${i === suggIdx ? 'text-[#FF4500]' : tt.textMuted}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 12 12">
+                  <circle cx="5" cy="5" r="3.5"/><line x1="7.5" y1="7.5" x2="11" y2="11"/>
+                </svg>
+                {s}
               </button>
             ))}
           </div>

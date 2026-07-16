@@ -509,43 +509,85 @@ function getSearchUrl(query: string): string {
   } catch { return `https://www.google.com/search?q=${q}` }
 }
 
-async function fetchFreeProxy(country = 'all'): Promise<string | null> {
+async function fetchProxyPool(country = 'all'): Promise<string[]> {
   const cc = country === 'all' ? 'all' : country.toUpperCase()
-  const urls = [
-    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
-    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
+  const sources = [
+    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=all`,
+    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=all`,
+    `https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt`,
+    `https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt`,
   ]
-  for (const src of urls) {
+  const parseProxies = (text: string) =>
+    text.split('\n').map(l => l.trim()).filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
+
+  const results = await Promise.allSettled(
+    sources.map(url => fetch(url, { signal: AbortSignal.timeout(8000) }).then(r => r.text()))
+  )
+  const all: string[] = []
+  for (const r of results) {
+    if (r.status === 'fulfilled') all.push(...parseProxies(r.value))
+  }
+  // Deduplicate and shuffle
+  const unique = [...new Set(all)]
+  for (let i = unique.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]]
+  }
+  return unique
+}
+
+async function testProxyCandidate(proxy: string): Promise<boolean> {
+  const partition = `memory:vpn-test-${proxy.replace(/[:.]/g, '-')}-${Date.now()}`
+  const testSess = session.fromPartition(partition)
+  try {
+    await testSess.setProxy({ proxyRules: `socks5h://${proxy}` })
+    const resp = await net.fetch('https://api.ipify.org?format=json', {
+      session: testSess,
+      signal: AbortSignal.timeout(5000),
+    } as any)
+    return resp.ok
+  } catch {
+    return false
+  } finally {
+    try { await testSess.clearStorageData() } catch { /* ignore */ }
+  }
+}
+
+async function findWorkingProxy(pool: string[], batchSize = 8): Promise<string | null> {
+  const maxProxies = Math.min(pool.length, 80)
+  for (let i = 0; i < maxProxies; i += batchSize) {
+    const batch = pool.slice(i, i + batchSize)
     try {
-      const resp = await fetch(src, { signal: AbortSignal.timeout(8000) })
-      const text = await resp.text()
-      const proxies = text.split('\n')
-        .map(l => l.trim())
-        .filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
-      if (proxies.length > 0) {
-        return proxies[Math.floor(Math.random() * Math.min(proxies.length, 30))]
-      }
+      const winner = await Promise.any(
+        batch.map(async (p) => {
+          const ok = await testProxyCandidate(p)
+          if (!ok) throw new Error('dead')
+          return p
+        })
+      )
+      return winner
     } catch { continue }
   }
   return null
 }
 
+async function fetchFreeProxy(country = 'all'): Promise<string | null> {
+  const pool = await fetchProxyPool(country)
+  return findWorkingProxy(pool)
+}
+
 async function verifyProxy(): Promise<boolean> {
-  try {
-    const resp = await net.fetch('https://httpbin.org/ip', {
-      signal: AbortSignal.timeout(6000),
-    } as any)
-    if (!resp.ok) return false
-    const json = await resp.json() as any
-    return !!json.origin
-  } catch {
+  const endpoints = [
+    'https://api.ipify.org?format=json',
+    'http://ip-api.com/json/',
+  ]
+  for (const url of endpoints) {
     try {
-      const resp = await net.fetch('http://ip-api.com/json/', {
-        signal: AbortSignal.timeout(5000),
-      } as any)
-      return resp.ok
-    } catch { return false }
+      const resp = await net.fetch(url, { signal: AbortSignal.timeout(5000) } as any)
+      if (resp.ok) return true
+    } catch { continue }
   }
+  return false
 }
 
 
@@ -3216,24 +3258,20 @@ export function registerIpcHandlers() {
 
   // VPN — free public proxy with optional country selection
   ipcMain.handle('vpn:connect', async (_e, country?: string) => {
-    const MAX_RETRIES = 3
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const proxy = await fetchFreeProxy(country)
-      if (!proxy) continue
-      await applyProxyToAllSessions(`socks5h://${proxy}`)
-      // Health check: verify the proxy actually works before declaring success
-      const alive = await verifyProxy()
-      if (alive) {
-        getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'true')
-        getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('vpnCountry', country ?? 'all')
-        getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-        return { success: true, proxy, country: country ?? 'Auto' }
-      }
-      // Proxy failed — loop will auto-rotate to next one
+    const pool = await fetchProxyPool(country)
+    if (pool.length === 0) {
+      return { success: false, error: 'Could not fetch proxy list. Check your internet connection.' }
     }
-    // All retries exhausted — fall back to direct
-    await applyProxyToAllSessions('direct://')
-    return { success: false, error: `No working servers found after ${MAX_RETRIES} attempts${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
+    const proxy = await findWorkingProxy(pool)
+    if (!proxy) {
+      await applyProxyToAllSessions('direct://')
+      return { success: false, error: `No working server found in pool of ${pool.length} candidates${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
+    }
+    await applyProxyToAllSessions(`socks5h://${proxy}`)
+    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'true')
+    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('vpnCountry', country ?? 'all')
+    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+    return { success: true, proxy, country: country ?? 'Auto' }
   })
 
   ipcMain.handle('vpn:disconnect', async () => {
@@ -3245,18 +3283,17 @@ export function registerIpcHandlers() {
   ipcMain.handle('vpn:rotate', async () => {
     const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('vpnCountry') as any
     const country = row?.value ?? 'all'
-    const MAX_RETRIES = 3
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const proxy = await fetchFreeProxy(country)
-      if (!proxy) continue
-      await applyProxyToAllSessions(`socks5h://${proxy}`)
-      const alive = await verifyProxy()
-      if (alive) {
-        getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-        return { success: true, proxy }
-      }
+    const pool = await fetchProxyPool(country)
+    if (pool.length === 0) {
+      return { success: false, error: 'Could not fetch proxy list. Check your internet connection.' }
     }
-    return { success: false, error: 'No working servers available after retries. Try again.' }
+    const proxy = await findWorkingProxy(pool)
+    if (!proxy) {
+      return { success: false, error: 'No working server found. Try again or switch country.' }
+    }
+    await applyProxyToAllSessions(`socks5h://${proxy}`)
+    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
+    return { success: true, proxy }
   })
 
   // Public-IP / geolocation check — what a DNS/IP checker on the open web would

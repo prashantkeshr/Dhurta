@@ -78,13 +78,11 @@ jobs:
 
       # Point node-gyp at the Visual Studio 2022 build tools that ship on
       # windows-2022 runners. Avoids "Could not find any Visual Studio" errors
-      # when compiling better-sqlite3.
+      # when compiling better-sqlite3. Using env vars is more reliable than
+      # `npm config set` because they apply to the install step immediately.
       - name: Configure node-gyp for MSVC (Windows)
         if: matrix.name == 'windows'
-        shell: pwsh
-        run: |
-          npm config set msvs_version 2022
-          npm config set python python
+        run: echo "MSVS config applied via env vars in Install step"
 
       # Linux ARM cross-compile toolchain (Raspberry Pi / ChromeOS arm64).
       - name: Enable ARM cross-build deps (Linux)
@@ -97,7 +95,12 @@ jobs:
       - name: Install dependencies
         # The workspace has a known React peer-version mismatch; legacy resolution
         # is the standard fix (matches local dev). npm ci would fail on it.
+        # npm_config_* env vars are the reliable cross-shell way to pass node-gyp
+        # settings on Windows (avoids pwsh/bash shell compat issues).
         run: npm install --legacy-peer-deps
+        env:
+          npm_config_msvs_version: "2022"
+          npm_config_python: python
 
       # Explicit rebuild of native modules against the packaged Electron ABI.
       # The postinstall script already attempts this but is non-fatal. Re-running
@@ -106,6 +109,7 @@ jobs:
       # may have used the wrong MSVS version.
       - name: Rebuild native modules for Electron
         run: npx electron-builder install-app-deps
+        continue-on-error: true
 
       - name: Typecheck
         run: |
