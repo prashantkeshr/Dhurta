@@ -431,12 +431,18 @@ let ghostEnabled = false
 let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
 
-// VPN auto-rotation: network error codes that indicate a proxy failure or blocked route
-// -101 CONNECTION_RESET, -102 CONNECTION_REFUSED, -103 CONNECTION_ABORTED,
-// -104 CONNECTION_FAILED, -105 NAME_NOT_RESOLVED, -106 INTERNET_DISCONNECTED,
-// -109 ADDRESS_UNREACHABLE, -110 CONNECTION_TIMED_OUT, -118 EMPTY_RESPONSE,
-// -130 PROXY_CONNECTION_FAILED, -133 TUNNEL_CONNECTION_FAILED, -135 PROXY_AUTH_UNSUPPORTED
-const PROXY_NET_ERRORS = new Set([-101, -102, -103, -104, -105, -106, -109, -110, -118, -130, -133, -135])
+// VPN auto-rotation: network error codes that indicate a proxy failure or blocked route.
+// -101 CONNECTION_RESET,      -102 CONNECTION_REFUSED,    -103 CONNECTION_ABORTED,
+// -104 CONNECTION_FAILED,     -105 NAME_NOT_RESOLVED,     -106 INTERNET_DISCONNECTED,
+// -109 ADDRESS_UNREACHABLE,   -110 CONNECTION_TIMED_OUT,  -118 EMPTY_RESPONSE,
+// -130 PROXY_CONNECTION_FAILED, -133 TUNNEL_CONNECTION_FAILED, -135 PROXY_AUTH_UNSUPPORTED,
+// -200 CERT_COMMON_NAME_INVALID, -201 CERT_DATE_INVALID, -202 CERT_AUTHORITY_INVALID
+// (cert codes catch MITM proxies that pass the TCP test but fail Chromium TLS validation)
+const PROXY_NET_ERRORS = new Set([
+  -101, -102, -103, -104, -105, -106, -109, -110, -118,
+  -130, -133, -135,
+  -200, -201, -202,
+])
 // Rate-limit auto-rotation to once per 30 s per tab to break retry loops
 const _lastProxyRotate = new Map<number, number>()
 
@@ -656,78 +662,30 @@ async function testProxyCandidate(proxy: string, timeoutMs = 8000): Promise<bool
   })
 }
 
-// ── Electron-backed proxy verification ───────────────────────────────────────
-// Five dedicated memory partitions — each maps to exactly one parallel candidate
-// so concurrent setProxy() calls can never clobber each other.
-// Must be initialised inside IPC handlers (after app.ready), never at module load.
-const _probeSessionPool: (Electron.Session | null)[] = Array(5).fill(null)
-
-function _getProbeSession(slot: number): Electron.Session {
-  if (!_probeSessionPool[slot]) {
-    _probeSessionPool[slot] = session.fromPartition(`memory:probe-${slot}`)
-  }
-  return _probeSessionPool[slot]!
-}
-
-// The conclusive test: route a real HTTPS request through Chromium's own
-// network stack (same code path as BrowserView). If this passes, the browser
-// WILL work through the proxy — no TCP-layer illusions possible.
-async function verifyProxyElectron(proxy: string, slot: number, timeoutMs = 12_000): Promise<boolean> {
-  const sess = _getProbeSession(slot % 5)
-  try {
-    await sess.setProxy({ proxyRules: `socks5h://${proxy}`, proxyBypassRules: '' })
-    const resp = await (net.fetch as any)('https://example.com/', {
-      session: sess,
-      signal: AbortSignal.timeout(timeoutMs),
-    })
-    return (resp as Response).status > 0
-  } catch {
-    return false
-  }
-}
-
-async function findWorkingProxy(pool: string[], batchSize = 24): Promise<string | null> {
-  // Fast path: re-verify the cached proxy — TCP pre-filter then Electron check
+async function findWorkingProxy(pool: string[]): Promise<string | null> {
+  // Fast path: cached proxy — re-test it first for instant reconnect
   const cached = (() => {
     try {
       return (getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any)?.value as string | undefined
     } catch { return undefined }
   })()
-  if (cached) {
-    const tcpOk = await testProxyCandidate(cached)
-    if (tcpOk && await verifyProxyElectron(cached, 0)) return cached
-  }
+  if (cached && await testProxyCandidate(cached)) return cached
 
-  // Scan pool in batches:
-  // 1. TCP test (raw socket, fast, 24 in parallel) — coarse pre-filter
-  // 2. Race ≤5 TCP-passing candidates through Electron — definitive check
-  // Only a proxy that clears BOTH layers is returned.
-  const maxProxies = Math.min(pool.length, 200)
-  for (let i = 0; i < maxProxies; i += batchSize) {
-    const batch = pool.slice(i, i + batchSize)
-
-    const tcpResults = await Promise.allSettled(
-      batch.map(async (p) => {
-        const ok = await testProxyCandidate(p)
-        if (!ok) throw new Error('dead')
-        return p
-      })
-    )
-    const candidates = tcpResults
-      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
-      .map(r => r.value)
-      .slice(0, 5)
-
-    if (candidates.length === 0) continue
-
+  // Race batches of 48 candidates at a time with Promise.any — exits the moment
+  // the first passing proxy is found without waiting for the rest of the batch.
+  // No pool-size cap: with a ~2-5% pass rate on public SOCKS5 lists we need to
+  // scan broadly, and a 90-second total deadline keeps this bounded.
+  const BATCH = 48
+  const deadline = Date.now() + 90_000
+  for (let i = 0; i < pool.length && Date.now() < deadline; i += BATCH) {
+    const batch = pool.slice(i, i + BATCH)
     try {
       return await Promise.any(
-        candidates.map((p, slot) =>
-          verifyProxyElectron(p, slot).then(ok => {
-            if (!ok) throw new Error('electron-rejected')
-            return p
-          })
-        )
+        batch.map(async (p) => {
+          const ok = await testProxyCandidate(p)
+          if (!ok) throw new Error('dead')
+          return p
+        })
       )
     } catch { continue }
   }
@@ -743,7 +701,7 @@ async function verifyProxy(): Promise<boolean> {
   const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
   const proxy = row?.value as string | undefined
   if (!proxy) return false
-  return verifyProxyElectron(proxy, 0, 8_000)
+  return testProxyCandidate(proxy, 6_000)
 }
 
 
