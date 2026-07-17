@@ -3253,8 +3253,8 @@ export function registerIpcHandlers() {
     await session.defaultSession.clearStorageData({ storages: ['cookies'] })
   }, 60 * 60 * 1000)
 
-  // Note: ghost tabs get their Tor proxy at creation time (hardenGhostSession).
-  // The proxy rule (socks5h://127.0.0.1:19050) is static, so once Tor bootstraps
+  // Note: ghost tabs get their Tor proxy at creation time (openGhostSession).
+  // The proxy rule (socks5://127.0.0.1:19050) is static, so once Tor bootstraps
   // Chromium's SOCKS retries succeed automatically — no retroactive reapply
   // needed. Tor-crash notification to the renderer is wired in the net layer.
 

@@ -52,12 +52,21 @@ export function isTorReady(): boolean {
   return torReady
 }
 
-/** Proxy rules string for Electron's session.setProxy(). socks5h (not socks5)
- *  means DNS is resolved remotely BY Tor, never locally — this is what prevents
- *  DNS leaks. Safe to apply even before Tor is up: Chromium fails closed with
+/** Proxy rules string for Electron's session.setProxy(). Uses socks5, NOT
+ *  socks5h: "socks5h" is a curl-specific scheme name for "resolve hostnames
+ *  through the proxy" — Chromium's proxy-config parser doesn't recognize it as
+ *  a valid scheme at all, and setting it produces ERR_NO_SUPPORTED_PROXIES on
+ *  every navigation (confirmed live: Tor itself was fully bootstrapped and the
+ *  SOCKS port worked fine via curl, yet every Electron navigation through this
+ *  string failed — because curl accepts "socks5h" and Chromium silently
+ *  doesn't). This is not a downgrade: Chromium's SOCKS5 client ALWAYS resolves
+ *  hostnames through the proxy by default (there is no separate "local DNS"
+ *  mode for it to opt out of), so plain socks5 already gives the same
+ *  no-local-DNS-leak guarantee curl needs the "h" suffix to request. Safe to
+ *  apply even before Tor is up: Chromium fails closed with
  *  ERR_PROXY_CONNECTION_FAILED until the listener exists, rather than going direct. */
 export function getTorProxyRules(): string {
-  return `socks5h://127.0.0.1:${PORTS.torSocks}`
+  return `socks5://127.0.0.1:${PORTS.torSocks}`
 }
 
 /** Circuits used this session — 1 after bootstrap, +1 per successful NEWNYM. */

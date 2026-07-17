@@ -46,10 +46,11 @@ export async function fetchFreeProxy(country = 'all'): Promise<string | null> {
 
 // ── Proxy application ──────────────────────────────────────────────────────────
 // Push one set of proxy rules onto every non-ghost session at once. Ghost (Tor) tabs
-// are deliberately excluded — they own their own socks5h Tor rules and must never be
-// re-pointed at a VPN proxy. We use scheme socks5:// (NOT socks5h) for VPN proxies:
-// local DNS resolution is fine for a plain proxy, and socks5h would force remote DNS
-// through a free public server we don't trust for resolution.
+// are deliberately excluded — they own their own Tor SOCKS rule (net/sessions.ts's
+// applyTorProxyRule) and must never be re-pointed at a VPN proxy. Scheme is plain
+// socks5:// — Chromium's SOCKS5 client always resolves hostnames through the proxy
+// regardless of scheme name, so there's no separate "remote DNS" variant to opt into
+// here (curl's socks5h is a curl-only convention, not something Chromium recognizes).
 export async function applyProxyToAllSessions(ctx: NetContext, rules: string): Promise<void> {
   await Promise.all(
     ctx.getNonGhostSessions().map(sess => sess.setProxy({ proxyRules: rules }))

@@ -71,8 +71,15 @@ export function applyGhostPermissionsAndHeaders(ctx: NetContext, sess: Session):
 }
 
 // Route a session through the bundled Tor SOCKS listener.
-//   socks5h  — the 'h' makes Chromium resolve DNS *through* the proxy (inside
-//              Tor), so hostname lookups never leak to the local ISP resolver.
+//   socks5   — NOT socks5h. "socks5h" is a curl-only scheme name; Chromium's
+//              proxy-config parser doesn't recognize it and silently produces
+//              ERR_NO_SUPPORTED_PROXIES on every navigation (this was a real,
+//              previously-undetected bug — Tor and the SOCKS port were both
+//              fine, curl-based tests passed because curl DOES understand
+//              "socks5h", but every real Electron navigation failed). Plain
+//              socks5 already gives remote DNS resolution here: Chromium's
+//              SOCKS5 client always resolves hostnames through the proxy by
+//              default, so there's no local-DNS-leak mode to opt out of.
 //   proxyBypassRules: '' — empty bypass list means even local-looking hostnames
 //              (localhost, *.local, RFC1918 IPs) are still tunneled, closing the
 //              usual "bypass local addresses" hole.
@@ -83,7 +90,7 @@ export function applyGhostPermissionsAndHeaders(ctx: NetContext, sess: Session):
 // gets ECONNREFUSED, never a direct connection. Exported so the orchestrator can
 // call this again later to upgrade a session from the fast-proxy rail to Tor.
 export async function applyTorProxyRule(sess: Session): Promise<void> {
-  await sess.setProxy({ proxyRules: 'socks5h://127.0.0.1:' + PORTS.torSocks, proxyBypassRules: '' })
+  await sess.setProxy({ proxyRules: 'socks5://127.0.0.1:' + PORTS.torSocks, proxyBypassRules: '' })
 }
 
 export async function hardenGhostSession(ctx: NetContext, sess: Session): Promise<void> {

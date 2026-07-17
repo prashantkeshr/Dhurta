@@ -16,7 +16,9 @@ import type { Session } from 'electron'
 
 // ── Fixed, private ports (chosen to never collide with a real Tor Browser 9150) ──
 export const PORTS = {
-  /** Tor SOCKS5 listener — ghost tabs proxy through this (socks5h, remote DNS). */
+  /** Tor SOCKS5 listener — ghost tabs proxy through this via plain socks5://
+   *  (NOT socks5h — Chromium doesn't recognize that scheme; its SOCKS5 client
+   *  already resolves DNS through the proxy by default). */
   torSocks: 19050,
   /** Tor control port — NEWNYM circuit rotation, no auth, loopback only. */
   torControl: 19051,
@@ -116,7 +118,7 @@ export interface NetContext {
 //   startTor(exitCountry?: string | null): Promise<{ socksPort: number }>
 //   stopTor(): void
 //   isTorReady(): boolean
-//   getTorProxyRules(): string            // 'socks5h://127.0.0.1:19050'
+//   getTorProxyRules(): string            // 'socks5://127.0.0.1:19050'
 //   sendNewnym(): Promise<void>           // increments circuit count on 250 OK
 //   getCircuitCount(): number
 //   setExitNodeCountry(cc: string | null): void
