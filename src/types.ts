@@ -124,6 +124,7 @@ export interface DhurtaAPI {
   getWarmth(): Promise<number>
   showDownloadPopup(pos: { x: number; y: number }): Promise<void>
   showWarmthPopup(pos: { x: number; y: number }): Promise<void>
+  showSitePopup(pos: { x: number; y: number }, tabId: number, url: string): Promise<void>
   getWindowPos(): Promise<[number, number]>
   zoomIn(tabId: number): Promise<number>
   zoomOut(tabId: number): Promise<number>
@@ -215,8 +216,6 @@ export interface DhurtaAPI {
   isBookmarked(url: string): Promise<boolean>
   showThreeDotMenu(opts: { url: string }): Promise<void>
   showTabContextMenu(opts: { tabId: number; tabCount: number; x: number; y: number }): Promise<void>
-  concealBrowserView(side?: 'left' | 'right'): Promise<void>
-  revealBrowserView(): Promise<void>
   showAppsPopup(pos: { x: number; y: number }): Promise<void>
   getAppIconDataUrl(url: string): Promise<string | null>
   closePip(): Promise<void>

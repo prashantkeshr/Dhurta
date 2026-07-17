@@ -56,10 +56,12 @@ contextBridge.exposeInMainWorld('dhurta', {
   setWarmth: (level: number) => ipcRenderer.invoke('display:setWarmth', level),
   getWarmth: () => ipcRenderer.invoke('display:getWarmth'),
 
-  // Native popup windows (download tray + warmth slider)
+  // Native popup windows (download tray + warmth slider + site info)
   // pos = { x, y } in SCREEN coordinates (viewport coords + window position)
   showDownloadPopup: (pos: { x: number; y: number }) => ipcRenderer.invoke('popup:showDownloads', pos),
   showWarmthPopup:   (pos: { x: number; y: number }) => ipcRenderer.invoke('popup:showWarmth', pos),
+  showSitePopup: (pos: { x: number; y: number }, tabId: number, url: string) =>
+    ipcRenderer.invoke('popup:showSiteInfo', pos, tabId, url),
   getWindowPos: () => ipcRenderer.invoke('window:getPos') as Promise<[number, number]>,
 
   // Zoom
@@ -191,10 +193,6 @@ contextBridge.exposeInMainWorld('dhurta', {
   // Tab context menu — native OS menu so it renders above BrowserViews
   showTabContextMenu: (opts: { tabId: number; tabCount: number; x: number; y: number }) =>
     ipcRenderer.invoke('tab:showContextMenu', opts),
-
-  // BrowserView conceal/reveal — React dropdowns call these so they're visible above web pages
-  concealBrowserView: (side?: 'left' | 'right') => ipcRenderer.invoke('view:conceal', side ?? 'right'),
-  revealBrowserView:  () => ipcRenderer.invoke('view:reveal'),
 
   // Sidebar apps popup — native BrowserWindow like the download popup
   showAppsPopup: (pos: { x: number; y: number }) => ipcRenderer.invoke('popup:showApps', pos),

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import type { SecuritySettings, Extension, Download } from '../types'
-import SiteInfoPanel from './SiteInfoPanel'
 
 interface Props {
   url: string
@@ -65,29 +64,29 @@ export default function URLBar({
   const [bookmarkFlash, setBookmarkFlash] = useState(false)
   const [findMode, setFindMode] = useState(false)
   const [findText, setFindText] = useState('')
-  const [showSiteInfo, setShowSiteInfo] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const findRef = useRef<HTMLInputElement>(null)
+  const lockBtnRef = useRef<HTMLButtonElement>(null)
 
-  const openSiteInfo = useCallback(async () => {
-    if (showSiteInfo) {
-      setShowSiteInfo(false)
-      if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {})
-      return
-    }
-    if (isElectron) await (window as any).dhurta.concealBrowserView().catch(() => {})
-    setShowSiteInfo(true)
-  }, [showSiteInfo])
+  // Site info popup — a real child BrowserWindow that floats above the
+  // BrowserView natively (like Downloads/Warmth), instead of the old approach
+  // of concealing the BrowserView (hiding the whole page) so a React dropdown
+  // could show through it. The page stays fully visible underneath, matching
+  // how Chrome/Firefox/Edge show their own site-info popups.
+  const openSitePopup = useCallback(async () => {
+    if (!isElectron || !lockBtnRef.current) return
+    const rect = lockBtnRef.current.getBoundingClientRect()
+    const [wx, wy] = await (window as any).dhurta.getWindowPos() as [number, number]
+    await (window as any).dhurta.showSitePopup(
+      { x: Math.round(wx + rect.left), y: Math.round(wy + rect.bottom + 6) },
+      activeTabId,
+      url
+    )
+  }, [activeTabId, url])
 
-  const closeSiteInfo = useCallback(() => {
-    setShowSiteInfo(false)
-    if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {})
-  }, [])
-
-  // Sync input when url changes from outside; also close site panel on navigation
+  // Sync input when url changes from outside
   useEffect(() => {
     if (!editing) setInput(url)
-    if (showSiteInfo) { setShowSiteInfo(false); if (isElectron) (window as any).dhurta.revealBrowserView().catch(() => {}) }
   }, [url]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check bookmark state when URL changes
@@ -196,18 +195,16 @@ export default function URLBar({
         </div>
       )}
 
-      {/* URL input — lock icon is clickable and opens Site Info Panel */}
+      {/* URL input — lock icon opens the native Site Info popup */}
       <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-surface-3 focus-within:border-saffron transition-colors px-2 h-6 min-w-0 relative">
         <button
-          onClick={openSiteInfo}
+          ref={lockBtnRef}
+          onClick={openSitePopup}
           title="Site information and controls"
-          className={[
-            'mr-1.5 shrink-0 flex items-center justify-center transition-colors',
-            showSiteInfo ? 'text-saffron' : 'text-muted hover:text-saffron',
-          ].join(' ')}
+          className="mr-1.5 shrink-0 flex items-center justify-center transition-colors text-muted hover:text-saffron"
         >
           {url.startsWith('https://') ? (
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke={showSiteInfo ? '#FF4500' : '#4CAF50'} strokeWidth="1.2">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#4CAF50" strokeWidth="1.2">
               <rect x="2" y="4" width="6" height="5" /><path d="M3 4V3a2 2 0 0 1 4 0v1" />
             </svg>
           ) : url.startsWith('file://') ? (
@@ -215,9 +212,9 @@ export default function URLBar({
               <path d="M2 1h4l2 2v6H2z" /><polyline points="6,1 6,3 8,3" />
             </svg>
           ) : (
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke={showSiteInfo ? '#FF4500' : '#666'} strokeWidth="1.2">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#666" strokeWidth="1.2">
               <circle cx="5" cy="5" r="4" /><line x1="5" y1="3" x2="5" y2="5.5" />
-              <circle cx="5" cy="7" r="0.5" fill={showSiteInfo ? '#FF4500' : '#666'} />
+              <circle cx="5" cy="7" r="0.5" fill="#666" />
             </svg>
           )}
         </button>
@@ -232,15 +229,6 @@ export default function URLBar({
           spellCheck={false}
           autoComplete="off"
         />
-        {/* Site Info Panel */}
-        {showSiteInfo && (
-          <SiteInfoPanel
-            activeTabId={activeTabId}
-            url={url}
-            theme={theme}
-            onClose={closeSiteInfo}
-          />
-        )}
       </div>
 
       {/* Find in page bar (inline, appears when active) */}

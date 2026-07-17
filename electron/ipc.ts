@@ -187,12 +187,14 @@ let _downloadPopupWin: BrowserWindow | null = null
 let _warmthPopupWin:   BrowserWindow | null = null
 let _appsPopupWin:     BrowserWindow | null = null
 let _toolsPopupWin:    BrowserWindow | null = null
+let _sitePopupWin:     BrowserWindow | null = null
 
 function _createPopup(
   win: BrowserWindow,
   htmlFile: string,
   width: number, height: number,
   screenX: number, screenY: number,
+  query?: Record<string, string>,
 ): BrowserWindow {
   const popup = new BrowserWindow({
     parent: win,
@@ -214,7 +216,7 @@ function _createPopup(
     },
   })
   popup.setMenu(null)
-  popup.loadFile(htmlFile)
+  popup.loadFile(htmlFile, query ? { query } : undefined)
   popup.on('blur', () => { if (!popup.isDestroyed()) popup.close() })
   return popup
 }
@@ -1595,6 +1597,26 @@ export function registerIpcHandlers() {
     })
   })
 
+  // Site info popup — clicking the URL bar's lock/info icon used to conceal the
+  // BrowserView (hiding the whole page) so a React dropdown could show through it.
+  // Like Downloads/Warmth, this is now a real child BrowserWindow that floats
+  // above the BrowserView natively, so the page stays fully visible underneath —
+  // matching how Chrome/Firefox/Edge show their own site-info popups.
+  ipcMain.handle('popup:showSiteInfo', (_e, pos: { x: number; y: number }, tabId: number, url: string) => {
+    const win = getMainWindow()
+    if (!win) return
+    if (_sitePopupWin && !_sitePopupWin.isDestroyed()) {
+      _sitePopupWin.close()
+      return
+    }
+    const isDhurtaPage = !url || url.startsWith('dhurta://') || url === 'about:blank'
+    _sitePopupWin = _createPopup(
+      win, path.join(__dirname, 'sitePopup.html'), 288, isDhurtaPage ? 130 : 440, pos.x, pos.y,
+      { tabId: String(tabId), url: url || '' }
+    )
+    _sitePopupWin.on('closed', () => { _sitePopupWin = null })
+  })
+
   // Close the popup that sent this request (used by popup's own "Close" button)
   ipcMain.handle('popup:close', (e) => {
     BrowserWindow.fromWebContents(e.sender)?.close()
@@ -2109,38 +2131,6 @@ export function registerIpcHandlers() {
     if (win && tab && !isNewTabUrl(tab.url)) {
       tab.view.setBounds(getTabBounds(win))
     }
-  })
-
-  // BrowserView conceal/reveal — used by React dropdowns (AppsGrid) so they can sit
-  // ABOVE the BrowserView native layer while open. Instead of removing the BrowserView
-  // (which shows the black #0A0A0A BrowserWindow background), we shrink it away from
-  // the dropdown so most of the page remains visible:
-  //  'right' = tab-bar apps button (dropdown on right) → trim width from right edge
-  //  'left'  = sidebar apps button (dropdown on left)  → shift x right to expose left edge
-  const DROPDOWN_SPACE = 296 // AppsGrid is w-[280px] + 16px safety margin
-  ipcMain.handle('view:conceal', (_e, side: 'left' | 'right' = 'right') => {
-    const win = getMainWindow()
-    const tab = tabs.get(activeTabId)
-    if (!win || !tab || isNewTabUrl(tab.url)) return
-    const b = getTabBounds(win)
-    tab.view.setAutoResize({ width: false, height: false })
-    if (side === 'left') {
-      // Sidebar: dropdown opens to the right of the 64px sidebar nav (x ≈ 66).
-      // Shift BrowserView right so the dropdown area (x=66 to x≈346) is in HTML layer.
-      const newX = b.x + DROPDOWN_SPACE
-      tab.view.setBounds({ x: newX, y: b.y, width: Math.max(100, b.width - DROPDOWN_SPACE), height: b.height })
-    } else {
-      // Tab bar: dropdown is right-aligned at window right edge.
-      // Trim BrowserView width from the right so right 296px is HTML layer.
-      tab.view.setBounds({ x: b.x, y: b.y, width: Math.max(100, b.width - DROPDOWN_SPACE), height: b.height })
-    }
-  })
-  ipcMain.handle('view:reveal', () => {
-    const win = getMainWindow()
-    const tab = tabs.get(activeTabId)
-    if (!win || !tab || isNewTabUrl(tab.url)) return
-    tab.view.setBounds(getTabBounds(win))
-    tab.view.setAutoResize({ width: true, height: true })
   })
 
   // Native tab context menu — renders above BrowserViews via Menu.popup()
