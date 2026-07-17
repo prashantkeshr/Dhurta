@@ -141,6 +141,8 @@ export interface DhurtaAPI {
   vpnConnect(country?: string): Promise<{ success: boolean; proxy?: string; country?: string; error?: string }>
   vpnDisconnect(): Promise<void>
   vpnRotate(): Promise<{ success: boolean; proxy?: string; error?: string }>
+  netKillSwitch(): Promise<void>
+  netRelease(): Promise<void>
   checkPublicIp(tabId?: number): Promise<{
     success: boolean; ip?: string; country?: string; countryCode?: string
     city?: string; region?: string; lat?: number; lon?: number; org?: string; error?: string

@@ -116,6 +116,10 @@ contextBridge.exposeInMainWorld('dhurta', {
   vpnConnect: (country?: string) => ipcRenderer.invoke('vpn:connect', country),
   vpnDisconnect: () => ipcRenderer.invoke('vpn:disconnect'),
   vpnRotate: () => ipcRenderer.invoke('vpn:rotate'),
+
+  // Kill-switch — seals traffic during privacy-mode transitions (fail closed)
+  netKillSwitch: () => ipcRenderer.invoke('net:killSwitch'),
+  netRelease: () => ipcRenderer.invoke('net:release'),
   checkPublicIp: (tabId?: number) => ipcRenderer.invoke('omni:checkIp', tabId),
   checkRealIp: () => ipcRenderer.invoke('omni:checkRealIp'),
   getBlockedCount: () => ipcRenderer.invoke('omni:getBlockedCount'),

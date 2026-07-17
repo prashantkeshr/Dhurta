@@ -367,11 +367,16 @@ export function useBrowser() {
     } else {
       // Enforce "only one mode at a time" — Ghost is the strongest mode
       // (real Tor onion routing), so it fully supersedes Chakra rather than
-      // stacking with it.
+      // stacking with it. Seal traffic across the switch so the real IP can't
+      // leak through in-flight requests while VPN tears down and Tor boots.
+      await api().netKillSwitch().catch(() => {})
       if (chakraActive) await disableChakraInternal()
       setTorConnecting(true)
       const result = await api().enableGhost() as { tor?: boolean; error?: string } | undefined
       setTorConnecting(false)
+      // Normal-tab sessions return to their direct baseline; ghost tabs stay
+      // Tor-routed (and fail closed on their own until the circuit is ready).
+      await api().netRelease().catch(() => {})
       const torOk = !!result?.tor
       setTorActive(torOk)
       setGhostMode(true)

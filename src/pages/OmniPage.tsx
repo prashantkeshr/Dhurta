@@ -392,11 +392,20 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     if (mode === currentMode) return
     setChakraBusy(true)
     try {
+      // Seal traffic for the whole switch-over so the real IP can't leak through
+      // in-flight requests during the disable→enable gap. Fail closed until the
+      // destination mode has applied its own proxy (or we release to direct).
+      await api().netKillSwitch().catch(() => {})
+
       if (currentMode === 'chakra') await disableChakra()
       if (currentMode === 'ghost') await disableGhostMode()
 
-      if (mode === 'chakra') await enableChakra()
-      if (mode === 'ghost') await enableGhostMode()
+      if (mode === 'normal') await api().netRelease().catch(() => {})
+      if (mode === 'chakra') await enableChakra()               // vpnConnect re-seals then applies the proxy
+      if (mode === 'ghost') {
+        await enableGhostMode()                                 // ghost tabs route through Tor (fail closed until ready)
+        await api().netRelease().catch(() => {})                // normal-tab sessions return to their direct baseline
+      }
       checkIp()
     } finally {
       setChakraBusy(false)

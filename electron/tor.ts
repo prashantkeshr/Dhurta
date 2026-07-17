@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
+import { spawn, execSync, ChildProcessWithoutNullStreams } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
@@ -97,9 +97,40 @@ export function getTorProxyRules() {
   return `socks5h://127.0.0.1:${SOCKS_PORT}`
 }
 
+/** Kill any orphaned tor.exe still bound to OUR ports (19050/19051/19053).
+ *  These are leftovers from a previous app session that crashed before
+ *  stopTor() ran — they hold the ports and make a fresh startTor() fail with
+ *  "Address already in use". The ports are non-standard (not Tor Browser's
+ *  9150), so anything listening on them is almost certainly our own orphan.
+ *  Best-effort and synchronous — safe to call right before spawn. */
+function killStaleTorProcesses() {
+  try {
+    if (process.platform === 'win32') {
+      const out = execSync('netstat -ano', { encoding: 'utf8', windowsHide: true })
+      const pids = new Set<string>()
+      for (const line of out.split('\n')) {
+        if (/127\.0\.0\.1:(19050|19051|19053)\b/.test(line)) {
+          const m = line.trim().match(/(\d+)\s*$/)
+          if (m && m[1] !== '0') pids.add(m[1])
+        }
+      }
+      for (const pid of pids) {
+        console.log('[Tor] killing stale process holding our port, PID', pid)
+        try { execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore', windowsHide: true }) } catch (_) {}
+      }
+    } else {
+      // Unix: our data dirs are prefixed dhurta-tor- — kill by that signature.
+      try { execSync(`pkill -f "dhurta-tor-"`, { stdio: 'ignore' }) } catch (_) {}
+    }
+  } catch (_) { /* netstat/pkill unavailable — nothing we can do, proceed */ }
+}
+
 export function startTor(): Promise<{ socksPort: number }> {
   if (torReady) return Promise.resolve({ socksPort: SOCKS_PORT })
   if (startPromise) return startPromise
+
+  // Clear any orphaned Tor from a prior crashed session before we try to bind.
+  killStaleTorProcesses()
 
   startPromise = new Promise((resolve, reject) => {
     const resDir = torResourceDir()
@@ -123,7 +154,7 @@ export function startTor(): Promise<{ socksPort: number }> {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dhurta-tor-'))
     const torrcPath = path.join(dataDir, 'torrc')
     const torrc = [
-      `SocksPort 127.0.0.1:${SOCKS_PORT} IsolateDestDomain`,
+      `SocksPort 127.0.0.1:${SOCKS_PORT} IsolateDestAddr IsolateDestPort`,
       `ControlPort 127.0.0.1:${CONTROL_PORT}`,
       `DataDirectory ${dataDir}`,
       ...(fs.existsSync(geoip) ? [`GeoIPFile ${geoip}`] : []),
@@ -208,7 +239,19 @@ function cleanupFailedStart() {
 
 export function stopTor() {
   if (torProcess) {
-    try { torProcess.kill() } catch (_) {}
+    const pid = torProcess.pid
+    // torProcess.kill() sends SIGTERM, which Tor on Windows frequently ignores,
+    // leaving an orphan that holds our ports on next launch. Force-kill the whole
+    // process tree so the ports are actually released.
+    try {
+      if (process.platform === 'win32' && pid) {
+        execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore', windowsHide: true })
+      } else {
+        torProcess.kill('SIGKILL')
+      }
+    } catch (_) {
+      try { torProcess.kill('SIGKILL') } catch (_) {}
+    }
     torProcess = null
   }
   torReady = false

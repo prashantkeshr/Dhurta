@@ -1435,6 +1435,22 @@ async function applyProxyToAllSessions(proxyRules: string) {
   ])
 }
 
+// Kill-switch — routes ALL normal-tab traffic to a dead loopback port so every
+// request fails closed (ERR_PROXY_CONNECTION_FAILED) instead of falling back to
+// the direct connection. Used to seal the transition window: while a VPN proxy
+// is being fetched, or while the user is switching between privacy modes, the
+// real IP must NOT leak out through in-flight or auto-refreshing requests.
+// proxyBypassRules:'' forces even localhost through the dead proxy so nothing escapes.
+const BLACKHOLE_RULES = 'socks5://127.0.0.1:1'
+async function applyKillSwitch() {
+  const config = { proxyRules: BLACKHOLE_RULES, proxyBypassRules: '' }
+  await Promise.all([
+    session.defaultSession.setProxy(config),
+    session.fromPartition('persist:default').setProxy(config),
+    ...[...tabs.values()].filter(t => !t.ghost && !t.view.webContents.isDestroyed()).map(t => t.view.webContents.session.setProxy(config)),
+  ])
+}
+
 function getDownloadDir(): string {
   try {
     const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('downloadPath') as any
@@ -3237,10 +3253,23 @@ export function registerIpcHandlers() {
     }
   })
 
+  // Kill-switch — block all normal-tab traffic (fail closed). The renderer
+  // brackets every mode transition with these so the real IP can't leak through
+  // in-flight/auto-refreshing requests during the switch-over window.
+  ipcMain.handle('net:killSwitch', async () => { await applyKillSwitch() })
+  ipcMain.handle('net:release', async () => { await applyProxyToAllSessions('direct://') })
+
   // VPN — free public proxy with optional country selection
   ipcMain.handle('vpn:connect', async (_e, country?: string) => {
+    // Seal the connection FIRST: fetchFreeProxy can take several seconds, and
+    // during that window the sessions would otherwise still be on the direct
+    // connection, leaking the real IP. Fail closed until the proxy is live.
+    await applyKillSwitch()
     const proxy = await fetchFreeProxy(country)
     if (!proxy) {
+      // No proxy found — restore direct so the user can still browse, but the
+      // caller learns it failed (traffic was blocked, not leaked, during the try).
+      await applyProxyToAllSessions('direct://')
       return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
     }
     await applyProxyToAllSessions(`socks5://${proxy}`)
