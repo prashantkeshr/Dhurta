@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #080808; color: #888;
+    font-family: 'Courier New', monospace;
+    height: 100%; overflow: hidden;
+  }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; height: 100%; padding: 0 24px; text-align: center;
+  }
+  .brand { font-size: 10px; letter-spacing: 7px; color: #FF4500; opacity: .5; }
+  .icon { font-size: 32px; }
+  .title { font-size: 18px; color: #ddd; font-weight: bold; }
+  .body { font-size: 11px; color: #777; max-width: 520px; line-height: 1.7; }
+  button {
+    margin-top: 4px; background: transparent; border: 1px solid #FF4500; color: #FF4500;
+    padding: 8px 24px; font-family: 'Courier New', monospace; font-size: 12px; cursor: pointer;
+  }
+  .hint { font-size: 9px; color: #444; max-width: 520px; margin-top: 8px; word-break: break-all; }
+</style>
+</head>
+<body>
+  <div class="brand">D H U R T A</div>
+  <div class="icon">🧅</div>
+  <div class="title">Connecting to Tor onion routing…</div>
+  <div class="body">
+    This is a one-time setup for this session — Dhurta is establishing your Tor circuit now.
+    Check the progress banner at the top of the window for the live percentage and estimated time,
+    then reload this tab once it's ready.
+  </div>
+  <button onclick="location.reload()">↺ Reload</button>
+  <div class="hint" id="hint"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search)
+    const logPath = params.get('logPath') || ''
+    if (logPath) {
+      document.getElementById('hint').textContent =
+        `Taking unusually long? Check that Windows Defender / antivirus isn't blocking tor.exe. Details: ${logPath}`
+    }
+  </script>
+</body>
+</html>

@@ -1770,28 +1770,17 @@ export function registerIpcHandlers() {
       // one case where the tab genuinely can't load anything yet. Every other
       // ghost tab opens instantly on a proxy rail (see openGhostSession) and
       // silently upgrades to Tor in the background, so it never hits this page.
-      const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
-      const logPath = esc(path.join(app.getPath('userData'), 'crash-log.json'))
-      // Framed as a one-time setup step, not a failure: no fast-proxy rail was
-      // available either (rare — usually the fast rail covers this gap), so this
-      // tab genuinely has to wait for Tor itself. The progress banner up top
-      // shows the same live percentage; this page just needs a manual reload
-      // once it finishes, since a fresh navigation is the only way to pick up
-      // the now-ready Tor circuit.
-      view.webContents.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
-        `<html style="background:#080808;color:#888;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px">` +
-        `<div style="font-size:10px;letter-spacing:7px;color:#FF4500;opacity:.5">D H U R T A</div>` +
-        `<div style="font-size:32px">🧅</div>` +
-        `<div style="font-size:18px;color:#ddd;font-weight:bold">Connecting to Tor onion routing…</div>` +
-        `<div style="font-size:11px;color:#777;max-width:520px;text-align:center;line-height:1.7">` +
-        `This is a one-time setup for this session — Dhurta is establishing your Tor circuit now. ` +
-        `Check the progress banner at the top of the window for the live percentage and estimated time, then reload this tab once it's ready.` +
-        `</div>` +
-        `<button onclick="location.reload()" style="margin-top:4px;background:transparent;border:1px solid #FF4500;color:#FF4500;padding:8px 24px;font-family:'Courier New',monospace;font-size:12px;cursor:pointer">↺ Reload</button>` +
-        `<div style="font-size:9px;color:#444;max-width:520px;text-align:center;margin-top:8px">` +
-        `Taking unusually long? Check that Windows Defender / antivirus isn't blocking tor.exe. Details: ${logPath}</div>` +
-        `</html>`
-      )).catch(() => {})
+      // Uses loadFile + query params (same pattern as offline.html), NOT an
+      // inline data: URL — an earlier version built this page as a giant
+      // encodeURIComponent'd data: URL and it rendered as raw, corrupted
+      // encoded text instead of HTML once actually exercised (confirmed live:
+      // a fresh cold start with no cached VPN proxy hit this exact path and
+      // showed garbled quoted-printable-looking text instead of the page).
+      const logPath = path.join(app.getPath('userData'), 'crash-log.json')
+      view.webContents.loadFile(
+        path.join(__dirname, 'torConnecting.html'),
+        { query: { logPath } }
+      ).catch(() => {})
     } else if (url) {
       view.webContents.loadURL(url)
     }
