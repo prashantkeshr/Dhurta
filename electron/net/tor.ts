@@ -20,6 +20,12 @@ import os from 'os'
 import net from 'node:net'
 import { PORTS } from './types'
 
+// Per-attempt wait for bootstrap before a caller gives up (NOT a hard kill —
+// see startTor). Descriptor loading has been observed taking well over 60s on
+// slow/congested networks; a generous wait avoids repeatedly abandoning an
+// attempt that's about to succeed.
+const BOOTSTRAP_WAIT_MS = 90_000
+
 // ── Live process state ───────────────────────────────────────────────────────
 let torProcess: ChildProcessWithoutNullStreams | null = null
 let torReady = false
@@ -167,6 +173,22 @@ export function startTor(exitCountry?: string | null): Promise<{ socksPort: numb
   if (torReady) return Promise.resolve({ socksPort: PORTS.torSocks })
   if (startPromise) return startPromise
 
+  // A process from an EARLIER startTor() call may still be alive and bootstrapping
+  // even though that call's own promise already timed out and rejected (descriptor
+  // loading has been observed taking several minutes on slow/congested networks —
+  // well past any reasonable per-call wait). Re-spawning here would kill a process
+  // that might succeed seconds later, then restart bootstrap from 0%. Instead,
+  // attach a fresh promise to the SAME eventual completion via onTorReady rather
+  // than touching the live process at all.
+  if (torProcess) {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Tor still hasn't finished bootstrapping (still in progress in the background — it will keep trying).`))
+      }, BOOTSTRAP_WAIT_MS)
+      onTorReady(() => { clearTimeout(timeout); resolve({ socksPort: PORTS.torSocks }) })
+    })
+  }
+
   // Effective exit country for this boot: an explicitly-passed value (even null)
   // wins over the stored preference; undefined falls back to the stored one.
   const effectiveExit = exitCountry !== undefined
@@ -231,12 +253,18 @@ export function startTor(exitCountry?: string | null): Promise<{ socksPort: numb
     })
     torProcess = proc
 
-    // 60s hard cap on bootstrap — if Tor can't reach the network (censored,
-    // offline) it would otherwise hang forever. Reject with the tail of output.
+    // Soft wait on bootstrap — rejects THIS caller if it's taking too long, but
+    // deliberately does NOT touch torProcess/dataDir. The real Tor process is
+    // still alive and may still succeed (descriptor loading alone has taken
+    // several minutes on a slow network in testing); killing it here would
+    // sabotage an attempt that might finish seconds later, and a subsequent
+    // startTor() call would otherwise re-spawn and restart bootstrap from 0%.
+    // Only clear startPromise so a later call re-attaches (see the `if
+    // (torProcess)` branch above) instead of assuming nothing is in flight.
     const timeout = setTimeout(() => {
-      cleanupFailedStart()
-      reject(new Error(`Tor bootstrap timed out after 60 s. Last output:\n${buffer.slice(-500)}`))
-    }, 60000)
+      startPromise = null
+      reject(new Error(`Tor bootstrap is taking longer than ${BOOTSTRAP_WAIT_MS / 1000}s. Last output:\n${buffer.slice(-500)}`))
+    }, BOOTSTRAP_WAIT_MS)
 
     let buffer = ''
     const onData = (chunk: Buffer) => {
