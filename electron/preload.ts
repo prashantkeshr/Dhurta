@@ -15,7 +15,8 @@ const VALID_CHANNELS = new Set([
   'download:start', 'download:update', 'download:done',
   'pip:loadInMain', 'menu:action', 'context-menu:action',
   'extension:installed', 'appLock:locked',
-  'ghost:tor-crashed', 'tor:circuitRotated', 'pip:opened', 'pip:closed',
+  'ghost:tor-crashed', 'ghost:tor-failed', 'ghost:upgradedToTor',
+  'tor:circuitRotated', 'pip:opened', 'pip:closed',
   'update:checking', 'update:available', 'update:not-available',
   'update:progress', 'update:downloaded', 'update:error',
 ])

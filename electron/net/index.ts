@@ -15,13 +15,14 @@ import type { BrowserWindow, Session } from 'electron'
 import type { NetContext } from './types'
 import {
   startTor, stopTor, isTorReady, sendNewnym, getCircuitCount,
-  setExitNodeCountry, onTorExit,
+  setExitNodeCountry, onTorReady, onTorExit,
 } from './tor'
 import {
   vpnConnect, vpnDisconnect, vpnRotate, applyKillSwitch, releaseKillSwitch,
-  applyProxyToAllSessions,
+  applyProxyToAllSessions, fetchFreeProxy,
 } from './vpn'
 import { checkPublicIp, checkRealIp } from './leakcheck'
+import { applyGhostPermissionsAndHeaders, applyTorProxyRule } from './sessions'
 import { SETTINGS } from './types'
 
 // Re-export the session-hardening helpers and Tor status so the tab manager
@@ -54,6 +55,10 @@ let _ctx: NetContext | null = null
 // Ghost / circuit-rotation state
 let ghostEnabled = false
 let _newnymTimer: ReturnType<typeof setInterval> | null = null
+
+// Ghost sessions currently riding the fast proxy rail, waiting to be upgraded to
+// real Tor onion routing the moment Tor finishes bootstrapping. See openGhostSession.
+const _pendingTorUpgrade = new Set<Session>()
 
 /** Crash-safe renderer send — never touches a destroyed window. */
 function safeSend(channel: string, ...args: unknown[]): void {
@@ -102,6 +107,63 @@ export function netContext(): NetContext {
   return _ctx
 }
 
+// ── Progressive Ghost session — instant open, silent upgrade to Tor ──────────
+// A cold Tor bootstrap takes ~15-25s. Blocking ghost-tab creation on that (the
+// original design) meant every "enable Ghost Mode" click either sat on a spinner
+// for that long or failed outright if Tor couldn't start at all — and any orphan/
+// port issue turned into "Ghost Mode is broken" from the user's perspective.
+//
+// Instead: open the tab immediately on whichever proxy is fastest to get (an
+// already-active VPN proxy, instantly; otherwise a fresh free-proxy fetch, a few
+// seconds), and register the session to be silently re-pointed at the real Tor
+// SOCKS listener the instant Tor finishes bootstrapping in the background. If
+// NEITHER a cached nor a fresh proxy is available, fall back to the original
+// fail-closed behavior (apply the Tor rule anyway — Chromium blocks with
+// ECONNREFUSED rather than ever leaking direct). The real IP is never exposed on
+// any path; the only thing that varies is how many hops protect it while Tor
+// finishes coming up.
+export async function openGhostSession(
+  ctx: NetContext, sess: Session
+): Promise<{ rail: 'tor' | 'proxy' | 'pending'; proxy?: string }> {
+  applyGhostPermissionsAndHeaders(ctx, sess)
+
+  if (isTorReady()) {
+    await applyTorProxyRule(sess)
+    return { rail: 'tor' }
+  }
+
+  // Tor isn't up yet. Prefer an already-active VPN proxy — instant, no network
+  // round-trip. Otherwise fetch a fresh one in parallel with Tor's own bootstrap
+  // (which ghost:enable already kicked off). Never touch the DB directly — go
+  // through ctx, per the net-layer contract.
+  const cachedProxy = ctx.getSetting(SETTINGS.activeProxy)
+  const fastProxy = cachedProxy || await fetchFreeProxy().catch(() => null)
+
+  if (fastProxy) {
+    await sess.setProxy({ proxyRules: `socks5://${fastProxy}`, proxyBypassRules: '' })
+    _pendingTorUpgrade.add(sess)
+    onTorReady(() => upgradePendingGhostSessions())
+    return { rail: 'proxy', proxy: fastProxy }
+  }
+
+  // No fast proxy available either — fail closed exactly as before: the Tor rule
+  // blocks (ECONNREFUSED) until Tor bootstraps, never a direct/unprotected leak.
+  await applyTorProxyRule(sess)
+  _pendingTorUpgrade.add(sess)
+  onTorReady(() => upgradePendingGhostSessions())
+  return { rail: 'pending' }
+}
+
+/** Re-point every ghost session still on the fast rail at the real Tor listener,
+ *  then notify the renderer so the UI can drop its "single-hop" indicator. */
+function upgradePendingGhostSessions(): void {
+  if (_pendingTorUpgrade.size === 0) return
+  const sessions = [..._pendingTorUpgrade]
+  _pendingTorUpgrade.clear()
+  Promise.all(sessions.map(s => applyTorProxyRule(s).catch(() => {})))
+    .then(() => safeSend('ghost:upgradedToTor', sessions.length))
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Registration — call ONCE from ipc.ts's registerIpcHandlers().
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,18 +176,24 @@ export function registerNetworkLayer(deps: NetHostDeps): void {
   onTorExit(() => safeSend('ghost:tor-crashed'))
 
   // ── Ghost Mode ─────────────────────────────────────────────────────────────
-  ipcMain.handle('ghost:enable', async () => {
+  // Returns IMMEDIATELY — never blocks on Tor's ~15-25s bootstrap. `tor: true`
+  // only reflects whether Tor happens to already be ready (e.g. re-enabling
+  // Ghost Mode after a prior session left it running). Tor boots in the
+  // background; ghost tabs open right away on the fast proxy rail and silently
+  // upgrade via 'ghost:upgradedToTor' the moment bootstrap completes. A hard
+  // failure to start Tor at all is reported asynchronously via 'ghost:tor-failed'
+  // rather than blocking the caller waiting to find out.
+  ipcMain.handle('ghost:enable', () => {
     ghostEnabled = true
-    try {
-      const exit = ctx.getSetting(SETTINGS.exitNodeCountry)
-      await startTor(exit && exit !== 'any' ? exit : null)
-      startNewnymTimer()
-      return { tor: true }
-    } catch (e: any) {
-      const msg = e?.message ?? String(e)
-      console.error('[Net] Tor failed to start:', msg)
-      return { tor: false, error: msg }
-    }
+    const exit = ctx.getSetting(SETTINGS.exitNodeCountry)
+    startTor(exit && exit !== 'any' ? exit : null)
+      .then(() => startNewnymTimer())
+      .catch((e: any) => {
+        const msg = e?.message ?? String(e)
+        console.error('[Net] Tor failed to start:', msg)
+        safeSend('ghost:tor-failed', msg)
+      })
+    return { tor: isTorReady() }
   })
 
   ipcMain.handle('ghost:disable', () => {

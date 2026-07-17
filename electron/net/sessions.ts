@@ -35,7 +35,18 @@ function normalizePrivacyHeaders(sess: Session): void {
 // A ghost tab lives in its own in-memory partition and must exit exclusively via
 // Tor. Everything here is fail-closed: if any step can't be satisfied the tab
 // should get an error, never a direct-to-ISP connection.
-export async function hardenGhostSession(ctx: NetContext, sess: Session): Promise<void> {
+//
+// Split into two pieces so the orchestrator (net/index.ts) can compose a
+// "progressive" variant: apply the non-proxy hardening once, then choose which
+// proxy rule to install (an instant fast-proxy rail while Tor is still
+// bootstrapping, upgrading to the real Tor rule the moment it's ready) instead
+// of blocking tab creation on a ~20s Tor bootstrap. hardenGhostSession itself is
+// unchanged behaviorally — always-Tor, fail-closed — for any caller that wants
+// the simple, non-progressive version.
+
+// Non-proxy ghost hardening: permissions, ad blocker, header normalization, UA.
+// Exported so the orchestrator can apply it once and layer proxy selection on top.
+export function applyGhostPermissionsAndHeaders(ctx: NetContext, sess: Session): void {
   // Deny the two permissions that defeat network-level anonymity outright:
   //   media       — camera/mic can expose the real user; also device enumeration.
   //   geolocation — reveals a precise real-world position regardless of proxying.
@@ -44,20 +55,6 @@ export async function hardenGhostSession(ctx: NetContext, sess: Session): Promis
     if (permission === 'media' || permission === 'geolocation') cb(false)
     else cb(true)
   })
-
-  // Route the whole session through the bundled Tor SOCKS listener.
-  //   socks5h  — the 'h' makes Chromium resolve DNS *through* the proxy (inside
-  //              Tor), so hostname lookups never leak to the local ISP resolver.
-  //   proxyBypassRules: '' — empty bypass list means even local-looking hostnames
-  //              (localhost, *.local, RFC1918 IPs) are still tunneled, closing the
-  //              usual "bypass local addresses" hole.
-  // The URL is built from PORTS so this module stays decoupled from tor.ts.
-  // MUST be awaited: setProxy() genuinely hands off to the network service async;
-  // if the BrowserView returns before the proxy is wired, a caller that navigates
-  // immediately (e.g. tab duplicate) fires the first request unproxied and leaks
-  // the real IP/DNS. Awaiting also gives us the fail-closed guarantee: if Tor
-  // isn't up yet Chromium gets ECONNREFUSED, never a direct connection.
-  await sess.setProxy({ proxyRules: 'socks5h://127.0.0.1:' + PORTS.torSocks, proxyBypassRules: '' })
 
   // Each ghost tab gets its own unique memory: partition, so the ad/tracker
   // blocker (registered once for persist:default) must be enabled per-session
@@ -71,6 +68,27 @@ export async function hardenGhostSession(ctx: NetContext, sess: Session): Promis
   // Strip "Electron/x.x" from the UA — sites that detect Electron render broken,
   // and a unique Electron UA is itself a fingerprint. Present as plain Chrome.
   sess.setUserAgent(CHROME_UA)
+}
+
+// Route a session through the bundled Tor SOCKS listener.
+//   socks5h  — the 'h' makes Chromium resolve DNS *through* the proxy (inside
+//              Tor), so hostname lookups never leak to the local ISP resolver.
+//   proxyBypassRules: '' — empty bypass list means even local-looking hostnames
+//              (localhost, *.local, RFC1918 IPs) are still tunneled, closing the
+//              usual "bypass local addresses" hole.
+// The URL is built from PORTS so this module stays decoupled from tor.ts.
+// MUST be awaited: setProxy() genuinely hands off to the network service async;
+// if the caller proceeds before the proxy is wired, the first request can fire
+// unproxied and leak the real IP/DNS. Fail-closed: if Tor isn't up yet, Chromium
+// gets ECONNREFUSED, never a direct connection. Exported so the orchestrator can
+// call this again later to upgrade a session from the fast-proxy rail to Tor.
+export async function applyTorProxyRule(sess: Session): Promise<void> {
+  await sess.setProxy({ proxyRules: 'socks5h://127.0.0.1:' + PORTS.torSocks, proxyBypassRules: '' })
+}
+
+export async function hardenGhostSession(ctx: NetContext, sess: Session): Promise<void> {
+  applyGhostPermissionsAndHeaders(ctx, sess)
+  await applyTorProxyRule(sess)
 }
 
 // ── Normal session hardening ─────────────────────────────────────────────────

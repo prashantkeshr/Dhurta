@@ -28,7 +28,12 @@ export function useBrowser() {
   const [zoomLevel, setZoomLevel] = useState(1)
   const [isVideoFullscreen, setIsVideoFullscreen] = useState(false)
   const [torActive, setTorActive] = useState(false)
-  const [torConnecting, setTorConnecting] = useState(false)
+  // Ghost Mode is instant now (see toggleGhost) — there's no "connecting" wait
+  // state anymore. This just means "Ghost Mode is on but Tor hasn't finished
+  // bootstrapping yet", so the UI can show "upgrading to Tor…" instead of a
+  // fixed on/off badge. It's derived, not a state variable, so it can never
+  // drift out of sync with the two flags it depends on.
+  const torConnecting = ghostMode && !torActive
   // Chakra is DERIVED from the settings it bundles, not a standalone flag —
   // this is what makes it reflect reality regardless of whether it was toggled
   // from the sidebar, the Omni dashboard, or the Security panel: whichever one
@@ -220,6 +225,15 @@ export function useBrowser() {
     // Flip torActive so the sidebar shows the warning badge immediately.
     const onTorCrashed = () => { setTorActive(false) }
 
+    // Background Tor bootstrap finished — every ghost tab that was riding the
+    // fast proxy rail just got silently re-pointed at real Tor onion routing.
+    const onTorUpgraded = () => { setTorActive(true) }
+
+    // Tor failed to start at all (e.g. orphaned process, blocked binary). Ghost
+    // tabs stay usable via the fast proxy rail; this just means they'll never
+    // upgrade to Tor until the user retries (re-enable Ghost Mode).
+    const onTorFailed = (msg: string) => { console.error('[Ghost] Tor failed to start:', msg) }
+
     const onPipOpened = (title: string) => { setPipActive(true); setPipTitle(title ?? '') }
     const onPipClosed = () => { setPipActive(false); setPipTitle('') }
 
@@ -232,6 +246,8 @@ export function useBrowser() {
     api().on('menu:action', onMenuAction as never)
     api().on('context-menu:action', onMenuAction as never)
     api().on('ghost:tor-crashed', onTorCrashed as never)
+    api().on('ghost:upgradedToTor', onTorUpgraded as never)
+    api().on('ghost:tor-failed', onTorFailed as never)
     api().on('pip:opened', onPipOpened as never)
     api().on('pip:closed', onPipClosed as never)
 
@@ -245,6 +261,8 @@ export function useBrowser() {
       api().off('menu:action', onMenuAction as never)
       api().off('context-menu:action', onMenuAction as never)
       api().off('ghost:tor-crashed', onTorCrashed as never)
+      api().off('ghost:upgradedToTor', onTorUpgraded as never)
+      api().off('ghost:tor-failed', onTorFailed as never)
       api().off('pip:opened', onPipOpened as never)
       api().off('pip:closed', onPipClosed as never)
     }
@@ -371,18 +389,19 @@ export function useBrowser() {
       // leak through in-flight requests while VPN tears down and Tor boots.
       await api().netKillSwitch().catch(() => {})
       if (chakraActive) await disableChakraInternal()
-      setTorConnecting(true)
-      const result = await api().enableGhost() as { tor?: boolean; error?: string } | undefined
-      setTorConnecting(false)
+      // enableGhost() returns almost instantly — it kicks off Tor's bootstrap in
+      // the background rather than blocking on it. `tor: true` here only means
+      // Tor happened to already be ready (e.g. re-enabling Ghost Mode after a
+      // prior session left it running); otherwise torActive flips to true later
+      // via the 'ghost:upgradedToTor' event once bootstrap actually completes.
+      // The ghost tab below opens immediately either way, riding a fast proxy
+      // rail until Tor is ready — never blocked on the ~15-25s bootstrap.
+      const result = await api().enableGhost() as { tor?: boolean } | undefined
       // Normal-tab sessions return to their direct baseline; ghost tabs stay
-      // Tor-routed (and fail closed on their own until the circuit is ready).
+      // proxy/Tor-routed (and fail closed on their own if neither is available).
       await api().netRelease().catch(() => {})
-      const torOk = !!result?.tor
-      setTorActive(torOk)
+      setTorActive(!!result?.tor)
       setGhostMode(true)
-      if (!torOk && result?.error) {
-        console.error('[Ghost] Tor failed:', result.error)
-      }
       window.dispatchEvent(new CustomEvent('dhurta:ghostChanged', { detail: true }))
       // Ghost tabs already get anti-fingerprint/WebRTC-block/Tor-routing
       // applied unconditionally under the hood (see createBrowserView) — this

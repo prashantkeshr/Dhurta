@@ -21,8 +21,7 @@ import { getDb, nukeDatabase, runIncinerate } from './db'
 import { getMainWindow } from './main'
 import {
   registerNetworkLayer, restoreVpnOnStartup, netContext,
-  hardenGhostSession, hardenNormalSession, webRTCPolicyFor,
-  isTorReady,
+  openGhostSession, hardenNormalSession, webRTCPolicyFor,
   type NetHostDeps,
 } from './net'
 import { enableAdBlocker, getBlockedCount } from './adBlocker'
@@ -515,7 +514,16 @@ function codeToPort(code: string): number {
 }
 
 
-async function createBrowserView(ghost: boolean): Promise<BrowserView> {
+interface CreatedView {
+  view: BrowserView
+  // Only meaningful for ghost tabs: which rail the session ended up on. 'pending'
+  // means neither a cached VPN proxy nor a fresh free-proxy fetch was available,
+  // so the session fails closed on the (not-yet-live) Tor rule — the one case
+  // where the tab genuinely cannot load anything until Tor finishes bootstrapping.
+  ghostRail?: 'tor' | 'proxy' | 'pending'
+}
+
+async function createBrowserView(ghost: boolean): Promise<CreatedView> {
   // Ghost = isolated in-memory session (nothing persists to disk), routed through
   // the bundled Tor binary so traffic — including DNS, via SOCKS5 remote resolution —
   // exits via the Tor network instead of the real ISP connection.
@@ -525,14 +533,18 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
   const antiFP = ghost || getSecurityFlag('security_antiFingerprint')
   const blockWebRTC = ghost || getSecurityFlag('security_blockWebRTC')
 
-  // Session hardening is owned by the net layer (net/sessions.ts). Ghost sessions
-  // get Tor proxy + header normalization + ad blocker + strict permissions; normal
-  // sessions get anti-fingerprint hardening + VPN/direct proxy per current settings.
-  // MUST be awaited — setProxy hands off to the network service asynchronously, and
-  // a caller that navigates immediately (tab:duplicate) would otherwise fire the
-  // first request before the proxy is wired up, leaking the real IP/DNS.
+  // Session hardening is owned by the net layer (net/sessions.ts / net/index.ts).
+  // Ghost sessions open on the fastest available rail — an already-active VPN
+  // proxy or a fresh free-proxy fetch — instead of blocking on Tor's ~15-25s
+  // bootstrap, then silently upgrade to real Tor onion routing the moment it's
+  // ready (see openGhostSession). Normal sessions get anti-fingerprint hardening
+  // + VPN/direct proxy per current settings. MUST be awaited — setProxy hands off
+  // to the network service asynchronously, and a caller that navigates immediately
+  // (tab:duplicate) would otherwise fire the first request before the proxy is
+  // wired up, leaking the real IP/DNS.
   const ctx = netContext()
-  if (ghost) await hardenGhostSession(ctx, sess)
+  let ghostRail: CreatedView['ghostRail']
+  if (ghost) ghostRail = (await openGhostSession(ctx, sess)).rail
   else       await hardenNormalSession(ctx, sess)
 
   sess.cookies.on('changed', (_e, _cookie, _cause, _removed) => {})
@@ -566,7 +578,7 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
     view.webContents.setWebRTCIPHandlingPolicy(webrtcPolicy)
   }
 
-  return view
+  return { view, ghostRail }
 }
 
 // Guards win.webContents.send() against "Object has been destroyed" crashes.
@@ -1697,9 +1709,9 @@ export function registerIpcHandlers() {
   // Tab management
   ipcMain.handle('tab:create', async (_e, url?: string, ghost = false) => {
     const id = tabIdCounter++
-    // Await so the session's proxy (Tor for ghost, VPN/direct otherwise) is
-    // fully applied before anything below can navigate — see createBrowserView.
-    const view = await createBrowserView(ghost)
+    // Await so the session's proxy (Tor/fast-rail for ghost, VPN/direct otherwise)
+    // is fully applied before anything below can navigate — see createBrowserView.
+    const { view, ghostRail } = await createBrowserView(ghost)
     const tab: Tab = {
       id,
       view,
@@ -1717,9 +1729,12 @@ export function registerIpcHandlers() {
     // Register the download handler on it now so ghost downloads auto-save too.
     if (ghost) attachDownloadSession(view.webContents.session)
     showTab(id)
-    if (ghost && !isTorReady()) {
-      // Tor hasn't bootstrapped — load a clear error page instead of letting
-      // the first navigation silently fail with a proxy connection error.
+    if (ghost && ghostRail === 'pending') {
+      // Neither an active VPN proxy nor a fresh free-proxy fetch was available,
+      // so the session fails closed on the (not-yet-live) Tor rule — this is the
+      // one case where the tab genuinely can't load anything yet. Every other
+      // ghost tab opens instantly on a proxy rail (see openGhostSession) and
+      // silently upgrades to Tor in the background, so it never hits this page.
       const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
       const logPath = esc(path.join(app.getPath('userData'), 'crash-log.json'))
       view.webContents.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
@@ -1727,7 +1742,7 @@ export function registerIpcHandlers() {
         `<div style="font-size:10px;letter-spacing:7px;color:#FF4500;opacity:.5">D H U R T A</div>` +
         `<div style="font-size:18px;color:#aaa;font-weight:bold">Tor is not ready</div>` +
         `<div style="font-size:11px;color:#555;max-width:520px;text-align:center;line-height:1.6">` +
-        `Ghost Mode requires the Tor network. Tor may still be connecting — wait a moment and open a new Ghost tab, or check that Windows Defender / antivirus is not blocking tor.exe.` +
+        `Ghost Mode requires the Tor network, and no fallback proxy could be reached either. Tor may still be connecting — wait a moment and open a new Ghost tab, or check that Windows Defender / antivirus is not blocking tor.exe.` +
         `</div>` +
         `<div style="font-size:9px;color:#333;max-width:520px;text-align:center">` +
         `For details open: ${logPath}</div>` +
@@ -2178,7 +2193,7 @@ export function registerIpcHandlers() {
     // would fire that first request through an unconfigured (direct) session,
     // leaking the real IP/DNS for exactly the site the user was trying to
     // browse anonymously.
-    const view = await createBrowserView(tab.ghost)
+    const { view } = await createBrowserView(tab.ghost)
     const newTab: Tab = {
       id, view,
       url: tab.url,

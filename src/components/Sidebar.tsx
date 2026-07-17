@@ -104,15 +104,12 @@ export default function Sidebar({
     <aside className="glass border-r border-border flex flex-col items-center py-2 w-16 shrink-0 z-50">
       {/* Trishula logo / Ghost toggle */}
       <button
-        title={torConnecting
-          ? 'Connecting to Tor… please wait'
-          : ghostMode
-            ? (torActive
-                ? 'Ghost Mode ON — Tor active ✓\nIn-memory · Fingerprint spoofed · WebRTC blocked · Traffic via Tor'
-                : 'Ghost Mode ON — Tor unavailable (traffic via direct)\nIn-memory · Fingerprint spoofed · WebRTC blocked')
-            : 'Enable Ghost Mode\nIn-memory session · Fingerprint spoofing · WebRTC blocked · Real Tor routing'}
+        title={ghostMode
+          ? (torActive
+              ? 'Ghost Mode ON — Tor active ✓\nIn-memory · Fingerprint spoofed · WebRTC blocked · Traffic via Tor'
+              : 'Ghost Mode ON — securing via proxy, upgrading to Tor…\nIn-memory · Fingerprint spoofed · WebRTC blocked')
+          : 'Enable Ghost Mode\nIn-memory session · Fingerprint spoofing · WebRTC blocked · Real Tor routing'}
         onClick={onToggleGhost}
-        disabled={torConnecting}
         className="w-10 h-10 flex items-center justify-center mb-1 transition-all duration-300 shrink-0 relative disabled:opacity-60"
         style={ghostMode ? {
           borderRadius: '50%',
