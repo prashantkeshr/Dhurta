@@ -67,6 +67,11 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
   const [torBusy, setTorBusy] = useState(false)
   const [torMsg, setTorMsg] = useState('')
 
+  // ── Tor circuit rotation ──────────────────────────────────────────────────
+  const [circuitCount, setCircuitCount] = useState(0)
+  const [newnymBusy, setNewnymBusy] = useState(false)
+  const [lastRotation, setLastRotation] = useState<Date | null>(null)
+
   const load = useCallback(async () => {
     if (typeof window.dhurta === 'undefined') return
     setLoading(true)
@@ -93,6 +98,23 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     poll()
     const t = setInterval(poll, 4000)
     return () => clearInterval(t)
+  }, [])
+
+  // Circuit count — poll and listen for auto-rotation events
+  useEffect(() => {
+    if (typeof window.dhurta === 'undefined') return
+    const refresh = () => api().torCircuitCount().then(setCircuitCount).catch(() => {})
+    refresh()
+    const t = setInterval(refresh, 5000)
+    const onRotated = (count: unknown) => {
+      setCircuitCount(Number(count))
+      setLastRotation(new Date())
+    }
+    api().on('tor:circuitRotated', onRotated)
+    return () => {
+      clearInterval(t)
+      api().off('tor:circuitRotated', onRotated)
+    }
   }, [])
 
   const checkIp = useCallback(async () => {
@@ -293,6 +315,22 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
   }
 
   // ── Tor/onion widget handlers ─────────────────────────────────────────────
+  const requestNewnym = async () => {
+    setNewnymBusy(true)
+    try {
+      const res = await api().torNewnym()
+      if (res.success) {
+        setCircuitCount(res.count ?? circuitCount + 1)
+        setLastRotation(new Date())
+        setTorMsg('New Tor circuit established')
+      } else {
+        setTorMsg(res.error ?? 'NEWNYM failed')
+      }
+    } finally {
+      setNewnymBusy(false)
+    }
+  }
+
   const applyExitNode = async () => {
     setTorBusy(true)
     setTorMsg('Applying…')
@@ -741,6 +779,23 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 ].join(' ')}>
                   {busy === 'ghost' ? '…' : ghostMode ? '● Ghost Mode ON — click to disable' : 'Enable Ghost Mode (Tor)'}
                 </button>
+                {ghostMode && torReady && (
+                  <div className="mt-2 border-t border-white/10 pt-2">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[9px] font-mono text-[#ff2bd6]/70 tracking-widest">CIRCUIT #{circuitCount} · AUTO-ROTATES EVERY 5 MIN</span>
+                      {lastRotation && (
+                        <span className="text-[9px] font-mono text-muted">last: {lastRotation.toLocaleTimeString()}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={requestNewnym}
+                      disabled={newnymBusy}
+                      className="w-full text-[10px] font-mono border border-[#ff2bd6]/40 text-[#ff2bd6] hover:bg-[#ff2bd6]/10 py-1.5 transition-colors disabled:opacity-40"
+                    >
+                      {newnymBusy ? '↻ requesting…' : '↻ New Circuit (NEWNYM)'}
+                    </button>
+                  </div>
+                )}
                 {torMsg && <p className="text-[9px] font-mono text-muted mt-1.5 truncate">{torMsg}</p>}
               </div>
             </div>

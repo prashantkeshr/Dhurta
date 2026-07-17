@@ -19,7 +19,7 @@ import fs from 'fs'
 import { pathToFileURL } from 'url'
 import { getDb, nukeDatabase, runIncinerate } from './db'
 import { getMainWindow } from './main'
-import { startTor, stopTor, isTorReady, getTorProxyRules, addTorReadyListener, addTorExitListener, setExitNodeCountry } from './tor'
+import { startTor, stopTor, isTorReady, getTorProxyRules, addTorReadyListener, addTorExitListener, setExitNodeCountry, sendNewnym, getCircuitCount } from './tor'
 import { enableAdBlocker, getBlockedCount } from './adBlocker'
 import { isLockEnabled, verifyPin, verifyRecovery, setupPin, changePin, clearPin } from './appLock'
 import { resolveToolUrl, shutdownAllTools } from './tools'
@@ -659,6 +659,33 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
   return view
 }
 
+// Guards win.webContents.send() against "Object has been destroyed" crashes.
+// The main window captured at attachViewEvents() time can be destroyed later
+// (e.g. app closing while a tab is still loading), so always check first.
+function safeSend(win: BrowserWindow, channel: string, ...args: unknown[]): void {
+  if (!win.isDestroyed()) win.webContents.send(channel, ...args)
+}
+
+// Auto-rotation timer — fires sendNewnym() every 5 min while Ghost Mode is active.
+let _newnymTimer: ReturnType<typeof setInterval> | null = null
+
+function startNewnymTimer() {
+  if (_newnymTimer) return
+  _newnymTimer = setInterval(async () => {
+    if (!isTorReady()) return
+    try {
+      await sendNewnym()
+      getMainWindow()?.webContents.send('tor:circuitRotated', getCircuitCount())
+    } catch (e) {
+      console.warn('[Tor] Auto-NEWNYM failed:', e)
+    }
+  }, 5 * 60 * 1000)
+}
+
+function stopNewnymTimer() {
+  if (_newnymTimer) { clearInterval(_newnymTimer); _newnymTimer = null }
+}
+
 function attachViewEvents(tab: Tab) {
   const win = getMainWindow()
   if (!win) return
@@ -678,7 +705,7 @@ function attachViewEvents(tab: Tab) {
   wc.on('did-start-loading', () => {
     tab.loading = true
     tab.requests = []
-    win.webContents.send('tab:loadStart', tab.id)
+    safeSend(win, 'tab:loadStart', tab.id)
   })
 
   wc.on('did-stop-loading', () => {
@@ -717,7 +744,7 @@ function attachViewEvents(tab: Tab) {
       } catch (_) {}
     }
 
-    win.webContents.send('tab:loadStop', {
+    safeSend(win, 'tab:loadStop', {
       id: tab.id,
       url: tab.url,
       title: tab.title,
@@ -956,13 +983,13 @@ function attachViewEvents(tab: Tab) {
 
   wc.on('page-title-updated', (_e, title) => {
     tab.title = title
-    win.webContents.send('tab:titleChanged', { id: tab.id, title })
+    safeSend(win, 'tab:titleChanged', { id: tab.id, title })
   })
 
   wc.on('page-favicon-updated', (_e, favicons) => {
     if (favicons[0]) {
       tab.favicon = favicons[0]
-      win.webContents.send('tab:faviconChanged', { id: tab.id, favicon: favicons[0] })
+      safeSend(win, 'tab:faviconChanged', { id: tab.id, favicon: favicons[0] })
     }
   })
 
@@ -980,7 +1007,7 @@ function attachViewEvents(tab: Tab) {
         `</html>`
       )).catch(() => {})
     })
-    win.webContents.send('tab:loadError', { id: tab.id, code: -2, desc: 'Renderer crashed', url: '' })
+    safeSend(win, 'tab:loadError', { id: tab.id, code: -2, desc: 'Renderer crashed', url: '' })
   })
 
   wc.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
@@ -988,7 +1015,7 @@ function attachViewEvents(tab: Tab) {
     // isMainFrame=false = sub-resource (ad/tracker blocked by ad-blocker) — not a page error.
     if (code === -3 || !isMainFrame) return
     if (wc.isDestroyed()) return
-    win.webContents.send('tab:loadError', { id: tab.id, code, desc, url })
+    safeSend(win, 'tab:loadError', { id: tab.id, code, desc, url })
     const offlinePage = path.join(__dirname, 'offline.html')
     wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
       if (wc.isDestroyed()) return
@@ -1041,7 +1068,7 @@ function attachViewEvents(tab: Tab) {
     // target="_blank" link (anything not matching the small-popup-size check
     // above) silently created a NORMAL tab with the real IP/connection, which
     // is a real anonymity leak, not just a UX quirk.
-    win.webContents.send('tab:openUrl', { url, ghost: tab.ghost })
+    safeSend(win, 'tab:openUrl', { url, ghost: tab.ghost })
     return { action: 'deny' }
   })
 
@@ -1061,7 +1088,7 @@ function attachViewEvents(tab: Tab) {
         items.push({ type: 'separator' })
       }
       if (params.linkURL) {
-        items.push({ label: 'Open Link in New Tab', click: () => win.webContents.send('context-menu:action', { action: 'openInNewTab', url: params.linkURL, ghost: tab.ghost }) })
+        items.push({ label: 'Open Link in New Tab', click: () => safeSend(win, 'context-menu:action', { action: 'openInNewTab', url: params.linkURL, ghost: tab.ghost }) })
         items.push({ label: 'Copy Link Address',    click: () => clipboard.writeText(params.linkURL) })
         items.push({ type: 'separator' })
       }
@@ -1086,7 +1113,7 @@ function attachViewEvents(tab: Tab) {
   wc.on('zoom-changed', (_e, _direction) => {
     // Keep the zoom level indicator in sync when zoom changes by any means.
     setTimeout(() => {
-      if (wc.isDestroyed()) return
+      if (wc.isDestroyed() || win.isDestroyed()) return
       win.webContents.send('zoom:level', { tabId: tab.id, level: wc.getZoomFactor() })
     }, 50)
   })
@@ -1104,7 +1131,7 @@ function attachViewEvents(tab: Tab) {
     }
     if (next !== null) {
       wc.setZoomFactor(next)
-      win.webContents.send('zoom:level', { tabId: tab.id, level: next })
+      safeSend(win, 'zoom:level', { tabId: tab.id, level: next })
     }
   })
 
@@ -1135,10 +1162,11 @@ function attachViewEvents(tab: Tab) {
   // HTML5 video fullscreen — expand BrowserView to cover entire window
   // (kept as belt-and-suspenders alongside the preload ipc-message approach above)
   wc.on('enter-html-full-screen', () => {
+    if (win.isDestroyed()) return
     const { width: w, height: h } = win.getBounds()
     tab.view.setAutoResize({ width: false, height: false })
     tab.view.setBounds({ x: 0, y: 0, width: w, height: h })
-    win.webContents.send('browser:fullscreen', true)
+    safeSend(win, 'browser:fullscreen', true)
     // Re-apply after a short delay in case Chromium layout raced the setBounds call
     setTimeout(() => {
       if (!win.isDestroyed() && !tab.view.webContents.isDestroyed()) {
@@ -1163,9 +1191,10 @@ function attachViewEvents(tab: Tab) {
   })
 
   wc.on('leave-html-full-screen', () => {
+    if (win.isDestroyed()) return
     tab.view.setBounds(getTabBounds(win))
     tab.view.setAutoResize({ width: true, height: true })
-    win.webContents.send('browser:fullscreen', false)
+    safeSend(win, 'browser:fullscreen', false)
     // Remove hint if still visible
     wc.executeJavaScript(`const h=document.getElementById('__dhurta_fs_hint');if(h)h.remove()`).catch(()=>{})
   })
@@ -1185,14 +1214,14 @@ function attachViewEvents(tab: Tab) {
 
     // Link actions
     if (params.linkURL) {
-      items.push({ label: 'Open Link in New Tab', click: () => win.webContents.send('context-menu:action', { action: 'openInNewTab', url: params.linkURL, ghost: tab.ghost }) })
+      items.push({ label: 'Open Link in New Tab', click: () => safeSend(win, 'context-menu:action', { action: 'openInNewTab', url: params.linkURL, ghost: tab.ghost }) })
       items.push({ label: 'Copy Link Address',    click: () => clipboard.writeText(params.linkURL) })
       items.push({ type: 'separator' })
     }
 
     // Image actions
     if (params.mediaType === 'image' && params.srcURL) {
-      items.push({ label: 'Open Image in New Tab', click: () => win.webContents.send('context-menu:action', { action: 'openInNewTab', url: params.srcURL, ghost: tab.ghost }) })
+      items.push({ label: 'Open Image in New Tab', click: () => safeSend(win, 'context-menu:action', { action: 'openInNewTab', url: params.srcURL, ghost: tab.ghost }) })
       items.push({ label: 'Copy Image Address',    click: () => clipboard.writeText(params.srcURL) })
       items.push({ label: 'Save Image As…',        click: () => wc.downloadURL(params.srcURL) })
       items.push({ type: 'separator' })
@@ -1205,7 +1234,7 @@ function attachViewEvents(tab: Tab) {
         label: `Search for "${params.selectionText.slice(0, 30)}${params.selectionText.length > 30 ? '…' : ''}"`,
         click: () => {
           const url = getSearchUrl(params.selectionText)
-          win.webContents.send('context-menu:action', { action: 'openInNewTab', url, ghost: tab.ghost })
+          safeSend(win, 'context-menu:action', { action: 'openInNewTab', url, ghost: tab.ghost })
         },
       })
       items.push({ type: 'separator' })
@@ -1229,7 +1258,7 @@ function attachViewEvents(tab: Tab) {
       ).catch(() => {}),
     })
     items.push({ label: 'Print…',           click: () => wc.print() })
-    items.push({ label: 'View Page Source',  click: () => win.webContents.send('context-menu:action', { action: 'openInNewTab', url: 'view-source:' + wc.getURL(), ghost: tab.ghost }) })
+    items.push({ label: 'View Page Source',  click: () => safeSend(win, 'context-menu:action', { action: 'openInNewTab', url: 'view-source:' + wc.getURL(), ghost: tab.ghost }) })
     items.push({ type: 'separator' })
     items.push({ label: 'Inspect Element',   click: () => wc.inspectElement(params.x, params.y) })
     items.push({
@@ -1240,7 +1269,7 @@ function attachViewEvents(tab: Tab) {
         if (url && !isNewTabUrl(url)) {
           try {
             getDb().prepare('INSERT OR IGNORE INTO bookmarks (url, title, favicon) VALUES (?, ?, ?)').run(url, title, '')
-            win.webContents.send('context-menu:action', { action: 'bookmarkAdded' })
+            safeSend(win, 'context-menu:action', { action: 'bookmarkAdded' })
           } catch (_) {}
         }
       },
@@ -1418,7 +1447,7 @@ function getDownloadDir(): string {
 // Window is resolved lazily at event-fire time so this works before createWindow().
 function _handleWillDownload(_event: Electron.Event, item: DownloadItem) {
   const win = getMainWindow()
-  if (!win) return
+  if (!win || win.isDestroyed()) return
 
   // Auto-save to configured download folder (user-settable, defaults to ~/Downloads).
   // Without setSavePath(), Electron shows a native dialog hidden behind BrowserView.
@@ -1946,6 +1975,7 @@ export function registerIpcHandlers() {
     ghostEnabled = true
     try {
       await startTor()
+      startNewnymTimer()
       return { tor: true }
     } catch (e: any) {
       const msg = e?.message ?? String(e)
@@ -1953,9 +1983,22 @@ export function registerIpcHandlers() {
       return { tor: false, error: msg }
     }
   })
-  ipcMain.handle('ghost:disable', () => { ghostEnabled = false })
+  ipcMain.handle('ghost:disable', () => {
+    ghostEnabled = false
+    stopNewnymTimer()
+  })
   ipcMain.handle('ghost:state', () => ghostEnabled)
   ipcMain.handle('ghost:torStatus', () => isTorReady())
+
+  ipcMain.handle('tor:newnym', async () => {
+    try {
+      await sendNewnym()
+      return { success: true, count: getCircuitCount() }
+    } catch (e: any) {
+      return { success: false, error: e?.message ?? String(e) }
+    }
+  })
+  ipcMain.handle('tor:circuitCount', () => getCircuitCount())
 
   // Set Tor exit-node country (ISO 3166-1 alpha-2 or null for any country).
   // If Tor is already running, restarts it so the new ExitNodes torrc line takes effect.

@@ -3,8 +3,12 @@ import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
+import net from 'net'
 
 const SOCKS_PORT = 19050
+export const CONTROL_PORT = 19051
+
+let _circuitCount = 0
 
 let torProcess: ChildProcessWithoutNullStreams | null = null
 let torReady = false
@@ -60,6 +64,31 @@ export function getTorSocksPort() {
   return SOCKS_PORT
 }
 
+export function getCircuitCount() {
+  return _circuitCount
+}
+
+/** Send NEWNYM to Tor's control port to request a new circuit.
+ *  No-op if Tor isn't running. Resolves when the signal is acknowledged. */
+export function sendNewnym(): Promise<void> {
+  if (!torReady) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const sock = net.createConnection({ port: CONTROL_PORT, host: '127.0.0.1' })
+    sock.setTimeout(5000)
+    let buf = ''
+    sock.on('data', (chunk) => { buf += chunk.toString() })
+    sock.on('connect', () => {
+      sock.write('AUTHENTICATE ""\r\nSIGNAL NEWNYM\r\nQUIT\r\n')
+    })
+    sock.on('error', (e) => reject(e))
+    sock.on('timeout', () => { sock.destroy(); reject(new Error('Tor control port timeout')) })
+    sock.on('close', () => {
+      if (buf.includes('250')) { _circuitCount++; resolve() }
+      else reject(new Error('NEWNYM failed: ' + buf.slice(0, 100)))
+    })
+  })
+}
+
 /** Proxy rules string for Electron session.setProxy().
  *  Always returns the SOCKS5 address — callers should apply this even before
  *  Tor is running. Chromium will ECONNREFUSED until Tor bootstraps (fail-closed). */
@@ -95,6 +124,7 @@ export function startTor(): Promise<{ socksPort: number }> {
     const torrcPath = path.join(dataDir, 'torrc')
     const torrc = [
       `SocksPort 127.0.0.1:${SOCKS_PORT} IsolateDestDomain`,
+      `ControlPort 127.0.0.1:${CONTROL_PORT}`,
       `DataDirectory ${dataDir}`,
       ...(fs.existsSync(geoip) ? [`GeoIPFile ${geoip}`] : []),
       ...(fs.existsSync(geoip6) ? [`GeoIPv6File ${geoip6}`] : []),
@@ -183,6 +213,7 @@ export function stopTor() {
   }
   torReady = false
   startPromise = null
+  _circuitCount = 0
   if (dataDir) {
     try { fs.rmSync(dataDir, { recursive: true, force: true }) } catch (_) {}
     dataDir = null
