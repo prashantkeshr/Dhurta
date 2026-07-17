@@ -60,12 +60,20 @@ const CODES = {
   '-100':['ERR_CONNECTION_CLOSED','Connection closed'],
   '-101':['ERR_CONNECTION_RESET','Connection reset'],
   '-102':['ERR_CONNECTION_REFUSED','Connection refused'],
+  '-103':['ERR_CONNECTION_ABORTED','Connection aborted'],
+  '-104':['ERR_CONNECTION_FAILED','Connection failed'],
   '-105':['ERR_NAME_NOT_RESOLVED','DNS lookup failed'],
   '-106':['ERR_INTERNET_DISCONNECTED','No internet connection'],
   '-109':['ERR_ADDRESS_UNREACHABLE','Address unreachable'],
-  '-118':['ERR_CONNECTION_TIMED_OUT','Connection timed out'],
+  '-110':['ERR_CONNECTION_TIMED_OUT','Connection timed out'],
+  '-118':['ERR_EMPTY_RESPONSE','Empty response'],
+  '-130':['ERR_PROXY_CONNECTION_FAILED','Proxy unavailable — Ghost Mode is connecting'],
+  '-133':['ERR_TUNNEL_CONNECTION_FAILED','Tunnel connection failed'],
+  '-135':['ERR_PROXY_AUTH_REQUIRED','Proxy auth required'],
   '-137':['ERR_NAME_RESOLUTION_FAILED','Name resolution failed'],
+  '-200':['ERR_CERT_COMMON_NAME_INVALID','Certificate name mismatch'],
   '-501':['ERR_INSECURE_RESPONSE','Insecure response'],
+  'CRASH':['RENDERER_CRASH','Tab crashed'],
 }
 const [errCode, errTitle] = CODES[code] || ['ERR_FAILED','Something went wrong']
 document.getElementById('eCode').textContent  = errCode
