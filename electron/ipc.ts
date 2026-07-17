@@ -19,7 +19,12 @@ import fs from 'fs'
 import { pathToFileURL } from 'url'
 import { getDb, nukeDatabase, runIncinerate } from './db'
 import { getMainWindow } from './main'
-import { startTor, stopTor, isTorReady, getTorProxyRules, addTorReadyListener, addTorExitListener, setExitNodeCountry, sendNewnym, getCircuitCount } from './tor'
+import {
+  registerNetworkLayer, restoreVpnOnStartup, netContext,
+  hardenGhostSession, hardenNormalSession, webRTCPolicyFor,
+  isTorReady,
+  type NetHostDeps,
+} from './net'
 import { enableAdBlocker, getBlockedCount } from './adBlocker'
 import { isLockEnabled, verifyPin, verifyRecovery, setupPin, changePin, clearPin } from './appLock'
 import { resolveToolUrl, shutdownAllTools } from './tools'
@@ -427,7 +432,6 @@ interface RequestEntry {
 let tabIdCounter = 1
 const tabs = new Map<number, Tab>()
 let activeTabId = -1
-let ghostEnabled = false
 let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
 
@@ -505,54 +509,11 @@ function getSearchUrl(query: string): string {
   } catch { return `https://www.google.com/search?q=${q}` }
 }
 
-async function fetchFreeProxy(country = 'all'): Promise<string | null> {
-  const cc = country === 'all' ? 'all' : country.toUpperCase()
-  const urls = [
-    `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
-    `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
-  ]
-  for (const src of urls) {
-    try {
-      const resp = await fetch(src, { signal: AbortSignal.timeout(8000) })
-      const text = await resp.text()
-      const proxies = text.split('\n')
-        .map(l => l.trim())
-        .filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
-      if (proxies.length > 0) {
-        return proxies[Math.floor(Math.random() * Math.min(proxies.length, 30))]
-      }
-    } catch { continue }
-  }
-  return null
-}
-
 
 function codeToPort(code: string): number {
   return 40000 + (parseInt(code, 10) % 20000)
 }
 
-async function lookupIp(sess: Electron.Session) {
-  const providers = [
-    { url: 'https://ipapi.co/json/', map: (j: any) => ({
-      ip: j.ip, country: j.country_name, countryCode: j.country_code,
-      city: j.city, region: j.region, lat: j.latitude, lon: j.longitude, org: j.org,
-    })},
-    { url: 'http://ip-api.com/json/', map: (j: any) => ({
-      ip: j.query, country: j.country, countryCode: j.countryCode,
-      city: j.city, region: j.regionName, lat: j.lat, lon: j.lon, org: j.isp,
-    })},
-  ]
-  for (const p of providers) {
-    try {
-      const resp = await net.fetch(p.url, { session: sess, signal: AbortSignal.timeout(6000) } as any)
-      if (!resp.ok) continue
-      const json = await resp.json()
-      const mapped = p.map(json)
-      if (mapped.ip) return { success: true, ...mapped }
-    } catch (_) { continue }
-  }
-  return { success: false, error: 'Could not reach an IP-lookup service (offline, or all providers blocked).' }
-}
 
 async function createBrowserView(ghost: boolean): Promise<BrowserView> {
   // Ghost = isolated in-memory session (nothing persists to disk), routed through
@@ -564,67 +525,15 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
   const antiFP = ghost || getSecurityFlag('security_antiFingerprint')
   const blockWebRTC = ghost || getSecurityFlag('security_blockWebRTC')
 
-  if (ghost) {
-    sess.setPermissionRequestHandler((_wc, permission, cb) => {
-      if (permission === 'media' || permission === 'geolocation') cb(false)
-      else cb(true)
-    })
-    // Always apply Tor proxy — fail-closed: if Tor hasn't bootstrapped yet,
-    // Chromium gets ECONNREFUSED (blocked) rather than routing directly to the ISP.
-    // proxyBypassRules: '' ensures even local-looking hostnames are still tunneled.
-    // MUST be awaited: session.setProxy() is genuinely async (hands off to the
-    // network service) — createBrowserView used to return the BrowserView
-    // immediately without waiting, so a caller that navigates right away
-    // (tab:duplicate did exactly this) could fire the first request before
-    // the proxy was actually wired up, leaking the real IP/DNS unproxied.
-    await sess.setProxy({ proxyRules: getTorProxyRules(), proxyBypassRules: '' })
-    // Each ghost tab gets its own unique memory: partition, so we must explicitly
-    // enable the ad blocker for it (persist:default is handled once in main.ts).
-    try { enableAdBlocker(sess) } catch (_) {}
-    // Normalize privacy-relevant request headers on every outbound request.
-    // Accept-Language is the important one: the JS-side spoof only changes
-    // navigator.language(s); the actual Accept-Language HTTP header still carried
-    // the real OS locale to every server — a leak on its own AND a contradiction
-    // with the spoofed navigator.language ('en-US' in JS vs. real locale in the
-    // header) that itself fingerprints the session as spoofed. Pin both to en-US.
-    sess.webRequest.onBeforeSendHeaders((details, callback) => {
-      details.requestHeaders['DNT'] = '1'
-      details.requestHeaders['Sec-GPC'] = '1'
-      details.requestHeaders['Accept-Language'] = 'en-US,en;q=0.9'
-      callback({ requestHeaders: details.requestHeaders })
-    })
-  } else {
-    // Geolocation reveals a precise real-world location regardless of IP/proxy spoofing —
-    // deny it outright whenever anti-fingerprint protection is on.
-    if (antiFP) {
-      sess.setPermissionRequestHandler((_wc, permission, cb) => {
-        if (permission === 'geolocation') cb(false)
-        else cb(true)
-      })
-      // Same Accept-Language normalization as ghost mode — without it, the
-      // anti-fingerprint JS spoof of navigator.language is contradicted by the
-      // real-locale Accept-Language header.
-      sess.webRequest.onBeforeSendHeaders((details, callback) => {
-        details.requestHeaders['DNT'] = '1'
-        details.requestHeaders['Sec-GPC'] = '1'
-        details.requestHeaders['Accept-Language'] = 'en-US,en;q=0.9'
-        callback({ requestHeaders: details.requestHeaders })
-      })
-    }
-    // Only reset to direct if VPN is NOT active — never clobber an active VPN proxy
-    const vpnActive = getSecurityFlag('security_ipRotation')
-    if (vpnActive) {
-      const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
-      if (proxyRow?.value) await sess.setProxy({ proxyRules: `socks5://${proxyRow.value}` })
-    } else {
-      await sess.setProxy({ proxyRules: 'direct://' })
-    }
-  }
-
-  // Remove "Electron/x.x.x" from UA — many sites (Brave Search, Google, etc.) detect
-  // Electron and render broken/simplified layouts. A plain Chrome UA fixes this.
-  const chromeUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-  sess.setUserAgent(chromeUA)
+  // Session hardening is owned by the net layer (net/sessions.ts). Ghost sessions
+  // get Tor proxy + header normalization + ad blocker + strict permissions; normal
+  // sessions get anti-fingerprint hardening + VPN/direct proxy per current settings.
+  // MUST be awaited — setProxy hands off to the network service asynchronously, and
+  // a caller that navigates immediately (tab:duplicate) would otherwise fire the
+  // first request before the proxy is wired up, leaking the real IP/DNS.
+  const ctx = netContext()
+  if (ghost) await hardenGhostSession(ctx, sess)
+  else       await hardenNormalSession(ctx, sess)
 
   sess.cookies.on('changed', (_e, _cookie, _cause, _removed) => {})
 
@@ -652,8 +561,9 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
   // RTCPeerConnection block in webviewPreload.js stops page code from calling
   // the API, but without this policy Chromium's internal ICE agent can still
   // leak real IPs in STUN/TURN candidates before JS even runs.
-  if (blockWebRTC || ghost) {
-    view.webContents.setWebRTCIPHandlingPolicy('disable_non_proxied_udp')
+  const webrtcPolicy = webRTCPolicyFor(ghost, blockWebRTC)
+  if (webrtcPolicy !== 'default') {
+    view.webContents.setWebRTCIPHandlingPolicy(webrtcPolicy)
   }
 
   return view
@@ -664,26 +574,6 @@ async function createBrowserView(ghost: boolean): Promise<BrowserView> {
 // (e.g. app closing while a tab is still loading), so always check first.
 function safeSend(win: BrowserWindow, channel: string, ...args: unknown[]): void {
   if (!win.isDestroyed()) win.webContents.send(channel, ...args)
-}
-
-// Auto-rotation timer — fires sendNewnym() every 5 min while Ghost Mode is active.
-let _newnymTimer: ReturnType<typeof setInterval> | null = null
-
-function startNewnymTimer() {
-  if (_newnymTimer) return
-  _newnymTimer = setInterval(async () => {
-    if (!isTorReady()) return
-    try {
-      await sendNewnym()
-      getMainWindow()?.webContents.send('tor:circuitRotated', getCircuitCount())
-    } catch (e) {
-      console.warn('[Tor] Auto-NEWNYM failed:', e)
-    }
-  }, 5 * 60 * 1000)
-}
-
-function stopNewnymTimer() {
-  if (_newnymTimer) { clearInterval(_newnymTimer); _newnymTimer = null }
 }
 
 function attachViewEvents(tab: Tab) {
@@ -1426,29 +1316,17 @@ function openPopoutWindow(url: string) {
   })
 }
 
-async function applyProxyToAllSessions(proxyRules: string) {
-  const config = { proxyRules }
-  await Promise.all([
-    session.defaultSession.setProxy(config),
-    session.fromPartition('persist:default').setProxy(config),
-    ...[...tabs.values()].filter(t => !t.ghost && !t.view.webContents.isDestroyed()).map(t => t.view.webContents.session.setProxy(config)),
-  ])
-}
-
-// Kill-switch — routes ALL normal-tab traffic to a dead loopback port so every
-// request fails closed (ERR_PROXY_CONNECTION_FAILED) instead of falling back to
-// the direct connection. Used to seal the transition window: while a VPN proxy
-// is being fetched, or while the user is switching between privacy modes, the
-// real IP must NOT leak out through in-flight or auto-refreshing requests.
-// proxyBypassRules:'' forces even localhost through the dead proxy so nothing escapes.
-const BLACKHOLE_RULES = 'socks5://127.0.0.1:1'
-async function applyKillSwitch() {
-  const config = { proxyRules: BLACKHOLE_RULES, proxyBypassRules: '' }
-  await Promise.all([
-    session.defaultSession.setProxy(config),
-    session.fromPartition('persist:default').setProxy(config),
-    ...[...tabs.values()].filter(t => !t.ghost && !t.view.webContents.isDestroyed()).map(t => t.view.webContents.session.setProxy(config)),
-  ])
+// Every non-ghost session that VPN/kill-switch proxy changes must reach:
+// the default session, the shared persist:default partition, and each open
+// normal tab's session (ghost tabs are excluded — they route through Tor).
+function getNonGhostSessions(): Electron.Session[] {
+  return [
+    session.defaultSession,
+    session.fromPartition('persist:default'),
+    ...[...tabs.values()]
+      .filter(t => !t.ghost && !t.view.webContents.isDestroyed())
+      .map(t => t.view.webContents.session),
+  ]
 }
 
 function getDownloadDir(): string {
@@ -1603,6 +1481,28 @@ export function registerIpcHandlers() {
   for (const [key, val] of SECURITY_DEFAULTS) {
     getDb().prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run(key, val)
   }
+
+  // ── Network layer ───────────────────────────────────────────────────────────
+  // Registers every network IPC handler (ghost:*, tor:*, vpn:*, net:*, omni:check*,
+  // security:setIPRotation/rotateProxy) and owns the NEWNYM auto-rotation timer.
+  // We supply the hooks it needs into tab state + settings; it stays decoupled.
+  const netDeps: NetHostDeps = {
+    getNonGhostSessions,
+    getTabSession: (tabId?: number) => {
+      const tab = tabId != null ? tabs.get(tabId) : tabs.get(activeTabId)
+      return tab?.view.webContents.session ?? session.defaultSession
+    },
+    getMainWindow,
+    getSetting: (key: string) => {
+      const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get(key) as any
+      return row?.value ?? null
+    },
+    setSetting: (key: string, value: string) => {
+      getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value)
+    },
+    enableAdBlocker,
+  }
+  registerNetworkLayer(netDeps)
 
   // Restore persisted warmth level so the setting survives restarts
   const _wRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('display_warmth') as any
@@ -1983,60 +1883,8 @@ export function registerIpcHandlers() {
     tabs.get(id)?.view.webContents.stop()
   })
 
-  // Ghost mode — boots the bundled Tor binary so ghost tabs route through the
-  // real Tor network. If Tor fails to bootstrap (no internet, blocked, etc.)
-  // Ghost Mode still activates with fingerprint spoofing + WebRTC block, but
-  // without Tor routing — the renderer is told so it can warn the user.
-  ipcMain.handle('ghost:enable', async () => {
-    ghostEnabled = true
-    try {
-      await startTor()
-      startNewnymTimer()
-      return { tor: true }
-    } catch (e: any) {
-      const msg = e?.message ?? String(e)
-      console.error('[Dhurta] Tor failed to start:', msg)
-      return { tor: false, error: msg }
-    }
-  })
-  ipcMain.handle('ghost:disable', () => {
-    ghostEnabled = false
-    stopNewnymTimer()
-  })
-  ipcMain.handle('ghost:state', () => ghostEnabled)
-  ipcMain.handle('ghost:torStatus', () => isTorReady())
-
-  ipcMain.handle('tor:newnym', async () => {
-    try {
-      await sendNewnym()
-      return { success: true, count: getCircuitCount() }
-    } catch (e: any) {
-      return { success: false, error: e?.message ?? String(e) }
-    }
-  })
-  ipcMain.handle('tor:circuitCount', () => getCircuitCount())
-
-  // Set Tor exit-node country (ISO 3166-1 alpha-2 or null for any country).
-  // If Tor is already running, restarts it so the new ExitNodes torrc line takes effect.
-  ipcMain.handle('ghost:setExitNode', async (_e, country: string | null) => {
-    setExitNodeCountry(country)
-    if (!isTorReady()) return { success: true, restarted: false }
-    stopTor()
-    try {
-      await startTor()
-      // Re-apply proxy to all open ghost sessions (same SOCKS port, but fresh circuit)
-      for (const [, tab] of tabs) {
-        if (tab.ghost) {
-          tab.view.webContents.session
-            .setProxy({ proxyRules: getTorProxyRules(), proxyBypassRules: '' })
-            .catch(() => {})
-        }
-      }
-      return { success: true, restarted: true }
-    } catch (e) {
-      return { success: false, error: String(e) }
-    }
-  })
+  // Ghost Mode, Tor circuits, VPN, kill-switch and IP-leak checks are all
+  // registered by the network layer — see registerNetworkLayer(...) below.
 
   // Zoom
   ipcMain.handle('zoom:in', (_e, tabId: number) => {
@@ -2212,33 +2060,8 @@ export function registerIpcHandlers() {
     autoClean: getSecurityFlag('security_autoClean'),
   }))
 
-  ipcMain.handle('security:setIPRotation', async (_e, enabled: boolean) => {
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', String(enabled))
-    if (enabled) {
-      const proxy = await fetchFreeProxy()
-      if (proxy) {
-        await applyProxyToAllSessions(`socks5://${proxy}`)
-        getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-        return { success: true, proxy }
-      }
-      getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'false')
-      return { success: false, error: 'No proxies found. Try again in a moment.' }
-    } else {
-      await applyProxyToAllSessions('direct://')
-      getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', '')
-      return { success: true }
-    }
-  })
-
-  ipcMain.handle('security:rotateProxy', async () => {
-    const proxy = await fetchFreeProxy()
-    if (proxy) {
-      await applyProxyToAllSessions(`socks5://${proxy}`)
-      getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-      return { success: true, proxy }
-    }
-    return { success: false, error: 'No proxies found. Try again in a moment.' }
-  })
+  // security:setIPRotation and security:rotateProxy are registered by the
+  // network layer (registerNetworkLayer) — same free-proxy engine as vpn:*.
 
   ipcMain.handle('security:setAntiFingerprint', (_e, enabled: boolean) => {
     getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_antiFingerprint', String(enabled))
@@ -3253,72 +3076,8 @@ export function registerIpcHandlers() {
     }
   })
 
-  // Kill-switch — block all normal-tab traffic (fail closed). The renderer
-  // brackets every mode transition with these so the real IP can't leak through
-  // in-flight/auto-refreshing requests during the switch-over window.
-  ipcMain.handle('net:killSwitch', async () => { await applyKillSwitch() })
-  ipcMain.handle('net:release', async () => { await applyProxyToAllSessions('direct://') })
-
-  // VPN — free public proxy with optional country selection
-  ipcMain.handle('vpn:connect', async (_e, country?: string) => {
-    // Seal the connection FIRST: fetchFreeProxy can take several seconds, and
-    // during that window the sessions would otherwise still be on the direct
-    // connection, leaking the real IP. Fail closed until the proxy is live.
-    await applyKillSwitch()
-    const proxy = await fetchFreeProxy(country)
-    if (!proxy) {
-      // No proxy found — restore direct so the user can still browse, but the
-      // caller learns it failed (traffic was blocked, not leaked, during the try).
-      await applyProxyToAllSessions('direct://')
-      return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
-    }
-    await applyProxyToAllSessions(`socks5://${proxy}`)
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'true')
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('vpnCountry', country ?? 'all')
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-    return { success: true, proxy, country: country ?? 'Auto' }
-  })
-
-  ipcMain.handle('vpn:disconnect', async () => {
-    await applyProxyToAllSessions('direct://')
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('security_ipRotation', 'false')
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', '')
-  })
-
-  ipcMain.handle('vpn:rotate', async () => {
-    const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('vpnCountry') as any
-    const country = row?.value ?? 'all'
-    const proxy = await fetchFreeProxy(country)
-    if (!proxy) return { success: false, error: 'No servers available right now. Try again.' }
-    await applyProxyToAllSessions(`socks5://${proxy}`)
-    getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-    return { success: true, proxy }
-  })
-
-  // Public-IP / geolocation check — what a DNS/IP checker on the open web would
-  // see for the CURRENTLY ACTIVE TAB's egress. Routed via net.fetch bound to that
-  // tab's own session so it honors whatever proxy/Tor circuit is actually active
-  // (or reveals the real ISP IP when no protection is on) — an accurate "what's
-  // leaking right now" readout for the Omni dashboard, not a generic lookup.
-  ipcMain.handle('omni:checkIp', async (_e, tabId?: number) => {
-    const tab = tabId != null ? tabs.get(tabId) : tabs.get(activeTabId)
-    const sess = tab?.view.webContents.session ?? session.defaultSession
-    return lookupIp(sess)
-  })
-
-  // "Real" unmasked IP — routed through a dedicated session partition that is
-  // FORCED to direct:// right before every check, regardless of whatever proxy
-  // state VPN/Ghost Mode have set elsewhere. VPN connect applies its proxy to
-  // session.defaultSession too (see applyProxyToAllSessions), so that session
-  // can't be used as a "what's my real IP" baseline while VPN is on — this
-  // dedicated partition is never touched by that code path, only by this
-  // handler, so it always reflects the true underlying connection.
-  let _directCheckSession: Electron.Session | null = null
-  ipcMain.handle('omni:checkRealIp', async () => {
-    if (!_directCheckSession) _directCheckSession = session.fromPartition('persist:omni-direct-check')
-    await _directCheckSession.setProxy({ proxyRules: 'direct://' })
-    return lookupIp(_directCheckSession)
-  })
+  // Kill-switch, VPN (vpn:*), and IP-leak checks (omni:checkIp / omni:checkRealIp)
+  // are registered by the network layer — see registerNetworkLayer(...) below.
 
   // Network connectivity check — actual internet reachability (not just adapter status).
   // The renderer's navigator.onLine only reflects whether a network adapter exists,
@@ -3466,24 +3225,10 @@ export function registerIpcHandlers() {
     await session.defaultSession.clearStorageData({ storages: ['cookies'] })
   }, 60 * 60 * 1000)
 
-  // When Tor finishes bootstrapping, retroactively apply the proxy to any ghost
-  // sessions that were created while Tor was still connecting. This ensures tabs
-  // opened the moment Ghost Mode is toggled are not left without a proxy.
-  addTorReadyListener(() => {
-    for (const [, tab] of tabs) {
-      if (tab.ghost) {
-        tab.view.webContents.session
-          .setProxy({ proxyRules: getTorProxyRules(), proxyBypassRules: '' })
-          .catch(() => {})
-      }
-    }
-  })
-
-  // If Tor crashes after having been running, notify the renderer so the sidebar
-  // can flip torActive to false and warn the user that Ghost Mode lost its circuit.
-  addTorExitListener(() => {
-    getMainWindow()?.webContents.send('ghost:tor-crashed')
-  })
+  // Note: ghost tabs get their Tor proxy at creation time (hardenGhostSession).
+  // The proxy rule (socks5h://127.0.0.1:19050) is static, so once Tor bootstraps
+  // Chromium's SOCKS retries succeed automatically — no retroactive reapply
+  // needed. Tor-crash notification to the renderer is wired in the net layer.
 
   // Search suggestions — fetched server-side so CORS never blocks the renderer.
   // Returns up to 8 suggestion strings in OpenSearch list format.
@@ -3641,19 +3386,7 @@ export function setupWindowListeners() {
   }
 
   // ── VPN restoration ───────────────────────────────────────────────────────
-  // Re-apply a previously active proxy so VPN survives app restarts.
-  // On first launch (Chakra just set VPN=ON), activeProxy is empty so fetch fresh.
-  if (getSecurityFlag('security_ipRotation')) {
-    const proxyRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('activeProxy') as any
-    if (proxyRow?.value) {
-      applyProxyToAllSessions(`socks5://${proxyRow.value}`).catch(() => {})
-    } else {
-      fetchFreeProxy().then(proxy => {
-        if (!proxy) return
-        return applyProxyToAllSessions(`socks5://${proxy}`).then(() => {
-          getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('activeProxy', proxy)
-        })
-      }).catch(() => {})
-    }
-  }
+  // Re-apply a previously active proxy so VPN survives app restarts (net layer
+  // handles the "active but no saved proxy yet" first-run case by fetching fresh).
+  restoreVpnOnStartup().catch(() => {})
 }
