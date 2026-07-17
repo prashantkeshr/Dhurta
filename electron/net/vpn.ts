@@ -88,8 +88,13 @@ export async function vpnConnect(ctx: NetContext, country?: string): Promise<Pro
   if (!proxy) {
     // Nothing found — lift the kill-switch back to direct so the user can still
     // browse. Traffic was blocked (not leaked) during the attempt; the caller just
-    // learns it failed.
+    // learns it failed. Also clear ipRotation/activeProxy: without this, a failed
+    // connect (or a failed restoreVpnOnStartup retry) leaves settings claiming
+    // "IP Rotation: ON" while every session is silently on direct:// — a state
+    // that can only be discovered by inspecting the DB, not from the UI.
     await releaseKillSwitch(ctx)
+    ctx.setSetting(SETTINGS.ipRotation, 'false')
+    ctx.setSetting(SETTINGS.activeProxy, '')
     return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
   }
 

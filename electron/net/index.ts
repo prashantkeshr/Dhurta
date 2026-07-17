@@ -47,6 +47,13 @@ export interface NetHostDeps {
   setSetting(key: string, value: string): void
   /** enable the ad/tracker blocker on a session. */
   enableAdBlocker(sess: Session): void
+  /** Called right after ghost sessions are upgraded from the fast proxy rail to
+   *  real Tor. Swapping a session's proxy does NOT retroactively re-route
+   *  content already rendered — without this hook the user keeps looking at a
+   *  fast-rail page with no visible sign Tor took over. ipc.ts finds the tabs
+   *  backed by these sessions and reloads them (skipping the internal new-tab
+   *  page, where there's nothing to reload). */
+  onGhostSessionsUpgraded(sessions: Session[]): void
 }
 
 let _deps: NetHostDeps | null = null
@@ -155,13 +162,18 @@ export async function openGhostSession(
 }
 
 /** Re-point every ghost session still on the fast rail at the real Tor listener,
- *  then notify the renderer so the UI can drop its "single-hop" indicator. */
+ *  reload the tabs backed by them (a proxy swap doesn't retroactively re-route
+ *  already-rendered content), then notify the renderer so the UI can drop its
+ *  "single-hop" indicator. */
 function upgradePendingGhostSessions(): void {
   if (_pendingTorUpgrade.size === 0) return
   const sessions = [..._pendingTorUpgrade]
   _pendingTorUpgrade.clear()
   Promise.all(sessions.map(s => applyTorProxyRule(s).catch(() => {})))
-    .then(() => safeSend('ghost:upgradedToTor', sessions.length))
+    .then(() => {
+      try { _deps?.onGhostSessionsUpgraded(sessions) } catch (_) {}
+      safeSend('ghost:upgradedToTor', sessions.length)
+    })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

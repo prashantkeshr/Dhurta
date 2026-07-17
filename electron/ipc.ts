@@ -1513,6 +1513,19 @@ export function registerIpcHandlers() {
       getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value)
     },
     enableAdBlocker,
+    onGhostSessionsUpgraded: (sessions) => {
+      // A session's proxy swap (fast rail → real Tor) doesn't retroactively
+      // re-route content already rendered — reload each open ghost tab backed
+      // by one of these sessions so the user actually SEES it now going through
+      // Tor, instead of a stale fast-rail page with no visible change.
+      const upgraded = new Set(sessions)
+      for (const [, tab] of tabs) {
+        if (!tab.ghost || !upgraded.has(tab.view.webContents.session)) continue
+        if (isNewTabUrl(tab.url)) continue // nothing rendered yet — no need to reload
+        if (tab.view.webContents.isDestroyed()) continue
+        tab.view.webContents.reload()
+      }
+    },
   }
   registerNetworkLayer(netDeps)
 
