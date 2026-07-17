@@ -15,7 +15,7 @@ import type { BrowserWindow, Session } from 'electron'
 import type { NetContext } from './types'
 import {
   startTor, stopTor, isTorReady, sendNewnym, getCircuitCount,
-  setExitNodeCountry, onTorReady, onTorExit,
+  setExitNodeCountry, onTorReady, onTorExit, onBootstrapProgress, getBootstrapProgress,
 } from './tor'
 import {
   vpnConnect, vpnDisconnect, vpnRotate, applyKillSwitch, releaseKillSwitch,
@@ -187,6 +187,10 @@ export function registerNetworkLayer(deps: NetHostDeps): void {
   // Tor crashed after being ready → warn the renderer so Ghost UI can react.
   onTorExit(() => safeSend('ghost:tor-crashed'))
 
+  // Push every bootstrap progress update to the renderer so the Ghost Mode
+  // banner can show a live percentage + ETA instead of a silent wait.
+  onBootstrapProgress((p) => safeSend('tor:bootstrapProgress', p))
+
   // ── Ghost Mode ─────────────────────────────────────────────────────────────
   // Returns IMMEDIATELY — never blocks on Tor's ~15-25s bootstrap. `tor: true`
   // only reflects whether Tor happens to already be ready (e.g. re-enabling
@@ -245,6 +249,10 @@ export function registerNetworkLayer(deps: NetHostDeps): void {
     }
   })
   ipcMain.handle('tor:circuitCount', () => getCircuitCount())
+
+  // Current bootstrap progress snapshot — for a banner that mounts after
+  // bootstrap already started (e.g. re-render, or app restart mid-boot).
+  ipcMain.handle('tor:getBootstrapProgress', () => getBootstrapProgress())
 
   // ── VPN / free proxy ─────────────────────────────────────────────────────────
   ipcMain.handle('vpn:connect', (_e, country?: string) => vpnConnect(ctx, country))

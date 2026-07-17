@@ -38,6 +38,62 @@ let exitNodeCountry: string | null = null
 // Number of distinct circuits used this session (bootstrap = 1, +1 per NEWNYM).
 let _circuitCount = 0
 
+// ── Bootstrap progress state (for the UI progress banner) ───────────────────
+let _bootstrapPercent = 0
+let _bootstrapTag = ''
+let _bootstrapSummary = ''
+let _bootstrapStartedAt: number | null = null
+
+export interface BootstrapProgress {
+  percent: number
+  tag: string
+  summary: string
+  elapsedMs: number
+  // null until we have at least one non-zero data point to extrapolate from.
+  etaMs: number | null
+}
+
+function currentBootstrapProgress(): BootstrapProgress {
+  const elapsedMs = _bootstrapStartedAt ? Date.now() - _bootstrapStartedAt : 0
+  // Simple linear extrapolation from elapsed-time-per-percent-point — Tor's own
+  // logs don't include an ETA, and bootstrap speed is roughly linear-ish once
+  // past the first couple of stalls, so this is a reasonable "~Xs remaining"
+  // estimate rather than a precise figure.
+  const etaMs = (_bootstrapPercent > 0 && _bootstrapPercent < 100)
+    ? Math.round(elapsedMs * (100 - _bootstrapPercent) / _bootstrapPercent)
+    : null
+  return { percent: _bootstrapPercent, tag: _bootstrapTag, summary: _bootstrapSummary, elapsedMs, etaMs }
+}
+
+/** Current bootstrap progress snapshot — for a UI that mounts after bootstrap
+ *  already started (e.g. app restart, or the banner mounting late). */
+export function getBootstrapProgress(): BootstrapProgress {
+  return currentBootstrapProgress()
+}
+
+// Listeners fired on every bootstrap progress update (not one-shot — persist
+// for the app's lifetime; net/index.ts subscribes exactly once at startup).
+const _progressListeners: Array<(p: BootstrapProgress) => void> = []
+export function onBootstrapProgress(cb: (p: BootstrapProgress) => void): void {
+  _progressListeners.push(cb)
+}
+function fireBootstrapProgress(): void {
+  const p = currentBootstrapProgress()
+  for (const cb of _progressListeners) { try { cb(p) } catch (_) {} }
+}
+
+function resetBootstrapProgress(): void {
+  _bootstrapPercent = 0
+  _bootstrapTag = ''
+  _bootstrapSummary = ''
+  _bootstrapStartedAt = null
+}
+
+// Matches Tor's own log line format: "Bootstrapped 45% (requesting_descriptors):
+// Asking for relay descriptors". Global so we can find the LAST match in a chunk
+// that happens to contain more than one progress line.
+const BOOTSTRAP_RE = /Bootstrapped (\d+)% \(([^)]+)\): ([^\r\n]+)/g
+
 // Listeners fired once when Tor reaches 100% bootstrap (drained on fire).
 const _readyListeners: Array<() => void> = []
 // Listeners fired every time Tor exits AFTER being ready (i.e. an unexpected
@@ -157,6 +213,7 @@ function cleanupFailedStart(): void {
   startPromise = null
   torProcess = null
   torReady = false
+  resetBootstrapProgress()
   if (dataDir) {
     try { fs.rmSync(dataDir, { recursive: true, force: true }) } catch (_) {}
     dataDir = null
@@ -252,6 +309,9 @@ export function startTor(exitCountry?: string | null): Promise<{ socksPort: numb
       cwd: path.dirname(torExe),
     })
     torProcess = proc
+    _bootstrapStartedAt = Date.now()
+    _bootstrapPercent = 0
+    fireBootstrapProgress()
 
     // Soft wait on bootstrap — rejects THIS caller if it's taking too long, but
     // deliberately does NOT touch torProcess/dataDir. The real Tor process is
@@ -271,11 +331,27 @@ export function startTor(exitCountry?: string | null): Promise<{ socksPort: numb
       const text = chunk.toString()
       buffer += text
       process.stdout.write('[Tor] ' + text)  // echo ALL stdout+stderr to console
+
+      // Update progress from the LAST "Bootstrapped NN% (tag): Summary" line in
+      // this chunk (a chunk can contain more than one if output was buffered).
+      BOOTSTRAP_RE.lastIndex = 0
+      let match: RegExpExecArray | null
+      let lastMatch: RegExpExecArray | null = null
+      while ((match = BOOTSTRAP_RE.exec(text))) lastMatch = match
+      if (lastMatch) {
+        _bootstrapPercent = parseInt(lastMatch[1], 10)
+        _bootstrapTag = lastMatch[2]
+        _bootstrapSummary = lastMatch[3]
+        fireBootstrapProgress()
+      }
+
       if (buffer.includes('Bootstrapped 100%')) {
         clearTimeout(timeout)
         torReady = true
         startPromise = null
         _circuitCount = 1  // first working circuit is live
+        _bootstrapPercent = 100
+        fireBootstrapProgress()
         fireTorReady()
         resolve({ socksPort: PORTS.torSocks })
       }
@@ -361,6 +437,7 @@ export function stopTor(): void {
   torReady = false
   startPromise = null
   _circuitCount = 0
+  resetBootstrapProgress()
   if (dataDir) {
     try { fs.rmSync(dataDir, { recursive: true, force: true }) } catch (_) {}
     dataDir = null

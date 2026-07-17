@@ -20,6 +20,7 @@ import TransparencyPanel from './components/panels/TransparencyPanel'
 import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import UpdateBanner from './components/UpdateBanner'
+import GhostBootstrapBanner from './components/GhostBootstrapBanner'
 import HistoryPage from './pages/HistoryPage'
 import BookmarksPage from './pages/BookmarksPage'
 import DownloadsPage from './pages/DownloadsPage'
@@ -485,6 +486,11 @@ export default function App() {
           {/* Auto-update notification — shown when a new version is downloading or ready */}
           {!isVideoFullscreen && (
             <UpdateBanner onOpenUpdatePage={() => handleNavigate('dhurta://update')} />
+          )}
+
+          {/* Ghost Mode Tor bootstrap progress — stays up until Tor is fully ready */}
+          {!isVideoFullscreen && (
+            <GhostBootstrapBanner ghostMode={ghostMode} torActive={torActive} />
           )}
 
           {/* Content area */}

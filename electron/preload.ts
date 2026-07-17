@@ -16,7 +16,7 @@ const VALID_CHANNELS = new Set([
   'pip:loadInMain', 'menu:action', 'context-menu:action',
   'extension:installed', 'appLock:locked',
   'ghost:tor-crashed', 'ghost:tor-failed', 'ghost:upgradedToTor',
-  'tor:circuitRotated', 'pip:opened', 'pip:closed',
+  'tor:circuitRotated', 'tor:bootstrapProgress', 'pip:opened', 'pip:closed',
   'update:checking', 'update:available', 'update:not-available',
   'update:progress', 'update:downloaded', 'update:error',
 ])
@@ -51,6 +51,7 @@ contextBridge.exposeInMainWorld('dhurta', {
   setExitNode: (country: string | null) => ipcRenderer.invoke('ghost:setExitNode', country),
   torNewnym: () => ipcRenderer.invoke('tor:newnym'),
   torCircuitCount: () => ipcRenderer.invoke('tor:circuitCount'),
+  getTorBootstrapProgress: () => ipcRenderer.invoke('tor:getBootstrapProgress'),
 
   // Screen warmth (eye-protection blue-light filter)
   setWarmth: (level: number) => ipcRenderer.invoke('display:setWarmth', level),

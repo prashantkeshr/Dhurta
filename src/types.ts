@@ -120,6 +120,9 @@ export interface DhurtaAPI {
   setExitNode(country: string | null): Promise<{ success: boolean; restarted?: boolean; error?: string }>
   torNewnym(): Promise<{ success: boolean; count?: number; error?: string }>
   torCircuitCount(): Promise<number>
+  getTorBootstrapProgress(): Promise<{
+    percent: number; tag: string; summary: string; elapsedMs: number; etaMs: number | null
+  }>
   setWarmth(level: number): Promise<void>
   getWarmth(): Promise<number>
   showDownloadPopup(pos: { x: number; y: number }): Promise<void>
