@@ -8,16 +8,18 @@
 //   2. "What is my TRUE IP?"  (checkRealIp) — the underlying ISP address, forced
 //      out a direct:// path so VPN/Ghost Mode can't mask the baseline.
 //
-// The whole trick is `net.fetch(url, { session })`: routing the lookup THROUGH a
-// specific session means the request inherits that session's proxy, so the IP we
-// read back is exactly what the far end would attribute to that session — not the
-// main-process default. A plain global fetch() would bypass the proxy and lie.
+// The whole trick is `sess.fetch(url)` — the SESSION's own fetch method, not the
+// module-level `net.fetch(url, { session })` — which routes the lookup through
+// that session's actual proxy, so the IP we read back is exactly what the far
+// end would attribute to that session. A plain global fetch(), or net.fetch with
+// a session option, would bypass the proxy and lie (see lookupIp for how this
+// was confirmed).
 //
 // Per the net-layer contract this module depends only on `electron` and
 // `./types` — never on other net/ modules or the DB.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { net, session } from 'electron'
+import { session } from 'electron'
 import type { Session } from 'electron'
 import type { IpInfo, NetContext } from './types'
 
@@ -54,17 +56,22 @@ const PROVIDERS: Array<{ url: string; map: (j: any) => Partial<IpInfo> }> = [
   },
 ]
 
-// Look up the egress IP/geo AS SEEN THROUGH `sess`. Binding net.fetch to the
-// passed session is deliberate and load-bearing: it forces the request out that
-// session's proxy (a tab's Tor circuit, an active VPN, or direct://), so the
-// result reflects that session's real egress rather than the process default.
-// The 6s AbortSignal keeps a wedged provider from hanging the dashboard.
+// Look up the egress IP/geo AS SEEN THROUGH `sess`. MUST use `sess.fetch()` (the
+// session's own method), NOT the module-level `net.fetch(url, { session })`.
+// Confirmed by direct testing: net.fetch(url, {session}) SILENTLY IGNORES a
+// session's SOCKS5 proxy and falls through to a direct connection — it returned
+// the real ISP IP even with a session explicitly configured to route through
+// Tor, while sess.fetch() on the exact same session correctly returned the Tor
+// exit IP. This was a real, previously-hidden bug: the Omni dashboard's "what
+// does this tab leak" check was silently checking the wrong (unproxied) path
+// while actual page navigations in the same tab were genuinely Tor-routed —
+// so the dashboard could show your real IP even while browsing was safely
+// anonymized. The 6s AbortSignal keeps a wedged provider from hanging the
+// dashboard.
 export async function lookupIp(sess: Session): Promise<IpInfo> {
   for (const p of PROVIDERS) {
     try {
-      // `session` isn't in the DOM RequestInit type but is a valid Electron
-      // net.fetch option — the `as any` is only to satisfy TS, not a behaviour hack.
-      const resp = await net.fetch(p.url, { session: sess, signal: AbortSignal.timeout(6000) } as any)
+      const resp = await sess.fetch(p.url, { signal: AbortSignal.timeout(6000) })
       if (!resp.ok) continue
       const json = await resp.json()
       const mapped = p.map(json)

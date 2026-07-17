@@ -500,7 +500,16 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
   const score = Math.round((activeCount / layers.length) * 100)
   const scoreColor = score >= 80 ? '#39ff14' : score >= 50 ? '#FF4500' : '#ff2bd6'
   const suggestions = layers.filter(l => !l.active)
-  const isMasked = ghostMode || settings.ipRotation
+  // isMasked must reflect what was ACTUALLY measured, not just whether a privacy
+  // toggle is on somewhere in the app. Omni renders inside its own tab (reusing
+  // whatever tab was active when you opened it) — that tab is not automatically
+  // the same tab as a separately-opened Ghost tab, so "Ghost Mode is ON" does NOT
+  // mean THIS tab's connection is masked. Once both IPs are in, trust the real
+  // comparison; only fall back to the toggle-based guess while data is still
+  // loading (so the badge isn't blank), and that fallback is itself corrected
+  // below the moment the real check lands.
+  const ipsCompared = ipStatus === 'done' && realIpStatus === 'done' && !!ipInfo?.ip && !!realIpInfo?.ip
+  const isMasked = ipsCompared ? ipInfo!.ip !== realIpInfo!.ip : (ghostMode || settings.ipRotation)
 
   // Every distinct destination the active tab has actually talked to, ranked by
   // frequency — the most-contacted host is treated as the page's own (first-party)
@@ -595,13 +604,23 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   ].join(' ')}>
                     {isMasked ? '● MASKED — this is what a DNS/IP checker would see (not your real IP)' : '● EXPOSED — this is your REAL IP, visible to every site and checker you visit'}
                   </div>
+                  {ghostMode && !isMasked && (
+                    <p className="text-[9px] font-mono text-muted mb-3 -mt-1">
+                      This reading is for the tab you're viewing Omni from, which is separate from any Ghost tab you opened —
+                      opening Omni doesn't move you into the Ghost tab. Switch to your Ghost tab (👻) to browse anonymously.
+                    </p>
+                  )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-1.5">
                     <OmniStat label="IP Address" value={ipInfo.ip ?? '—'} accent="#00fff2" />
                     <OmniStat label="Country" value={`${ipInfo.country ?? '—'} (${ipInfo.countryCode ?? '—'})`} accent="#00fff2" />
                     <OmniStat label="City / Region" value={`${ipInfo.city ?? '—'}, ${ipInfo.region ?? '—'}`} accent="#9d00ff" />
                     <OmniStat label="ISP / Org" value={ipInfo.org ?? '—'} accent="#9d00ff" />
                     <OmniStat label="Coordinates" value={ipInfo.lat != null ? `${ipInfo.lat.toFixed(2)}, ${ipInfo.lon?.toFixed(2)}` : '—'} accent="#FF4500" />
-                    <OmniStat label="Ghost Mode" value={ghostMode ? 'ON (Tor)' : 'OFF'} accent={ghostMode ? '#39ff14' : '#FF4500'} />
+                    <OmniStat
+                      label="Ghost Mode"
+                      value={!ghostMode ? 'OFF' : isMasked ? 'ON (Tor)' : 'ON (this tab unprotected)'}
+                      accent={ghostMode && isMasked ? '#39ff14' : ghostMode ? '#ff2bd6' : '#FF4500'}
+                    />
                   </div>
                 </>
               )}
