@@ -1772,7 +1772,25 @@ export function registerIpcHandlers() {
     // Register the download handler on it now so ghost downloads auto-save too.
     if (ghost) attachDownloadSession(view.webContents.session)
     showTab(id)
-    if (url) view.webContents.loadURL(url)
+    if (ghost && !isTorReady()) {
+      // Tor hasn't bootstrapped — load a clear error page instead of letting
+      // the first navigation silently fail with a proxy connection error.
+      const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+      const logPath = esc(path.join(app.getPath('userData'), 'crash-log.json'))
+      view.webContents.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(
+        `<html style="background:#080808;color:#888;font-family:'Courier New',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px">` +
+        `<div style="font-size:10px;letter-spacing:7px;color:#FF4500;opacity:.5">D H U R T A</div>` +
+        `<div style="font-size:18px;color:#aaa;font-weight:bold">Tor is not ready</div>` +
+        `<div style="font-size:11px;color:#555;max-width:520px;text-align:center;line-height:1.6">` +
+        `Ghost Mode requires the Tor network. Tor may still be connecting — wait a moment and open a new Ghost tab, or check that Windows Defender / antivirus is not blocking tor.exe.` +
+        `</div>` +
+        `<div style="font-size:9px;color:#333;max-width:520px;text-align:center">` +
+        `For details open: ${logPath}</div>` +
+        `</html>`
+      )).catch(() => {})
+    } else if (url) {
+      view.webContents.loadURL(url)
+    }
     return { id, url: tab.url, title: tab.title, ghost }
   })
 
@@ -1929,9 +1947,10 @@ export function registerIpcHandlers() {
     try {
       await startTor()
       return { tor: true }
-    } catch (e) {
-      console.error('[Dhurta] Tor failed to start:', e)
-      return { tor: false }
+    } catch (e: any) {
+      const msg = e?.message ?? String(e)
+      console.error('[Dhurta] Tor failed to start:', msg)
+      return { tor: false, error: msg }
     }
   })
   ipcMain.handle('ghost:disable', () => { ghostEnabled = false })

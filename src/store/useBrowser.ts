@@ -370,10 +370,14 @@ export function useBrowser() {
       // stacking with it.
       if (chakraActive) await disableChakraInternal()
       setTorConnecting(true)
-      const result = await api().enableGhost()
+      const result = await api().enableGhost() as { tor?: boolean; error?: string } | undefined
       setTorConnecting(false)
-      setTorActive(!!(result as { tor?: boolean } | undefined)?.tor)
+      const torOk = !!result?.tor
+      setTorActive(torOk)
       setGhostMode(true)
+      if (!torOk && result?.error) {
+        console.error('[Ghost] Tor failed:', result.error)
+      }
       window.dispatchEvent(new CustomEvent('dhurta:ghostChanged', { detail: true }))
       // Ghost tabs already get anti-fingerprint/WebRTC-block/Tor-routing
       // applied unconditionally under the hood (see createBrowserView) — this

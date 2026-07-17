@@ -74,11 +74,14 @@ export function startTor(): Promise<{ socksPort: number }> {
 
   startPromise = new Promise((resolve, reject) => {
     const resDir = torResourceDir()
-    // tor.exe lives in resDir/tor/ alongside its DLLs and GeoIP files
-    const torDir = path.join(resDir, 'tor')
-    const torExe = path.join(torDir, 'tor.exe')
-    const geoip  = path.join(torDir, 'geoip')
-    const geoip6 = path.join(torDir, 'geoip6')
+    const torExe = path.join(resDir, 'tor', 'tor.exe')
+    // GeoIP data lives in resDir/data/ — guard both with existsSync so a
+    // missing file is silently omitted instead of making Tor refuse to start.
+    const geoip  = path.join(resDir, 'data', 'geoip')
+    const geoip6 = path.join(resDir, 'data', 'geoip6')
+
+    console.log('[Tor] resource dir:', resDir)
+    console.log('[Tor] binary path:', torExe, '— exists:', fs.existsSync(torExe))
 
     if (!fs.existsSync(torExe)) {
       startPromise = null
@@ -91,55 +94,47 @@ export function startTor(): Promise<{ socksPort: number }> {
     dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dhurta-tor-'))
     const torrcPath = path.join(dataDir, 'torrc')
     const torrc = [
-      // IsolateDestDomain: each destination domain gets a separate Tor circuit,
-      // preventing cross-site correlation attacks (same technique Tor Browser uses).
       `SocksPort 127.0.0.1:${SOCKS_PORT} IsolateDestDomain`,
       `DataDirectory ${dataDir}`,
-      // Only include GeoIP directives if the files actually exist — a missing
-      // GeoIPFile in torrc causes Tor to refuse to start entirely.
       ...(fs.existsSync(geoip) ? [`GeoIPFile ${geoip}`] : []),
       ...(fs.existsSync(geoip6) ? [`GeoIPv6File ${geoip6}`] : []),
       'Log notice stdout',
       'ClientOnly 1',
       'AvoidDiskWrites 1',
       'CookieAuthentication 0',
-      // Privacy hardening
-      'EnforceDistinctSubnets 1',   // prevent Guard/Exit in same /16
-      'ClientUseIPv6 0',            // IPv4 only — IPv6 exit coverage is sparse
-      'NumEntryGuards 3',           // Tor Browser default — guards are stable, long-lived
-      // Remote hostname resolution: Tor's SOCKS5 listener resolves DNS server-side.
-      // Chromium's setProxy("socks5://…") sends the hostname (not the resolved IP)
-      // to the SOCKS5 server, so DNS never reaches the ISP. DNSPort is an additional
-      // defence-in-depth resolver that local tools (if any) can use.
+      'EnforceDistinctSubnets 1',
+      'ClientUseIPv6 0',
+      'NumEntryGuards 3',
       `DNSPort 127.0.0.1:19053`,
-      // Exit node country pinning (only set when the user explicitly picks a country)
       ...(exitNodeCountry ? [
         `ExitNodes {${exitNodeCountry}}`,
-        'StrictNodes 1',   // refuse to route if no exit in the chosen country is available
+        'StrictNodes 1',
       ] : []),
     ].join('\n')
+    console.log('[Tor] torrc:\n' + torrc)
     fs.writeFileSync(torrcPath, torrc, 'utf8')
 
     const proc = spawn(torExe, ['-f', torrcPath, '--ignore-missing-torrc'], {
       windowsHide: true,
-      // cwd must be torDir (not resDir) so Windows finds co-located DLLs
-      cwd: torDir,
+      cwd: path.dirname(torExe),
     })
     torProcess = proc
 
     const timeout = setTimeout(() => {
       cleanupFailedStart()
-      reject(new Error('Tor bootstrap timed out'))
-    }, 60000)   // 60 s — first-run circuit building can be slow on cold start
+      reject(new Error(`Tor bootstrap timed out after 60 s. Last output:\n${buffer.slice(-500)}`))
+    }, 60000)
 
     let buffer = ''
     const onData = (chunk: Buffer) => {
-      buffer += chunk.toString()
+      const text = chunk.toString()
+      buffer += text
+      process.stdout.write('[Tor] ' + text)   // echo to main process console
       if (buffer.includes('Bootstrapped 100%')) {
         clearTimeout(timeout)
         torReady = true
         startPromise = null
-        fireTorReady()   // notify all waiting ghost sessions
+        fireTorReady()
         resolve({ socksPort: SOCKS_PORT })
       }
     }
@@ -147,19 +142,20 @@ export function startTor(): Promise<{ socksPort: number }> {
     proc.stderr.on('data', onData)
 
     proc.on('error', (err) => {
+      console.error('[Tor] spawn error:', err)
       clearTimeout(timeout)
       cleanupFailedStart()
-      reject(err)
+      reject(new Error(`Tor spawn error: ${err.message}`))
     })
 
-    proc.on('exit', () => {
+    proc.on('exit', (code, signal) => {
       if (!torReady) {
-        // Bootstrap never completed — normal rejection path
         clearTimeout(timeout)
         cleanupFailedStart()
-        reject(new Error('Tor process exited before bootstrapping'))
+        const reason = signal ? `signal ${signal}` : `exit code ${code}`
+        console.error('[Tor] exited before bootstrap:', reason, '\nOutput:', buffer.slice(-500))
+        reject(new Error(`Tor exited before bootstrapping (${reason}).\nOutput: ${buffer.slice(-300)}`))
       } else {
-        // Was running, died unexpectedly → notify ipc.ts so it can warn the UI
         torReady = false
         torProcess = null
         fireTorExit()
