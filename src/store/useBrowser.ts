@@ -71,8 +71,19 @@ export function useBrowser() {
   // Ghost Mode can also be toggled from the Omni dashboard, not just the
   // sidebar icon — listen for the shared broadcast so this state (and
   // everything reading it, like the sidebar glow) stays correct either way.
+  // Also re-sync torActive from the real Tor status here: the Omni page's own
+  // enable/disable path never touches torActive directly (only the sidebar's
+  // toggleGhost does), so without this the Ghost bootstrap banner could get
+  // stuck showing forever after enabling Ghost Mode from Omni, even once Tor
+  // is genuinely ready — since nothing would ever flip torActive to true.
   useEffect(() => {
-    const handler = (e: Event) => setGhostMode((e as CustomEvent<boolean>).detail)
+    const handler = (e: Event) => {
+      const on = (e as CustomEvent<boolean>).detail
+      setGhostMode(on)
+      if (typeof window.dhurta === 'undefined') return
+      if (on) api().getTorStatus().then(setTorActive).catch(() => {})
+      else setTorActive(false)
+    }
     window.addEventListener('dhurta:ghostChanged', handler)
     return () => window.removeEventListener('dhurta:ghostChanged', handler)
   }, [])

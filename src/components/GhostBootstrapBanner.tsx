@@ -60,9 +60,11 @@ export default function GhostBootstrapBanner({ ghostMode, torActive }: Props) {
 
   const percent = progress?.percent ?? 0
   const summary = progress?.summary || 'Starting Tor…'
-  const etaText = progress?.etaMs != null
-    ? `~${fmtDuration(progress.etaMs)} remaining`
-    : percent > 0 ? 'estimating time…' : 'just started…'
+  const etaText = percent >= 100
+    ? 'finishing up…'
+    : progress?.etaMs != null
+      ? `~${fmtDuration(progress.etaMs)} remaining`
+      : percent > 0 ? 'estimating time…' : 'just started…'
 
   return (
     <div
