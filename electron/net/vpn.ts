@@ -9,13 +9,37 @@
 // all arrives through the NetContext supplied by net/index.ts (see ./types).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { session } from 'electron'
 import type { NetContext, ProxyResult } from './types'
 import { SETTINGS, KILLSWITCH_RULES } from './types'
 
+// Verify a candidate proxy actually forwards traffic before committing to it.
+// Free public proxy lists are frequently stale — a meaningful fraction of listed
+// servers don't actually work at any given moment — so accepting the first one
+// blindly (the previous behavior) meant "VPN connected" could silently mean
+// "pointed at a dead proxy," with every subsequent request failing while the UI
+// still claimed success (confirmed live: a fetched proxy passed the connect flow,
+// but a direct curl through it timed out completely). Uses a short-lived,
+// throwaway in-memory session so the check exercises the EXACT mechanism
+// (Electron session + SOCKS5 proxy, via sess.fetch — NOT net.fetch(url,
+// {session}), which silently ignores a session's proxy, see net/leakcheck.ts)
+// that real tabs will actually use.
+export async function isProxyAlive(proxy: string): Promise<boolean> {
+  try {
+    const testSess = session.fromPartition(`proxy-check-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+    await testSess.setProxy({ proxyRules: `socks5://${proxy}` })
+    const resp = await testSess.fetch('https://api.ipify.org', { signal: AbortSignal.timeout(4000) })
+    return resp.ok
+  } catch {
+    return false
+  }
+}
+
 // ── Free-proxy sourcing ───────────────────────────────────────────────────────
 // ProxyScrape publishes a rolling list of public SOCKS5 proxies. We ask for elite
-// (high-anonymity) SOCKS5 servers and pick a random one from the freshest slice, so
-// repeated connects/rotations spread across servers instead of hammering one.
+// (high-anonymity) SOCKS5 servers, shuffle the freshest slice, and verify each
+// candidate is actually alive before returning it (see isProxyAlive) rather than
+// trusting the list blindly.
 export async function fetchFreeProxy(country = 'all'): Promise<string | null> {
   // 'all' is ProxyScrape's wildcard; a real country must be the 2-letter code uppercased.
   const cc = country === 'all' ? 'all' : country.toUpperCase()
@@ -25,6 +49,11 @@ export async function fetchFreeProxy(country = 'all'): Promise<string | null> {
     `https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
     `https://api.proxyscrape.com/v2/?request=getproxies&protocol=socks5&timeout=10000&country=${cc}&ssl=all&anonymity=elite`,
   ]
+  // Cap total verification attempts across BOTH source URLs, not per-URL — a
+  // proxy list fetch is cheap, but each liveness check costs up to ~4s, and the
+  // caller is sitting behind the kill-switch (sealed, not leaking) the whole time.
+  const MAX_ATTEMPTS = 5
+  let attempts = 0
   for (const src of urls) {
     try {
       // AbortSignal.timeout caps each attempt — a hung endpoint must not stall the
@@ -34,10 +63,20 @@ export async function fetchFreeProxy(country = 'all'): Promise<string | null> {
       const proxies = text.split('\n')
         .map(l => l.trim())
         .filter(l => /^\d+\.\d+\.\d+\.\d+:\d+$/.test(l))
-      if (proxies.length > 0) {
-        // Randomize within the top 30 (freshest entries) so we don't all pile onto
-        // the single first server, but stay in the healthiest part of the list.
-        return proxies[Math.floor(Math.random() * Math.min(proxies.length, 30))]
+      if (proxies.length === 0) continue
+
+      // Shuffle the freshest slice so repeated connects/rotations spread across
+      // servers instead of always probing the same ones in list order.
+      const candidates = proxies.slice(0, Math.min(proxies.length, 30))
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[candidates[i], candidates[j]] = [candidates[j], candidates[i]]
+      }
+
+      for (const candidate of candidates) {
+        if (attempts >= MAX_ATTEMPTS) return null
+        attempts++
+        if (await isProxyAlive(candidate)) return candidate
       }
     } catch { continue }  // timeout / network error → try the next endpoint
   }
@@ -79,6 +118,7 @@ export async function releaseKillSwitch(ctx: NetContext): Promise<void> {
 
 // ── VPN lifecycle ──────────────────────────────────────────────────────────────
 export async function vpnConnect(ctx: NetContext, country?: string): Promise<ProxyResult> {
+  console.log(`[TEMP-DEBUG] vpnConnect start ${new Date().toISOString()}`)
   // SEAL FIRST. fetchFreeProxy can take several seconds, and until it returns the
   // sessions are still on their previous (likely direct) connection. Engage the
   // kill-switch BEFORE fetching so the real IP can't leak through any request that
@@ -86,6 +126,7 @@ export async function vpnConnect(ctx: NetContext, country?: string): Promise<Pro
   await applyKillSwitch(ctx)
 
   const proxy = await fetchFreeProxy(country)
+  console.log(`[TEMP-DEBUG] fetchFreeProxy resolved ${new Date().toISOString()} proxy=${proxy}`)
   if (!proxy) {
     // Nothing found — lift the kill-switch back to direct so the user can still
     // browse. Traffic was blocked (not leaked) during the attempt; the caller just
@@ -96,6 +137,7 @@ export async function vpnConnect(ctx: NetContext, country?: string): Promise<Pro
     await releaseKillSwitch(ctx)
     ctx.setSetting(SETTINGS.ipRotation, 'false')
     ctx.setSetting(SETTINGS.activeProxy, '')
+    console.log(`[TEMP-DEBUG] reset committed ${new Date().toISOString()}`)
     return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
   }
 

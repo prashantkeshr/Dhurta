@@ -19,7 +19,7 @@ import {
 } from './tor'
 import {
   vpnConnect, vpnDisconnect, vpnRotate, applyKillSwitch, releaseKillSwitch,
-  applyProxyToAllSessions, fetchFreeProxy,
+  applyProxyToAllSessions, fetchFreeProxy, isProxyAlive,
 } from './vpn'
 import { checkPublicIp, checkRealIp } from './leakcheck'
 import { applyGhostPermissionsAndHeaders, applyTorProxyRule } from './sessions'
@@ -282,12 +282,18 @@ export async function restoreVpnOnStartup(): Promise<void> {
   if (!_ctx) return
   if (_ctx.getSetting(SETTINGS.ipRotation) !== 'true') return
   const proxy = _ctx.getSetting(SETTINGS.activeProxy)
-  if (proxy) {
-    // Re-apply the previously active proxy so VPN survives restarts.
+  // Free proxies routinely die between restarts (short-lived by nature) — blindly
+  // re-applying a saved-but-dead proxy would silently perpetuate broken browsing
+  // across every subsequent launch, since nothing would ever try a fresh one
+  // again. Verify it's still alive first; only reuse it if it genuinely still
+  // works, otherwise fall through to fetching a fresh proxy exactly like the
+  // "no proxy saved yet" case below.
+  if (proxy && await isProxyAlive(proxy)) {
     await applyProxyToAllSessions(_ctx, `socks5://${proxy}`)
   } else {
-    // VPN was on but no proxy saved (e.g. Chakra just flipped it on first run) —
-    // fetch a fresh one. vpnConnect seals + persists activeProxy itself.
+    // Either no proxy was saved (e.g. Chakra just flipped it on first run), or
+    // the saved one is dead — fetch a fresh one. vpnConnect seals + persists
+    // activeProxy itself, and its own fetchFreeProxy already verifies liveness.
     await vpnConnect(_ctx, _ctx.getSetting(SETTINGS.vpnCountry) ?? undefined)
   }
 }
