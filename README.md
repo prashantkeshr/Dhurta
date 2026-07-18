@@ -9,7 +9,7 @@
 <br/>
 
 <!-- Core badges -->
-![Version](https://img.shields.io/badge/🔱%20version-1.0.8.0-FF4500?style=for-the-badge&labelColor=0B1120)
+![Version](https://img.shields.io/badge/🔱%20version-1.2.0-FF4500?style=for-the-badge&labelColor=0B1120)
 ![Platform](https://img.shields.io/badge/platform-Windows%20·%20macOS%20·%20Linux-3A6FBF?style=for-the-badge&labelColor=0B1120)
 ![License](https://img.shields.io/badge/license-Proprietary%20%C2%A9%20Dhurta.inc-8B1A1A?style=for-the-badge&labelColor=0B1120)
 ![Build](https://img.shields.io/github/actions/workflow/status/prashantkeshr/Dhurta/build.yml?style=for-the-badge&label=CI&labelColor=0B1120&color=2A7A40)
@@ -77,27 +77,110 @@ under your control, on your machine.
 
 ---
 
+## 🔍 Don't Trust Us — Verify Us
+
+A privacy product that asks for blind faith isn't a privacy product. Dhurta is built so you can **audit its claims yourself, from inside the browser, in under five minutes**:
+
+1. **Watch every request leave the browser.** Open **Omni → Live Request Feed** (`dhurta://omni`). Every GET/POST the active tab makes is listed live, with its destination. Browse for an hour — you will find **zero** requests to any Dhurta server, because none exist. There is no Dhurta server.
+2. **Check what's leaving beyond the page you're on.** Omni's **"Other Data Leaving This Browser"** panel splits every destination into first-party vs. third-party, so you can see exactly who else learned about your visit.
+3. **Verify the IP masking is real, not a UI label.** Omni runs a live **Real IP vs. What Sites See** comparison — two independent lookups, one forced direct and one through your active protection. If they match, Dhurta *tells you you're exposed* instead of showing a comforting green badge.
+4. **Scan your own fingerprint.** Omni's **Fingerprint Surface Scanner** shows the exact screen size, GPU string, core count, timezone, and languages the current tab is presenting to websites — so you can confirm the spoofing with your own eyes.
+5. **Go external.** Run [Wireshark](https://www.wireshark.org/) against the Dhurta process, or test at `browserleaks.com` / `coveryourtracks.eff.org` with Ghost Mode on. We encourage it.
+
+> 🔱 **Zero telemetry isn't a promise. It's an architecture.** The codebase contains no analytics SDK, no crash reporter that phones home, no update pings beyond checking the public GitHub Releases feed.
+
+<details>
+<summary><b>❓ "It's proprietary — why should I trust a closed-source privacy browser?"</b></summary>
+<br/>
+
+A fair question, and we won't dodge it. Three answers:
+
+1. **The claims above are verifiable without source access.** Network traffic doesn't lie — the Live Request Feed, Wireshark, and external leak-test sites let you confirm the zero-telemetry and IP-masking claims empirically, which is stronger evidence than source code you'd never compile yourself anyway.
+2. **A named, accountable human stands behind it** (see [Governance](#%EF%B8%8F-legal-license--governance)) — not an anonymous team that can vanish.
+3. **Source-available auditing is on the roadmap.** As the project matures, we intend to open the security-critical modules (network layer, fingerprint engine) for independent review. A young product protecting its work and a product hiding something are not the same thing — and until you can read the code, we've made sure you can read the traffic.
+
+</details>
+
+---
+
+## 🎯 Threat Model — What Dhurta Protects You From (and What It Can't)
+
+Honest security tools state their boundaries. Here are ours.
+
+**Dhurta protects you against:**
+
+| Adversary | How |
+|---|---|
+| **Trackers & ad networks** | Ad/tracker blocking, Cookie Guard, Auto-Clean, third-party visibility in Omni |
+| **Browser fingerprinting** | Uniform anonymity set: spoofed screen/GPU/cores/RAM/canvas/audio/timezone on every tab |
+| **Sites learning your real IP** | VPN proxy rail (Chakra) or real Tor onion routing (Ghost), with WebRTC leak APIs dismantled |
+| **Your ISP logging your browsing** | Ghost Mode: the ISP sees only an encrypted Tor connection, never your destinations |
+| **Silent protection failure** | Fail-closed kill switch — if the VPN drops mid-connect, traffic is **blocked**, never silently leaked. Breach banners fire the moment any shield goes down |
+| **Someone at your machine** | PIN lock screen, in-memory Ghost sessions that leave nothing on disk |
+
+**Dhurta does NOT protect you against:**
+
+- **A nation-state targeting you personally.** If that's your threat model, use the [Tor Browser](https://www.torproject.org/) on Tails — and we say that without ego.
+- **Malware already on your machine.** No browser can defend a compromised OS.
+- **What you log into.** If you sign into an account, that site knows who you are regardless of IP masking.
+- **Free-proxy operators seeing Chakra-mode traffic.** Chakra's VPN rail uses community proxies (see limitations below) — for maximum-stakes browsing, use Ghost Mode's Tor routing instead.
+
+---
+
+## ⚠️ Honest Limitations
+
+Every privacy product has trade-offs. Vendors that hide theirs are selling you something. Ours, plainly:
+
+- **The free VPN uses community proxy servers.** They can be slow, go offline mid-session, or get overloaded — this is the inherent nature of free public proxies, not a bug. Dhurta compensates by health-checking every proxy before trusting it, failing closed when one dies, and offering one-click server switching the moment a page struggles. For sensitive work, Ghost Mode's Tor routing is the stronger rail.
+- **Ghost Mode is slower than normal browsing.** That's Tor — your traffic hops through three volunteer relays across the planet. It's the cost of genuine anonymity, and we won't pretend otherwise.
+- **Builds are currently unsigned.** Windows SmartScreen and macOS Gatekeeper will warn you. Code-signing certificates cost money a young project spends carefully; signing is on the roadmap. Until then, every release ships SHA-256 checksums so you can verify your download came from us.
+- **Some sites break under heavy protection.** Canvas noise can affect DRM video; WebRTC blocking kills some video-call sites. Every shield is individually toggleable, and breach banners tell you exactly what's on or off — the choice stays yours.
+- **Windows is the primary tested platform today.** macOS and Linux builds exist but receive less testing. Report what breaks — issues get read.
+
+---
+
+## ⚖️ How Dhurta Compares — Honestly
+
+| | 🔱 Dhurta | Brave | Firefox | Tor Browser |
+|---|---|---|---|---|
+| Zero telemetry by default | ✅ none exists | ⚠️ opt-out analytics | ⚠️ opt-out telemetry | ✅ |
+| Built-in real Tor routing | ✅ Ghost Mode | ⚠️ Tor windows (no fingerprint uniformity) | ❌ | ✅ its entire purpose |
+| Built-in free VPN rail | ✅ with fail-closed kill switch | ⚠️ paid | ❌ | n/a |
+| Live self-audit dashboard (see your IP, fingerprint, every request) | ✅ Omni | ❌ | ❌ | ❌ |
+| Fingerprint spoofing to a uniform set | ✅ | ⚠️ randomization | ⚠️ partial (RFP off by default) | ✅ strongest |
+| Extension ecosystem | ⚠️ Chrome extensions, young | ✅ mature | ✅ mature | ⚠️ discouraged |
+| Track record & audits | ⚠️ new project, unaudited | ✅ established | ✅ established | ✅ established |
+| Speed on Tor-free browsing | ✅ full speed | ✅ | ✅ | ❌ always Tor |
+
+**Bottom line:** established browsers have the track record we haven't earned yet — what Dhurta offers that none of them do is the combination of *verifiable* zero-telemetry, real Tor + VPN rails in one browser, and a dashboard that shows you the truth about your own exposure instead of asking you to assume it.
+
+---
+
 ## 🚀 Installation
 
 > [!TIP]
 > Always download from the **[official Releases page](https://github.com/prashantkeshr/Dhurta/releases)** — official, verified builds only.
 
 ### 🪟 Windows
-1. Download **`Dhurta-Setup-1.0.8.exe`** from Releases.
-2. Double-click to install. Windows SmartScreen may show *"Windows protected your PC"* for unsigned builds → click **More info → Run anyway**.
-3. Launch **🔱 Dhurta Browser** from your Desktop or Start Menu.
+1. Download **`Dhurta-Setup-1.2.0.exe`** from Releases.
+2. **Verify the download** — compare its SHA-256 hash against the checksum published in the release notes:
+   ```powershell
+   Get-FileHash .\Dhurta-Setup-1.2.0.exe -Algorithm SHA256
+   ```
+3. Double-click to install. Windows SmartScreen may show *"Windows protected your PC"* for unsigned builds → click **More info → Run anyway**. *(Why this happens is explained honestly in [Known Limitations](#-honest-limitations) below.)*
+4. Launch **🔱 Dhurta Browser** from your Desktop or Start Menu.
 
 ### 🍎 macOS
-1. Download **`Dhurta-1.0.8.dmg`**, open, drag **Dhurta** to Applications.
+1. Download **`Dhurta-1.2.0.dmg`**, open, drag **Dhurta** to Applications.
 2. First launch: right-click the app → **Open** to bypass Gatekeeper on unsigned builds.
 
 ### 🐧 Linux
 ```bash
 # AppImage (portable — works on any distro)
-chmod +x Dhurta-1.0.8.AppImage && ./Dhurta-1.0.8.AppImage
+chmod +x Dhurta-1.2.0.AppImage && ./Dhurta-1.2.0.AppImage
 
 # Debian / Ubuntu
-sudo dpkg -i dhurta_1.0.8_amd64.deb
+sudo dpkg -i dhurta_1.2.0_amd64.deb
 ```
 
 ---
