@@ -1,12 +1,29 @@
 import React, { useEffect, useRef } from 'react'
 
-interface Props {
+interface Marker {
   lat?: number
   lon?: number
   label?: string
+}
+
+interface Props {
+  // Legacy single-marker form (still supported — some callers only ever have
+  // one point to show).
+  lat?: number
+  lon?: number
+  label?: string
+  // Two-marker form: your real, unmasked location vs. what a site currently
+  // sees (VPN exit / Tor exit). Colors are fixed so the legend stays accurate
+  // regardless of which mode is active: real is always magenta, masked/seen
+  // is always cyan-green.
+  real?: Marker
+  masked?: Marker
   width?: number
   height?: number
 }
+
+const REAL_COLOR = '#ff2bd6'
+const MASKED_COLOR = '#39ff14'
 
 // Approximate country/region silhouettes as OVERLAPPING ellipses in lon/lat
 // space — no bundled map tiles/GeoJSON (stays fully offline). Regions overlap
@@ -55,6 +72,11 @@ const LANDMASSES: { cx: number; cy: number; rx: number; ry: number; name?: strin
   { cx: 173, cy: -41, rx: 5, ry: 7, name: 'New Zealand' },
 ]
 
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`
+}
+
 function isLand(lon: number, lat: number) {
   for (const m of LANDMASSES) {
     const dx = (lon - m.cx) / m.rx
@@ -64,10 +86,26 @@ function isLand(lon: number, lat: number) {
   return false
 }
 
-export default function OmniWorldMap({ lat, lon, label, width = 460, height = 220 }: Props) {
+export default function OmniWorldMap({ lat, lon, label, real, masked, width = 460, height = 220 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pulseRef = useRef(0)
   const rafRef = useRef(0)
+
+  // Two-marker form takes priority when supplied; otherwise fall back to the
+  // single lat/lon/label props so existing callers keep working unchanged.
+  const markers: { lat: number; lon: number; label?: string; color: string }[] = []
+  if (real && typeof real.lat === 'number' && typeof real.lon === 'number') {
+    markers.push({ lat: real.lat, lon: real.lon, label: real.label, color: REAL_COLOR })
+  }
+  if (masked && typeof masked.lat === 'number' && typeof masked.lon === 'number') {
+    markers.push({ lat: masked.lat, lon: masked.lon, label: masked.label, color: MASKED_COLOR })
+  }
+  if (markers.length === 0 && typeof lat === 'number' && typeof lon === 'number') {
+    markers.push({ lat, lon, label, color: REAL_COLOR })
+  }
+  const showRealLegend = !!real && typeof real.lat === 'number' && typeof real.lon === 'number'
+  const showMaskedLegend = !!masked && typeof masked.lat === 'number' && typeof masked.lon === 'number'
+  const showLegend = showRealLegend || showMaskedLegend
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -150,30 +188,34 @@ export default function OmniWorldMap({ lat, lon, label, width = 460, height = 22
       }
       ctx!.textAlign = 'start'
 
-      // Marker — plain pulsing dot, centered exactly on the coordinate
-      if (typeof lat === 'number' && typeof lon === 'number') {
-        const p = project(lon, lat)
-        pulseRef.current = (pulseRef.current + 0.05) % (Math.PI * 2)
-        const pr = 4 + Math.sin(pulseRef.current) * 2.5
+      // Markers — plain pulsing dots, centered exactly on each coordinate.
+      // Real and masked locations get their own fixed colors (see REAL_COLOR/
+      // MASKED_COLOR) so the legend below the canvas stays accurate no matter
+      // which one is currently plotted.
+      pulseRef.current = (pulseRef.current + 0.05) % (Math.PI * 2)
+      const pr = 4 + Math.sin(pulseRef.current) * 2.5
+      for (const m of markers) {
+        const p = project(m.lon, m.lat)
+        const rgb = hexToRgb(m.color)
 
         ctx!.beginPath()
         ctx!.arc(p.x, p.y, pr + 7, 0, Math.PI * 2)
-        ctx!.strokeStyle = 'rgba(255,43,214,0.55)'
+        ctx!.strokeStyle = `rgba(${rgb},0.55)`
         ctx!.lineWidth = 1.4
         ctx!.stroke()
 
         ctx!.beginPath()
         ctx!.arc(p.x, p.y, pr, 0, Math.PI * 2)
-        ctx!.fillStyle = '#ff2bd6'
-        ctx!.shadowColor = 'rgba(255,43,214,0.9)'
+        ctx!.fillStyle = m.color
+        ctx!.shadowColor = `rgba(${rgb},0.9)`
         ctx!.shadowBlur = 14
         ctx!.fill()
         ctx!.shadowBlur = 0
 
-        if (label) {
+        if (m.label) {
           ctx!.font = '10px Consolas, monospace'
           ctx!.fillStyle = '#fff'
-          ctx!.fillText(label, p.x + 9, p.y - 7)
+          ctx!.fillText(m.label, p.x + 9, p.y - 7)
         }
       }
 
@@ -182,7 +224,27 @@ export default function OmniWorldMap({ lat, lon, label, width = 460, height = 22
     draw()
 
     return () => cancelAnimationFrame(rafRef.current)
-  }, [lat, lon, label, width, height])
+  }, [lat, lon, label, real?.lat, real?.lon, real?.label, masked?.lat, masked?.lon, masked?.label, width, height])
 
-  return <canvas ref={canvasRef} style={{ width, height }} />
+  return (
+    <div style={{ width }}>
+      <canvas ref={canvasRef} style={{ width, height }} />
+      {showLegend && (
+        <div className="flex items-center justify-center gap-4 mt-1.5 text-[9px] font-mono">
+          {showRealLegend && (
+            <span className="flex items-center gap-1.5" style={{ color: REAL_COLOR }}>
+              <span className="inline-block w-2 h-2 rounded-full" style={{ background: REAL_COLOR, boxShadow: `0 0 6px ${REAL_COLOR}` }} />
+              Real location (unmasked)
+            </span>
+          )}
+          {showMaskedLegend && (
+            <span className="flex items-center gap-1.5" style={{ color: MASKED_COLOR }}>
+              <span className="inline-block w-2 h-2 rounded-full" style={{ background: MASKED_COLOR, boxShadow: `0 0 6px ${MASKED_COLOR}` }} />
+              Masked location (what sites see)
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }

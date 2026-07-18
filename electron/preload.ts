@@ -19,6 +19,7 @@ const VALID_CHANNELS = new Set([
   'tor:circuitRotated', 'tor:bootstrapProgress', 'pip:opened', 'pip:closed',
   'update:checking', 'update:available', 'update:not-available',
   'update:progress', 'update:downloaded', 'update:error',
+  'connTrouble:action',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -101,6 +102,11 @@ contextBridge.exposeInMainWorld('dhurta', {
 
   // Panel layout sync
   setPanelWidth: (width: number) => ipcRenderer.invoke('panel:setWidth', width),
+  setChromeHeight: (height: number) => ipcRenderer.invoke('layout:setChromeHeight', height),
+
+  // Connection-trouble popup — floats above the BrowserView instead of growing the header
+  showConnTroublePopup: (data: Record<string, unknown>) => ipcRenderer.invoke('connTrouble:show', data),
+  hideConnTroublePopup: () => ipcRenderer.invoke('connTrouble:hide'),
 
   // Security
   getSecuritySettings: () => ipcRenderer.invoke('security:getSettings'),

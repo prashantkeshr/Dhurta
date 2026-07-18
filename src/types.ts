@@ -177,6 +177,9 @@ export interface DhurtaAPI {
   getSetting(key: string): Promise<string>
   setSetting(key: string, value: string): Promise<void>
   setPanelWidth(width: number): Promise<void>
+  setChromeHeight(height: number): Promise<void>
+  showConnTroublePopup(data: Record<string, unknown>): Promise<void>
+  hideConnTroublePopup(): Promise<void>
   getSecuritySettings(): Promise<SecuritySettings>
   setIPRotation(enabled: boolean): Promise<{ success: boolean; proxy?: string; error?: string }>
   setAntiFingerprint(enabled: boolean): Promise<void>

@@ -569,10 +569,16 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   </span>
                 </div>
                 <div className="flex-1 flex items-center justify-center">
-                  <OmniWorldMap lat={realIpInfo?.lat} lon={realIpInfo?.lon} label={realIpInfo?.countryCode} width={480} height={260} />
+                  <OmniWorldMap
+                    real={realIpStatus === 'done' && realIpInfo ? { lat: realIpInfo.lat, lon: realIpInfo.lon, label: realIpInfo.countryCode } : undefined}
+                    masked={isMasked && ipStatus === 'done' && ipInfo ? { lat: ipInfo.lat, lon: ipInfo.lon, label: ipInfo.countryCode } : undefined}
+                    width={480} height={260}
+                  />
                 </div>
                 <p className="text-[9px] font-mono text-muted/60 mt-1">
-                  Pin marks your real, unmasked IP's location — where you're actually connecting from, regardless of VPN/Ghost Mode.
+                  {isMasked
+                    ? "Magenta pin is your real, unmasked location — where you're actually connecting from. Green pin is what sites currently see (your VPN/Tor exit)."
+                    : "Pin marks your real, unmasked IP's location — where you're actually connecting from, regardless of VPN/Ghost Mode."}
                 </p>
               </div>
             </div>

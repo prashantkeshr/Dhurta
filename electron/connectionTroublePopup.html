@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: transparent; color: #d4d4d4;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 12px; height: 100%; overflow: hidden;
+    user-select: none; -webkit-user-select: none;
+  }
+  .card {
+    display: flex; flex-direction: column; gap: 10px;
+    /* No forced height — the window reserves generous max space (see
+       _connTroublePopupHeight in ipc.ts) but the visible card only ever
+       hugs its actual content, so shorter messages don't leave a stretched
+       card with empty space before the button. */
+    padding: 11px 13px;
+    border-radius: 8px;
+    border: 1px solid #3a2810;
+    background: linear-gradient(135deg, #1a1005 0%, #120c04 100%);
+    box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  }
+  .row { display: flex; align-items: flex-start; gap: 8px; }
+  .icon { font-size: 15px; line-height: 1; color: #f59e0b; flex-shrink: 0; }
+  .body { flex: 1; min-width: 0; }
+  .title { font-weight: 600; color: #f59e0b; line-height: 1.35; }
+  .hint { color: #a08050; line-height: 1.35; margin-top: 2px; }
+  .action-msg { color: #d4a76a; margin-top: 4px; }
+  .dismiss {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; color: #886; cursor: pointer;
+    font-size: 10px; font-family: inherit;
+  }
+  .dismiss:hover { color: #ccc; }
+  .switch-btn {
+    align-self: flex-end;
+    background: #f59e0b; color: #000; border: none; border-radius: 4px;
+    font-size: 11px; font-weight: 600; padding: 5px 12px; cursor: pointer;
+    font-family: inherit; transition: opacity .15s;
+  }
+  .switch-btn:disabled { opacity: .5; cursor: default; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row">
+    <span class="icon">⚠</span>
+    <div class="body">
+      <div class="title" id="title"></div>
+      <div class="hint" id="hint"></div>
+      <div class="action-msg" id="actionMsg" style="display:none"></div>
+    </div>
+    <button class="dismiss" id="dismissBtn" title="Dismiss">✕</button>
+  </div>
+  <button class="switch-btn" id="switchBtn"></button>
+</div>
+
+<script>
+  const titleEl  = document.getElementById('title')
+  const hintEl   = document.getElementById('hint')
+  const actionEl = document.getElementById('actionMsg')
+  const switchBtn = document.getElementById('switchBtn')
+  const dismissBtn = document.getElementById('dismissBtn')
+
+  function render(data) {
+    titleEl.textContent = data.title || ''
+    hintEl.textContent = data.hint || ''
+    if (data.actionMsg) {
+      actionEl.textContent = data.actionMsg
+      actionEl.style.display = 'block'
+    } else {
+      actionEl.style.display = 'none'
+    }
+    switchBtn.textContent = data.busy ? '…' : (data.buttonLabel || 'Switch Server')
+    switchBtn.disabled = !!data.busy
+  }
+
+  switchBtn.onclick = () => window.popup.invoke('connTrouble:action', 'switch')
+  dismissBtn.onclick = () => window.popup.invoke('connTrouble:action', 'dismiss')
+
+  window.popup.on('conn-trouble:data', render)
+  window.popup.invoke('connTrouble:ready').then(data => { if (data) render(data) })
+</script>
+</body>
+</html>

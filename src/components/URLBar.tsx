@@ -147,6 +147,10 @@ export default function URLBar({
   const zoomedAway = zoomLevel < 0.95 || zoomLevel > 1.05
   const activeSecurityCount = Object.values(securityStatus).filter(Boolean).length
   const isRealPage = url && !url.startsWith('dhurta://') && url !== '' && url !== 'about:blank'
+  // Ghost tabs never leak by design (always on some masking rail, or fail
+  // closed) — always Protected. Normal/Chakra tabs are Protected only when VPN
+  // is actually toggled on, matching what the security chips already reflect.
+  const isProtected = ghost || securityStatus.ipRotation
 
   return (
     <div
@@ -193,6 +197,21 @@ export default function URLBar({
           {securityStatus.blockWebRTC && <Chip label="RTC" title="WebRTC blocked" />}
           {securityStatus.autoClean && <Chip label="🧹" title="Auto-Clean on tab close" />}
         </div>
+      )}
+
+      {/* Protected / Exposed — quick, glanceable status for the current tab */}
+      {isRealPage && (
+        <span
+          className="text-[9px] font-mono border px-1 shrink-0 leading-tight py-0.5"
+          style={isProtected
+            ? { color: '#4CAF50', borderColor: '#4CAF50' }
+            : { color: '#ef4444', borderColor: '#ef4444' }}
+          title={isProtected
+            ? (ghost ? 'Protected — routed through Tor onion routing' : 'Protected — routed through your VPN')
+            : 'Exposed — your real IP is visible to this site. Enable VPN or Ghost Mode to mask it.'}
+        >
+          {isProtected ? 'PROTECTED' : 'EXPOSED'}
+        </span>
       )}
 
       {/* URL input — lock icon opens the native Site Info popup */}

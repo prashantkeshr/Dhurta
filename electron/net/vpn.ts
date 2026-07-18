@@ -118,7 +118,6 @@ export async function releaseKillSwitch(ctx: NetContext): Promise<void> {
 
 // ── VPN lifecycle ──────────────────────────────────────────────────────────────
 export async function vpnConnect(ctx: NetContext, country?: string): Promise<ProxyResult> {
-  console.log(`[TEMP-DEBUG] vpnConnect start ${new Date().toISOString()}`)
   // SEAL FIRST. fetchFreeProxy can take several seconds, and until it returns the
   // sessions are still on their previous (likely direct) connection. Engage the
   // kill-switch BEFORE fetching so the real IP can't leak through any request that
@@ -126,7 +125,6 @@ export async function vpnConnect(ctx: NetContext, country?: string): Promise<Pro
   await applyKillSwitch(ctx)
 
   const proxy = await fetchFreeProxy(country)
-  console.log(`[TEMP-DEBUG] fetchFreeProxy resolved ${new Date().toISOString()} proxy=${proxy}`)
   if (!proxy) {
     // Nothing found — lift the kill-switch back to direct so the user can still
     // browse. Traffic was blocked (not leaked) during the attempt; the caller just
@@ -137,7 +135,6 @@ export async function vpnConnect(ctx: NetContext, country?: string): Promise<Pro
     await releaseKillSwitch(ctx)
     ctx.setSetting(SETTINGS.ipRotation, 'false')
     ctx.setSetting(SETTINGS.activeProxy, '')
-    console.log(`[TEMP-DEBUG] reset committed ${new Date().toISOString()}`)
     return { success: false, error: `No servers found${country && country !== 'all' ? ' for ' + country : ''}. Try Auto or another country.` }
   }
 

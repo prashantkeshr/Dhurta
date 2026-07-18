@@ -189,6 +189,88 @@ let _appsPopupWin:     BrowserWindow | null = null
 let _toolsPopupWin:    BrowserWindow | null = null
 let _sitePopupWin:     BrowserWindow | null = null
 
+// ── Connection-trouble popup ─────────────────────────────────────────────────
+// Unlike the on-demand popups above (opened by a click, closed on blur), this
+// one appears AUTOMATICALLY whenever the active tab's load is failing/slow and
+// must stay open while the user keeps browsing — so it does NOT close on blur,
+// and its bounds are kept in sync with the main window's resize/move instead of
+// being positioned once at open time.
+let _connTroublePopupWin: BrowserWindow | null = null
+const CONN_TROUBLE_POPUP_WIDTH = 340
+// Fixed tall enough for the longest realistic combination (2-line title +
+// 3-line hint + action message + button) so nothing clips — the alternative
+// (measuring actual DOM height from the popup page and resizing live) adds a
+// round trip for a cosmetic few pixels of slack that's cheaper to just reserve.
+let _connTroublePopupHeight = 160
+let _connTroublePopupData: Record<string, unknown> | null = null
+
+function _connTroublePopupPos(win: BrowserWindow) {
+  // BrowserWindow x/y are ABSOLUTE screen coordinates, not relative to the
+  // parent — win.getBounds().x/y (the main window's own screen position, which
+  // isn't always {0,0}) must be added, or this positions relative to the
+  // display's top-left instead of the actual window, drifting off whenever the
+  // window itself isn't flush against the screen origin.
+  const { x: winX, y: winY, width: w } = win.getBounds()
+  // Sits just under the URL bar / page-load progress bar, right-aligned —
+  // matches where the other dismissible banners (security, update, ghost
+  // bootstrap) start, independent of whether any of them are also showing.
+  return { x: Math.round(winX + w - CONN_TROUBLE_POPUP_WIDTH - 16), y: Math.round(winY + CHROME_HEIGHT + 6) }
+}
+
+function _repositionConnTroublePopup() {
+  const win = getMainWindow()
+  if (!win || !_connTroublePopupWin || _connTroublePopupWin.isDestroyed()) return
+  const pos = _connTroublePopupPos(win)
+  _connTroublePopupWin.setBounds({ ...pos, width: CONN_TROUBLE_POPUP_WIDTH, height: _connTroublePopupHeight })
+}
+
+function showConnTroublePopup(data: Record<string, unknown>) {
+  const win = getMainWindow()
+  if (!win) return
+  _connTroublePopupData = data
+  if (!_connTroublePopupWin || _connTroublePopupWin.isDestroyed()) {
+    const pos = _connTroublePopupPos(win)
+    _connTroublePopupWin = new BrowserWindow({
+      parent: win,
+      modal: false,
+      x: pos.x, y: pos.y,
+      width: CONN_TROUBLE_POPUP_WIDTH, height: _connTroublePopupHeight,
+      frame: false,
+      resizable: false,
+      movable: false,
+      skipTaskbar: true,
+      alwaysOnTop: true,   // must be above the BrowserView native layer
+      transparent: true,
+      hasShadow: false,
+      // Don't show yet if Dhurta itself isn't the focused app — the blur
+      // handler below would otherwise have nothing to hide, and the popup
+      // would flash on top of whatever OTHER app the user is currently in.
+      show: win.isFocused(),
+      focusable: false,    // never steal focus from the page/URL bar
+      webPreferences: {
+        preload: path.join(__dirname, 'popupPreload.js'),
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false,
+      },
+    })
+    _connTroublePopupWin.setMenu(null)
+    _connTroublePopupWin.loadFile(path.join(__dirname, 'connectionTroublePopup.html'))
+    _connTroublePopupWin.on('closed', () => { _connTroublePopupWin = null })
+  } else {
+    _connTroublePopupWin.webContents.send('conn-trouble:data', data)
+    _repositionConnTroublePopup()
+  }
+}
+
+function hideConnTroublePopup() {
+  _connTroublePopupData = null
+  if (_connTroublePopupWin && !_connTroublePopupWin.isDestroyed()) {
+    _connTroublePopupWin.close()
+  }
+  _connTroublePopupWin = null
+}
+
 function _createPopup(
   win: BrowserWindow,
   htmlFile: string,
@@ -403,6 +485,17 @@ interface DownloadRecord {
   speed?: number    // bytes/sec, smoothed EMA
 }
 
+// Some failure modes (a dead SOCKS proxy in particular) make Chromium retry
+// the same navigation many times within a couple seconds, each retry firing
+// its own did-fail-load. Re-triggering wc.loadFile(offlinePage) on every one
+// of those races multiple competing navigations against each other and, in
+// the renderer, fires far more extra did-start-loading events than the
+// single-shot suppress flag in ConnectionTroubleBanner.tsx can account for —
+// wiping the error banner it had just shown. Debounce so a burst of retries
+// for the same tab+URL only triggers the offline-page swap once.
+const _lastFailShown = new Map<number, { url: string; at: number }>()
+const FAIL_DEBOUNCE_MS = 1500
+
 const downloads    = new Map<string, DownloadRecord>()
 const downloadItems = new Map<string, DownloadItem>()  // live item refs for pause/resume/cancel
 // Speed tracking: last snapshot per download id
@@ -461,6 +554,17 @@ let bridgeCode: string | null = null
 // the bottom of the URL bar (making its buttons unclickable) or leaves a gap.
 const CHROME_HEIGHT = 115
 
+// Dismissible banners (security warnings, update notices, the Ghost bootstrap
+// progress bar, the connection-trouble card) render BELOW the URL bar and
+// ABOVE the BrowserView, adding variable extra height that CHROME_HEIGHT alone
+// doesn't know about. Since the BrowserView is a native layer that always
+// paints above the HTML chrome regardless of z-index, any banner taller than
+// the static 115px reservation gets silently painted over and hidden — the
+// renderer measures its own actual chrome height (see App.tsx's ResizeObserver
+// on contentAreaRef) and reports it here via layout:setChromeHeight so
+// getTabBounds() can react to it instead of assuming a fixed value.
+let dynamicChromeHeight = CHROME_HEIGHT
+
 function getTabBounds(win: BrowserWindow) {
   // setBounds() and getBounds() both use logical (device-independent) pixels on
   // all platforms — no DPI scaling needed. The original bug was getContentSize()
@@ -470,9 +574,9 @@ function getTabBounds(win: BrowserWindow) {
   const x = 64 + currentPanelWidth
   return {
     x,
-    y: CHROME_HEIGHT,
+    y: dynamicChromeHeight,
     width:  Math.max(100, w - x),
-    height: Math.max(100, h - CHROME_HEIGHT),
+    height: Math.max(100, h - dynamicChromeHeight),
   }
 }
 
@@ -920,6 +1024,16 @@ function attachViewEvents(tab: Tab) {
     if (code === -3 || !isMainFrame) return
     if (wc.isDestroyed()) return
     safeSend(win, 'tab:loadError', { id: tab.id, code, desc, url })
+
+    // A dead proxy makes Chromium retry the same navigation several times a
+    // second — only swap in the offline page for the first of a burst, so we
+    // don't race multiple competing loadFile() navigations against each other
+    // (see _lastFailShown comment above).
+    const last = _lastFailShown.get(tab.id)
+    const now = Date.now()
+    if (last && last.url === url && now - last.at < FAIL_DEBOUNCE_MS) return
+    _lastFailShown.set(tab.id, { url, at: now })
+
     const offlinePage = path.join(__dirname, 'offline.html')
     wc.loadFile(offlinePage, { query: { code: String(code), url: url || '' } }).catch(() => {
       if (wc.isDestroyed()) return
@@ -1812,6 +1926,7 @@ export function registerIpcHandlers() {
 
     ;(tab.view.webContents as any).close?.()
     tabs.delete(id)
+    _lastFailShown.delete(id)
 
     if (activeTabId === id) {
       const remaining = [...tabs.keys()]
@@ -2129,6 +2244,41 @@ export function registerIpcHandlers() {
     if (win && tab && !isNewTabUrl(tab.url)) {
       tab.view.setBounds(getTabBounds(win))
     }
+  })
+
+  // Chrome height sync — see dynamicChromeHeight's comment above CHROME_HEIGHT.
+  // Never shrinks below the static baseline (TitleBar+TabBar+URLBar); only
+  // grows to cover whatever banners are currently stacked above the content area.
+  ipcMain.handle('layout:setChromeHeight', (_e, height: number) => {
+    dynamicChromeHeight = Math.max(CHROME_HEIGHT, Math.round(height))
+    const win = getMainWindow()
+    const tab = tabs.get(activeTabId)
+    if (win && tab && !isNewTabUrl(tab.url)) {
+      tab.view.setBounds(getTabBounds(win))
+    }
+  })
+
+  // ── Connection-trouble popup ────────────────────────────────────────────────
+  // Renders as a real native window above the BrowserView instead of an HTML
+  // banner in the chrome flow, so it floats over the page like a pop-out
+  // instead of growing the header. State (error/slow detection, dismissal,
+  // retry) still lives in ConnectionTroubleBanner.tsx — this just shows it.
+  ipcMain.handle('connTrouble:show', (_e, data: Record<string, unknown>) => {
+    showConnTroublePopup(data)
+  })
+  ipcMain.handle('connTrouble:hide', () => {
+    hideConnTroublePopup()
+  })
+  // The popup's own HTML calls this once on load to pick up whatever data was
+  // already current at creation time (avoids a blank flash before the first
+  // conn-trouble:data push arrives).
+  ipcMain.handle('connTrouble:ready', () => _connTroublePopupData)
+  // Button clicks inside the popup are forwarded to the main renderer, which
+  // owns the actual retry/dismiss logic (torNewnym/vpnRotate/loadURL calls) —
+  // the popup itself is presentation-only, no duplicated logic.
+  ipcMain.handle('connTrouble:action', (_e, action: string) => {
+    const win = getMainWindow()
+    win?.webContents.send('connTrouble:action', action)
   })
 
   // Native tab context menu — renders above BrowserViews via Menu.popup()
@@ -3359,7 +3509,8 @@ export function setupWindowListeners() {
   // short delay (so getBounds() reflects the settled post-transition size on Windows).
   const updateWithDelay = () => {
     updateActiveBounds()
-    setTimeout(updateActiveBounds, 80)
+    _repositionConnTroublePopup()
+    setTimeout(() => { updateActiveBounds(); _repositionConnTroublePopup() }, 80)
   }
   win.on('resize',           updateWithDelay)
   win.on('restore',          updateWithDelay)
@@ -3367,6 +3518,19 @@ export function setupWindowListeners() {
   win.on('unmaximize',       updateWithDelay)
   win.on('enter-full-screen', updateWithDelay)
   win.on('leave-full-screen', updateWithDelay)
+  win.on('move',             () => _repositionConnTroublePopup())
+
+  // alwaysOnTop is a Windows/OS-level flag — it has no concept of "on top of
+  // just this app's own page area," so left alone it keeps the popup floating
+  // above EVERY other window on the desktop, including apps the user has
+  // switched to. Hiding it whenever the main window itself isn't the focused/
+  // visible one confines it to reading as part of Dhurta's own page, not a
+  // stray system-wide overlay. showInactive() on the way back avoids stealing
+  // focus away from whatever the user just clicked into.
+  win.on('blur',     () => _connTroublePopupWin?.hide())
+  win.on('minimize', () => _connTroublePopupWin?.hide())
+  win.on('focus',    () => { if (_connTroublePopupData) _connTroublePopupWin?.showInactive() })
+  win.on('restore',  () => { if (_connTroublePopupData) _connTroublePopupWin?.showInactive() })
 
   // ── macOS 3-finger swipe navigation ──────────────────────────────────────
   ;(win as any).on('swipe', (_e: unknown, direction: string) => {
@@ -3393,7 +3557,14 @@ export function setupWindowListeners() {
         db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(k, v)
       set('security_antiFingerprint', 'true')
       set('security_blockWebRTC',     'true')
-      set('security_autoClean',       'true')
+      // Auto-Clean stays OFF by default even in the out-of-box Chakra bundle —
+      // it wipes cookies/cache/session storage on every tab close, which is a
+      // more disruptive default than the other protections (it can log users
+      // out of sites they want to stay signed into). Users opt in explicitly;
+      // Ghost Mode still forces it on for its own session (see enableGhostMode
+      // in OmniPage.tsx / useBrowser.ts), since Ghost Mode's whole point is
+      // leaving nothing behind.
+      set('security_autoClean',       'false')
       set('cookieGuard',              'true')
       set('adBlocker',                'true')
       set('security_ipRotation',      'true')

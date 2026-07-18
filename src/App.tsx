@@ -21,6 +21,7 @@ import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import UpdateBanner from './components/UpdateBanner'
 import GhostBootstrapBanner from './components/GhostBootstrapBanner'
+import ConnectionTroubleBanner from './components/ConnectionTroubleBanner'
 import HistoryPage from './pages/HistoryPage'
 import BookmarksPage from './pages/BookmarksPage'
 import DownloadsPage from './pages/DownloadsPage'
@@ -99,6 +100,7 @@ export default function App() {
   const [downloads, setDownloads] = useState<Download[]>([])
   const [warmthLevel, setWarmthLevel] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
+  const contentAreaRef = useRef<HTMLDivElement>(null)
 
   // Track window width for responsive panel sizing
   useEffect(() => {
@@ -338,6 +340,24 @@ export default function App() {
     window.dhurta.setPanelWidth(activePanelWidth)
   }, [activePanelWidth])
 
+  // Tell main process the ACTUAL chrome height (TitleBar + TabBar + URLBar +
+  // whatever banners are currently stacked above the content area), not just
+  // the static TitleBar/TabBar/URLBar baseline main.ts assumes by default.
+  // The BrowserView is a native layer that always paints above the HTML
+  // chrome — if a banner (security warning, update notice, Ghost bootstrap
+  // progress, connection trouble) makes the chrome taller than that baseline
+  // and main process doesn't know, the BrowserView silently paints over and
+  // hides the extra banner rows instead of leaving room for them.
+  useEffect(() => {
+    if (!isElectron || !contentAreaRef.current) return
+    const el = contentAreaRef.current
+    const report = () => window.dhurta.setChromeHeight(Math.round(el.getBoundingClientRect().top))
+    report()
+    const ro = new ResizeObserver(report)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   // Drag-drop files onto the browser window
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -493,8 +513,22 @@ export default function App() {
             <GhostBootstrapBanner ghostMode={ghostMode} torActive={torActive} />
           )}
 
+          {/* "This page failed / is slow — try switching server" — only shown when
+              a swappable rail (VPN or Tor) is actually active on this tab. Owns
+              no DOM of its own: it drives a separate always-on-top native
+              popup window (see electron/connectionTroublePopup.html) that
+              floats above the BrowserView instead of growing this header. */}
+          {!isVideoFullscreen && (
+            <ConnectionTroubleBanner
+              activeTabId={activeTabId}
+              activeTabLoading={activeTab?.loading ?? false}
+              ghostMode={ghostMode}
+              ipRotationActive={securityStatus.ipRotation}
+            />
+          )}
+
           {/* Content area */}
-          <div className="flex-1 relative bg-obsidian overflow-hidden">
+          <div ref={contentAreaRef} className="flex-1 relative bg-obsidian overflow-hidden">
             {/* Page-load progress bar — Chrome-style thin bar at the top */}
             <PageLoadBar loading={activeTab?.loading ?? false} />
 
