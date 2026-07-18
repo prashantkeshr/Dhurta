@@ -52,7 +52,11 @@ android {
 
 dependencies {
     // ── GeckoView (Mozilla) — the real Firefox engine, enables deep anti-fingerprint ──
-    implementation("org.mozilla.geckoview:geckoview:131.0.20241021185036")
+    // Version is a real published build on maven.mozilla.org (the previous
+    // timestamp did not exist — that date range belongs to 132.x). Pinned to the
+    // latest 131 release so the NavigationDelegate/ProgressDelegate signatures
+    // used in MainActivity stay on their target API.
+    implementation("org.mozilla.geckoview:geckoview:131.0.20241011205646")
 
     // ── AndroidX core + lifecycle ──
     implementation("androidx.core:core-ktx:1.13.1")
@@ -71,9 +75,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // ── Tor for Android (embedded onion routing) ──
-    // guardianproject's tor-android provides the tor binary + control port.
-    implementation("org.torproject:tor-android-binary:0.4.8.7")
-    implementation("info.guardianproject:jtorctl:0.4.5.7")
+    // Guardian Project's tor-android-binary ships the tor binary as libtor.so in
+    // the APK's native lib dir; TorProcess.kt launches that binary directly and
+    // parses its stdout, so only the binary (not any Java control API) is needed.
+    // 0.4.4.6 is the newest version actually published to gpmaven. jtorctl is not
+    // in that repo and is unused (bootstrap is read from stdout), so it's dropped.
+    implementation("org.torproject:tor-android-binary:0.4.4.6")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
