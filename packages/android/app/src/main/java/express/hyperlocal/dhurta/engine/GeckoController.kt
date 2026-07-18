@@ -69,46 +69,62 @@ class GeckoController private constructor(
             return GeckoController(runtime)
         }
 
+        // The about:config keys we WANT to lock down (RFP, WebRTC teardown, and
+        // forcing egress through the local Tor SOCKS proxy). Kept as the source
+        // of truth for the hardening target — see applyHardenedPrefs for why they
+        // aren't wired to the engine yet.
+        private val HARDENED_PREFS: Map<String, Any> = mapOf(
+            // ── Fingerprint resistance (RFP) ──
+            "privacy.resistFingerprinting" to true,
+            "privacy.resistFingerprinting.letterboxing" to true,
+            "privacy.fingerprintingProtection" to true,
+            "webgl.disable-fail-if-major-performance-caveat" to true,
+            "dom.maxHardwareConcurrency" to 8,
+            // ── WebRTC dismantled (mirror of GECKO_WEBRTC_PREFS) ──
+            "media.peerconnection.enabled" to false,
+            "media.navigator.enabled" to false,
+            "media.navigator.streams.fake" to true,
+            "media.peerconnection.ice.default_address_only" to true,
+            "media.peerconnection.ice.no_host" to true,
+            // ── Force all DNS + traffic through the SOCKS proxy (no leak) ──
+            "network.proxy.type" to 1,             // manual proxy
+            "network.proxy.socks" to TOR_SOCKS_HOST,
+            "network.proxy.socks_port" to TOR_SOCKS_PORT,
+            "network.proxy.socks_version" to 5,
+            "network.proxy.socks_remote_dns" to true, // DNS through Tor, never raw UDP
+            "network.dns.disablePrefetch" to true,
+            "network.predictor.enabled" to false,
+            // ── Telemetry off, always ──
+            "toolkit.telemetry.enabled" to false,
+            "datareporting.healthreport.uploadEnabled" to false,
+        )
+
         /**
-         * Applies the engine-level preference lockdown. These are the Firefox
-         * about:config keys that Tor Browser hardens; setting them on the
-         * runtime means no page script can observe a non-uniform value.
+         * Applies the engine-level preference lockdown from [HARDENED_PREFS].
+         *
+         * Stock GeckoView exposes NO public API to set arbitrary about:config
+         * prefs — the intended `GeckoRuntimeSettings.setPref` does not exist in
+         * the public surface, so it is reached via reflection and wrapped so a
+         * missing/renamed internal method degrades to a no-op instead of
+         * crashing engine startup. When the reflection target isn't found (which
+         * is expected on some GeckoView builds), Ghost Mode's Tor routing is
+         * still enforced at the OS layer by DhurtaVpnService's device-wide tun +
+         * fail-closed kill-switch — the engine prefs are a second, defence-in-
+         * depth layer, not the sole mechanism. Wiring these robustly (custom
+         * GeckoView build or a validated internal API) is a follow-up.
          */
         private fun applyHardenedPrefs(runtime: GeckoRuntime) {
-            val prefs: Map<String, Any> = mapOf(
-                // ── Fingerprint resistance (RFP) ──
-                "privacy.resistFingerprinting" to true,
-                "privacy.resistFingerprinting.letterboxing" to true,
-                "privacy.fingerprintingProtection" to true,
-                "webgl.disable-fail-if-major-performance-caveat" to true,
-                "dom.maxHardwareConcurrency" to 8,
+            val setPref = try {
+                GeckoRuntimeSettings::class.java
+                    .getMethod("setPref", String::class.java, Any::class.java)
+            } catch (_: Throwable) {
+                null // Not present on this build — OS-level VPN routing still applies.
+            } ?: return
 
-                // ── WebRTC dismantled (mirror of GECKO_WEBRTC_PREFS) ──
-                "media.peerconnection.enabled" to false,
-                "media.navigator.enabled" to false,
-                "media.navigator.streams.fake" to true,
-                "media.peerconnection.ice.default_address_only" to true,
-                "media.peerconnection.ice.no_host" to true,
-
-                // ── Force all DNS + traffic through the SOCKS proxy (no leak) ──
-                "network.proxy.type" to 1,             // manual proxy
-                "network.proxy.socks" to TOR_SOCKS_HOST,
-                "network.proxy.socks_port" to TOR_SOCKS_PORT,
-                "network.proxy.socks_version" to 5,
-                "network.proxy.socks_remote_dns" to true, // DNS through Tor, never raw UDP
-                "network.dns.disablePrefetch" to true,
-                "network.predictor.enabled" to false,
-
-                // ── Telemetry off, always ──
-                "toolkit.telemetry.enabled" to false,
-                "datareporting.healthreport.uploadEnabled" to false
-            )
-            // GeckoRuntimeSettings exposes a prefs bridge in recent versions;
-            // wrapped defensively so an unknown key can never abort the batch.
-            prefs.forEach { (key, value) ->
+            HARDENED_PREFS.forEach { (key, value) ->
                 try {
-                    runtime.settings.setPref(key, value)
-                } catch (t: Throwable) {
+                    setPref.invoke(runtime.settings, key, value)
+                } catch (_: Throwable) {
                     // A single unsupported pref must not break engine startup.
                 }
             }

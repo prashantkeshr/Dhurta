@@ -108,6 +108,7 @@ class MainActivity : AppCompatActivity() {
                 session: GeckoSession,
                 url: String?,
                 perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>,
+                hasUserGesture: Boolean,
             ) {
                 if (!binding.urlBar.hasFocus()) binding.urlBar.setText(url ?: "")
             }
