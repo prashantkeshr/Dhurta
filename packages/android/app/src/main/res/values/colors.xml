@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dhurta palette — mirrors the desktop obsidian/saffron theme. -->
+<resources>
+    <color name="obsidian">#0A0A0A</color>
+    <color name="obsidian_elev">#141414</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="border">#2A2A2A</color>
+    <color name="saffron">#FF4500</color>
+    <color name="saffron_dim">#B33000</color>
+    <color name="text">#D4D4D4</color>
+    <color name="text_muted">#808080</color>
+    <color name="ghost_glow">#FF2BD6</color>
+    <color name="protected_green">#39FF14</color>
+    <color name="exposed_red">#EF4444</color>
+</resources>

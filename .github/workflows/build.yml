@@ -161,6 +161,11 @@ jobs:
   # ── Android: GeckoView host via Gradle ──
   # Expansion scope — not part of the desktop release. Runs only on a manual
   # dispatch, never on release tags, so tagged desktop releases stay green.
+  #
+  # NOTE: this is the CANONICAL build path for the Android app. The local dev
+  # machine's JDK cannot open an NIO selector (its AF_UNIX loopback self-pipe
+  # fails with "Invalid argument"), so Gradle cannot run there at all — CI on a
+  # Linux runner is where the APK is actually produced.
   android:
     needs: core
     if: github.event_name == 'workflow_dispatch'
@@ -171,13 +176,24 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Build APK
+
+      # ubuntu-latest ships the Android SDK, but pin/accept it explicitly so the
+      # build never depends on a specific runner image's preinstalled versions.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Debug build → app-debug.apk is signed with the auto-generated debug key,
+      # so it installs directly on any device (sideload) with no manual signing.
+      # Release signing is deferred until there's a keystore secret to sign with.
+      - name: Build debug APK
         working-directory: packages/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
       - uses: actions/upload-artifact@v4
         with:
-          name: dhurta-android
-          path: packages/android/app/build/outputs/apk/release/*.apk
+          name: dhurta-android-debug
+          path: packages/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
 
   # ── iOS: WebKit host via xcodebuild (requires macOS runner + provisioning) ──
   # Expansion scope — manual dispatch only, excluded from the desktop release.

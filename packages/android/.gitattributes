@@ -1,0 +1,6 @@
+# The Gradle wrapper script runs on Linux CI runners — it MUST stay LF or bash
+# fails on the carriage returns. The jar is binary; never normalize it.
+gradlew            text eol=lf
+*.sh               text eol=lf
+gradlew.bat        text eol=crlf
+*.jar              binary

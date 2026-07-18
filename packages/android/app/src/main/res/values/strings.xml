@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dhurta</string>
+    <string name="url_hint">Search or enter address</string>
+    <string name="ghost_on">Ghost Mode ON — routing through Tor</string>
+    <string name="ghost_off">Ghost Mode OFF</string>
+    <string name="tor_connecting">Connecting to the Tor network…</string>
+    <string name="killswitch_engaged">Protection dropped — traffic blocked. Reconnecting…</string>
+    <string name="tor_notification_title">Dhurta — Onion Routing Active</string>
+    <string name="tor_notification_text">Your traffic is routed through the Tor network.</string>
+    <string name="tor_channel_name">Tor Onion Routing</string>
+</resources>

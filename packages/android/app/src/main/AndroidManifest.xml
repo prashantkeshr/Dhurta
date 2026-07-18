@@ -44,13 +44,20 @@
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Fail-closed kill-switch tunnel routing all device traffic through Tor for user privacy." />
         </service>
 
         <!-- Embedded Tor onion-routing background service -->
         <service
             android:name=".net.TorService"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Embedded Tor client providing onion routing for anonymous browsing." />
+        </service>
 
     </application>
 </manifest>

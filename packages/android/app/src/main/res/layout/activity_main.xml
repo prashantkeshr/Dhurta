@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dhurta browser chrome: top address bar, GeckoView content, bottom nav.
+     GeckoView is the real Firefox engine surface (see GeckoController). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/obsidian"
+    android:fitsSystemWindows="true">
+
+    <!-- ── Address bar ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="6dp"
+        android:background="@color/obsidian_elev">
+
+        <TextView
+            android:id="@+id/protectionBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EXPOSED"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:textColor="@color/exposed_red"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="2dp"
+            android:layout_marginEnd="6dp" />
+
+        <EditText
+            android:id="@+id/urlBar"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="@string/url_hint"
+            android:textColorHint="@color/text_muted"
+            android:textColor="@color/text"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
+            android:singleLine="true"
+            android:imeOptions="actionGo"
+            android:inputType="textUri"
+            android:background="@color/surface"
+            android:paddingHorizontal="12dp"
+            android:importantForAutofill="no" />
+
+        <ImageButton
+            android:id="@+id/reloadBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:src="@android:drawable/ic_popup_sync"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:contentDescription="Reload"
+            app:tint="@color/text_muted"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+    </LinearLayout>
+
+    <!-- ── Thin page-load progress bar ── -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="@color/saffron"
+        android:visibility="gone" />
+
+    <!-- ── Engine surface (GeckoView) ── -->
+    <org.mozilla.geckoview.GeckoView
+        android:id="@+id/geckoView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- ── Bottom nav ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:orientation="horizontal"
+        android:background="@color/obsidian_elev"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/backBtn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            app:tint="@color/text"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <ImageButton
+            android:id="@+id/forwardBtn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_media_next"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:contentDescription="Forward"
+            app:tint="@color/text"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <ImageButton
+            android:id="@+id/homeBtn"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_view"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:contentDescription="Home"
+            app:tint="@color/text"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <TextView
+            android:id="@+id/ghostToggle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="👻"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:background="?android:selectableItemBackgroundBorderless"
+            android:contentDescription="Toggle Ghost Mode" />
+    </LinearLayout>
+</LinearLayout>

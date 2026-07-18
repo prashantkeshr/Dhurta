@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Dark, edge-to-edge browser chrome. Parent is a non-ActionBar AppCompat
+         theme so MainActivity owns the entire surface (its own URL bar). -->
+    <style name="Theme.Dhurta" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/saffron</item>
+        <item name="colorPrimaryDark">@color/obsidian</item>
+        <item name="colorAccent">@color/saffron</item>
+        <item name="android:colorBackground">@color/obsidian</item>
+        <item name="android:statusBarColor">@color/obsidian</item>
+        <item name="android:navigationBarColor">@color/obsidian</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/obsidian</item>
+    </style>
+</resources>
