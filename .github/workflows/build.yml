@@ -2,12 +2,17 @@ name: 🔱 Dhurta — Build & Release (Dhurta.inc)
 
 # Triggers:
 #   • Any v* tag push → full build + publish a DRAFT GitHub Release
-#   • workflow_dispatch → manual run (can also trigger android/ios)
+#   • workflow_dispatch → manual run (android always; iOS only if opted in)
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      build_ios:
+        description: "Also build iOS (needs the Xcode project — off until scaffolded/signed)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -196,10 +201,14 @@ jobs:
           if-no-files-found: error
 
   # ── iOS: WebKit host via xcodebuild (requires macOS runner + provisioning) ──
-  # Expansion scope — manual dispatch only, excluded from the desktop release.
+  # Expansion scope, OPT-IN. Deferred: packages/ios currently has loose Swift
+  # files but no Xcode project, so this job cannot build yet. Gated behind the
+  # build_ios dispatch input (default false) so ordinary runs stay fully green
+  # instead of showing a red iOS failure that masks real problems. Flip the
+  # "Also build iOS" checkbox on Run workflow once the Xcode project exists.
   ios:
     needs: core
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.build_ios
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
