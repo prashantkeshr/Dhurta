@@ -147,25 +147,39 @@ jobs:
 
   # ── Promote draft → published release (runs only when all 3 OS builds pass) ──
   publish:
-    needs: desktop
+    # Wait for BOTH desktop installers and the Android APK so the published
+    # release contains every platform in one place.
+    needs: [desktop, android]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v4
-      - name: Publish GitHub Release
-        # All desktop builds succeeded — promote the draft to a real release.
-        # electron-builder names the release after the package.json version (not
-        # necessarily the git tag), so we read the version from package.json to
-        # find the right release rather than using github.ref_name directly.
+
+      # Pull the APK the android job built (uploaded as the dhurta-android-debug
+      # artifact) so it can be attached to the release below.
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: dhurta-android-debug
+          path: android-apk
+
+      - name: Publish GitHub Release (all platforms)
+        # electron-builder created the DRAFT release (named after package.json
+        # version) during the desktop job and uploaded the installers to it. Here
+        # we (1) rename + attach the Android APK to that same release, then
+        # (2) promote the draft to a real published release.
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          APK=$(find android-apk -name '*.apk' | head -n1)
+          cp "$APK" "Dhurta-${VERSION}.apk"
+          gh release upload "v${VERSION}" "Dhurta-${VERSION}.apk" --clobber --repo "${{ github.repository }}"
           gh release edit "v${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ── Android: GeckoView host via Gradle ──
-  # Expansion scope — not part of the desktop release. Runs only on a manual
-  # dispatch, never on release tags, so tagged desktop releases stay green.
+  # Runs on a manual dispatch (produces the APK as a test artifact) AND on a v*
+  # tag push (the publish job then attaches its APK to the GitHub Release).
   #
   # NOTE: this is the CANONICAL build path for the Android app. The local dev
   # machine's JDK cannot open an NIO selector (its AF_UNIX loopback self-pipe
@@ -173,7 +187,7 @@ jobs:
   # Linux runner is where the APK is actually produced.
   android:
     needs: core
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
