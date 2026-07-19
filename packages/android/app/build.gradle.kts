@@ -45,8 +45,26 @@ android {
         viewBinding = true
         buildConfig = true
     }
+
+    // GeckoView ships the full Firefox engine as native .so per ABI (~150 MB
+    // each). A universal APK bundling arm64 + armv7 + x86 + x86_64 was ~635 MB,
+    // which is why it failed to install. Split per-ABI so each APK carries only
+    // one architecture: arm64-v8a for real phones (incl. the POCO), x86_64 for
+    // the CI emulator. No universal APK — nothing needs all four at once.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "x86_64")
+            isUniversalApk = false
+        }
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        // Compress the native libs in the APK (smaller download; extracted on
+        // install). GeckoView libs dominate the size, so this helps materially.
+        jniLibs.useLegacyPackaging = true
     }
 }
 

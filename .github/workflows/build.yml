@@ -170,9 +170,10 @@ jobs:
         # (2) promote the draft to a real published release.
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          APK=$(find android-apk -name '*.apk' | head -n1)
-          cp "$APK" "Dhurta-${VERSION}.apk"
-          gh release upload "v${VERSION}" "Dhurta-${VERSION}.apk" --clobber --repo "${{ github.repository }}"
+          # Attach the arm64-v8a APK — the architecture every modern phone uses.
+          APK=$(find android-apk -name '*arm64*.apk' | head -n1)
+          cp "$APK" "Dhurta-${VERSION}-android-arm64.apk"
+          gh release upload "v${VERSION}" "Dhurta-${VERSION}-android-arm64.apk" --clobber --repo "${{ github.repository }}"
           gh release edit "v${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -213,6 +214,63 @@ jobs:
           name: dhurta-android-debug
           path: packages/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  # ── Android emulator smoke test ──
+  # Boots a headless x86_64 Android VM on CI, installs the x86_64 APK, launches
+  # the app, and captures a screenshot + logcat — proof the app actually runs
+  # and renders (the dev machine can't run an emulator locally). Manual-dispatch
+  # only so a flaky emulator never blocks a tagged release.
+  android-emulator-test:
+    needs: android
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dhurta-android-debug
+          path: apk
+
+      # The android-emulator-runner needs hardware acceleration (KVM) to boot in
+      # reasonable time; this udev rule makes /dev/kvm usable by the runner user.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install + launch in emulator, capture proof
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            APK=$(find apk -name '*x86_64*.apk' | head -n1)
+            echo "Installing $APK"
+            adb install -r "$APK"
+            # Launch via the LAUNCHER intent (debug applicationId has a .debug suffix).
+            adb shell monkey -p express.hyperlocal.dhurta.debug -c android.intent.category.LAUNCHER 1
+            sleep 25
+            adb exec-out screencap -p > emulator-screen.png
+            adb logcat -d -t 300 > logcat.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dhurta-emulator-proof
+          path: |
+            emulator-screen.png
+            logcat.txt
+          if-no-files-found: warn
 
   # ── iOS: WebKit host via xcodebuild (requires macOS runner + provisioning) ──
   # Expansion scope, OPT-IN. Deferred: packages/ios currently has loose Swift
