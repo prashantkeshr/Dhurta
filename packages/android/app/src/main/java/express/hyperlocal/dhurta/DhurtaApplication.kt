@@ -4,12 +4,11 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import express.hyperlocal.dhurta.engine.GeckoController
 
 /**
- * Process-level entry point. Warms the singleton [GeckoController] (which builds
- * the hardened GeckoRuntime once) and registers the foreground-service
- * notification channel Tor's onion-routing service posts into.
+ * Process-level entry point. Registers the foreground-service notification
+ * channel Tor's onion-routing service posts into. (The browser engine is now
+ * the OS-provided WebView, so there is no runtime to warm here.)
  */
 class DhurtaApplication : Application() {
 
@@ -19,8 +18,6 @@ class DhurtaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Eagerly build the runtime so the first tab opens without engine-init lag.
-        GeckoController.getInstance(this)
         createTorNotificationChannel()
     }
 

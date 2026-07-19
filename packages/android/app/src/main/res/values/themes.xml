@@ -12,4 +12,18 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowBackground">@color/obsidian</item>
     </style>
+
+    <!-- Sidebar row: full-width tappable label in the brand's mono/obsidian look. -->
+    <style name="DrawerRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingHorizontal">22dp</item>
+        <item name="android:paddingVertical">14dp</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:background">?android:selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
 </resources>

@@ -69,12 +69,15 @@ android {
 }
 
 dependencies {
-    // ── GeckoView (Mozilla) — the real Firefox engine, enables deep anti-fingerprint ──
-    // Version is a real published build on maven.mozilla.org (the previous
-    // timestamp did not exist — that date range belongs to 132.x). Pinned to the
-    // latest 131 release so the NavigationDelegate/ProgressDelegate signatures
-    // used in MainActivity stay on their target API.
-    implementation("org.mozilla.geckoview:geckoview:131.0.20241011205646")
+    // ── Engine: Android System WebView (Chromium) ──
+    // Same engine family as the Electron desktop, so behaviour matches. It's
+    // part of the OS (nothing to bundle → tiny APK) and can't be low-memory-
+    // killed the way the bundled GeckoView engine was. androidx.webkit adds the
+    // modern WebView APIs (proxy override, safe-browsing toggles) we layer the
+    // privacy features onto later.
+    implementation("androidx.webkit:webkit:1.11.0")
+    // Slide-out sidebar drawer.
+    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
 
     // ── AndroidX core + lifecycle ──
     implementation("androidx.core:core-ktx:1.13.1")

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Dhurta</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: #0A0A0A; color: #d4d4d4;
+    font-family: 'Courier New', monospace; user-select: none; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+  .mark { font-size: 46px; color: #FF4500; text-shadow: 0 0 24px rgba(255,69,0,.5); }
+  .name { margin-top: 8px; font-size: 15px; letter-spacing: .5em; color: #FF4500; }
+  .clock { margin-top: 26px; font-size: 44px; font-weight: bold; letter-spacing: .08em; color: #eee; }
+  .date { margin-top: 4px; font-size: 11px; letter-spacing: .25em; color: #666; }
+  form { margin-top: 30px; width: 100%; max-width: 460px; display: flex;
+    border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; background: #141414; }
+  input { flex: 1; background: transparent; border: none; outline: none;
+    color: #d4d4d4; font: 15px 'Courier New', monospace; padding: 14px 16px; }
+  input::placeholder { color: #555; }
+  button { background: #FF4500; color: #000; border: none; font: bold 12px 'Courier New', monospace;
+    letter-spacing: .15em; padding: 0 20px; }
+  .favs { margin-top: 26px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .fav { width: 78px; height: 66px; border: 1px solid #222; border-radius: 10px; background: #121212;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    color: #aaa; font-size: 10px; text-decoration: none; }
+  .fav span { font-size: 20px; }
+  .foot { position: fixed; bottom: 14px; font-size: 9px; letter-spacing: .2em; color: #333; }
+</style>
+</head>
+<body>
+  <div class="mark">🔱</div>
+  <div class="name">DHURTA</div>
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="date" id="date"></div>
+
+  <form onsubmit="return go(event)">
+    <input id="q" type="text" placeholder="Search or enter address" autocomplete="off"
+           autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button type="submit">GO</button>
+  </form>
+
+  <div class="favs">
+    <a class="fav" href="https://search.brave.com"><span>🦁</span>Brave</a>
+    <a class="fav" href="https://youtube.com"><span>▶</span>YouTube</a>
+    <a class="fav" href="https://en.wikipedia.org"><span>📖</span>Wikipedia</a>
+    <a class="fav" href="https://github.com"><span>💻</span>GitHub</a>
+  </div>
+
+  <div class="foot">SOVEREIGN · PRIVACY-NATIVE · ZERO TELEMETRY</div>
+
+<script>
+  function pad(n){ return n < 10 ? '0'+n : n; }
+  function tick(){
+    var d = new Date();
+    document.getElementById('clock').textContent =
+      pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+    document.getElementById('date').textContent =
+      d.toDateString().toUpperCase();
+  }
+  setInterval(tick, 1000); tick();
+
+  function go(e){
+    e.preventDefault();
+    var v = document.getElementById('q').value.trim();
+    if (!v) return false;
+    var isUrl = /^https?:\/\//i.test(v) || (v.indexOf('.') > 0 && v.indexOf(' ') < 0);
+    location.href = isUrl
+      ? (/^https?:\/\//i.test(v) ? v : 'https://' + v)
+      : 'https://search.brave.com/search?q=' + encodeURIComponent(v);
+    return false;
+  }
+</script>
+</body>
+</html>
