@@ -244,6 +244,19 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # Resolve the x86_64 APK path HERE (normal step, known CWD) with an
+      # absolute path, print the artifact listing + sizes for the record, and
+      # fail fast with a clear message if it's missing — the emulator-runner's
+      # own script runs in a different context where a relative `find` came up
+      # empty.
+      - name: Locate x86_64 APK
+        run: |
+          ls -la "$GITHUB_WORKSPACE/apk"
+          APK=$(find "$GITHUB_WORKSPACE/apk" -name '*x86_64*.apk' | head -n1)
+          if [ -z "$APK" ]; then echo "::error::No x86_64 APK found in artifact"; exit 1; fi
+          echo "Resolved APK: $APK ($(du -h "$APK" | cut -f1))"
+          echo "X86_APK=$APK" >> "$GITHUB_ENV"
+
       - name: Install + launch in emulator, capture proof
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -254,9 +267,8 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            APK=$(find apk -name '*x86_64*.apk' | head -n1)
-            echo "Installing $APK"
-            adb install -r "$APK"
+            echo "Installing $X86_APK"
+            adb install -r "$X86_APK"
             # Launch via the LAUNCHER intent (debug applicationId has a .debug suffix).
             adb shell monkey -p express.hyperlocal.dhurta.debug -c android.intent.category.LAUNCHER 1
             sleep 25
