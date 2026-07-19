@@ -263,17 +263,25 @@ jobs:
           api-level: 30
           arch: x86_64
           target: default
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          force-avd-creation: true
+          # GeckoView bundles the full Firefox engine and spawns a GPU + several
+          # content processes; the default ~2 GB AVD low-memory-kills it on
+          # launch (signal 9). Give the VM 4 GB so it survives — real phones
+          # (e.g. the 6-8 GB POCO) have the headroom, this just lets CI match.
+          ram-size: 4096
+          heap-size: 576
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -memory 4096
           disable-animations: true
           script: |
             echo "Installing $X86_APK"
             adb install -r "$X86_APK"
             # Launch via the LAUNCHER intent (debug applicationId has a .debug suffix).
             adb shell monkey -p express.hyperlocal.dhurta.debug -c android.intent.category.LAUNCHER 1
-            sleep 25
+            # Give the engine time to spin up and load the start page.
+            sleep 40
             adb exec-out screencap -p > emulator-screen.png
-            adb logcat -d -t 300 > logcat.txt || true
+            # Capture the app's own logcat lines for diagnosis.
+            adb logcat -d -t 600 > logcat.txt || true
 
       - uses: actions/upload-artifact@v4
         if: always()
