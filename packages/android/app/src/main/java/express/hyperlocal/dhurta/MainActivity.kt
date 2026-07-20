@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.EditorInfo
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -26,24 +27,36 @@ import express.hyperlocal.dhurta.net.DhurtaVpnService
 import express.hyperlocal.dhurta.net.TorService
 
 /**
- * The browser surface. Hosts an Android System WebView (Chromium — same engine
- * family as the Electron desktop) inside the Dhurta cyberpunk chrome: compact
- * top URL pill, floating bottom dock with the raised center Dhurta Hub, and a
- * slide-out command drawer.
- *
- * Rich UI (home, Omni dashboard) is served as local asset HTML and reached via
- * a small dhurta:// scheme the WebViewClient intercepts — the same pattern the
- * desktop uses for its internal pages.
+ * Browser surface — Android System WebView (Chromium) inside the Dhurta
+ * cyberpunk chrome. The rich screens (home, Omni control deck) are local asset
+ * HTML reached through a dhurta:// scheme the WebViewClient intercepts, mirroring
+ * the desktop's internal-page + Omni-actions pattern.
  */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityMainBinding
-    private var ghost = false
+
+    // Browsing level + shield state (drives the Omni deck + the badge).
+    private var mode = Mode.NORMAL
+    private var af = false     // anti-fingerprint  (UI state; engine wiring is a follow-up)
+    private var rtc = false    // block WebRTC       (ditto)
+    private var ad = false     // ad blocker         (ditto)
     private var devMode = false
+
+    private enum class Mode { NORMAL, CHAKRA, GHOST }
+    private val protectedNow get() = mode != Mode.NORMAL
 
     private companion object {
         const val HOME = "file:///android_asset/newtab.html"
-        fun omniUrl(ghost: Boolean) = "file:///android_asset/omni.html?ghost=" + if (ghost) "1" else "0"
+    }
+
+    private fun omniUrl() = buildString {
+        append("file:///android_asset/omni.html?")
+        append("ghost=").append(if (mode == Mode.GHOST) 1 else 0)
+        append("&chakra=").append(if (mode == Mode.CHAKRA) 1 else 0)
+        append("&af=").append(if (af) 1 else 0)
+        append("&rtc=").append(if (rtc) 1 else 0)
+        append("&ad=").append(if (ad) 1 else 0)
     }
 
     private val vpnConsent = registerForActivityResult(
@@ -54,8 +67,8 @@ class MainActivity : AppCompatActivity() {
                 action = DhurtaVpnService.ACTION_START
             })
         } else {
-            Toast.makeText(this, "VPN permission is required for Ghost Mode", Toast.LENGTH_LONG).show()
-            setGhost(false)
+            Toast.makeText(this, "VPN permission is required for protection", Toast.LENGTH_LONG).show()
+            setMode(Mode.NORMAL)
         }
     }
 
@@ -89,10 +102,7 @@ class MainActivity : AppCompatActivity() {
         b.webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
-                if (url.startsWith("dhurta://")) {
-                    handleInternal(request.url)
-                    return true
-                }
+                if (url.startsWith("dhurta://")) { handleInternal(request.url); return true }
                 return false
             }
 
@@ -125,55 +135,123 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    /** dhurta:// internal routes — mirrors the desktop's internal-page scheme. */
+    /** dhurta:// internal routes — the mobile equivalent of the desktop Omni actions. */
     private fun handleInternal(uri: Uri) {
         when (uri.host ?: uri.schemeSpecificPart.trimStart('/')) {
-            "omni" -> b.webView.loadUrl(omniUrl(ghost))
+            "omni" -> b.webView.loadUrl(omniUrl())
             "newtab", "home" -> b.webView.loadUrl(HOME)
-            "ghost-on" -> setGhost(true)
-            "ghost-off" -> setGhost(false)
+            "normal" -> setMode(Mode.NORMAL)
+            "chakra-on" -> setMode(Mode.CHAKRA)
+            "ghost-on" -> setMode(Mode.GHOST)
+            "ghost-off" -> setMode(Mode.NORMAL)
+            "rotate" -> rotateCircuit()
+            "toggle-af" -> { af = !af; refreshOmni() }
+            "toggle-rtc" -> { rtc = !rtc; refreshOmni() }
+            "toggle-ad" -> { ad = !ad; refreshOmni() }
+            "autoclean" -> autoClean()
+            "wipe" -> nuclearWipe()
             "devtools" -> toggleDevMode()
         }
     }
 
     private fun wireChrome() {
         b.urlBar.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_GO) {
-                navigate(b.urlBar.text.toString()); true
-            } else false
+            if (actionId == EditorInfo.IME_ACTION_GO) { navigate(b.urlBar.text.toString()); true } else false
         }
         b.reloadBtn.setOnClickListener { b.webView.reload() }
         b.backBtn.setOnClickListener { if (b.webView.canGoBack()) b.webView.goBack() }
         b.forwardBtn.setOnClickListener { if (b.webView.canGoForward()) b.webView.goForward() }
         b.homeBtn.setOnClickListener { b.webView.loadUrl(HOME) }
         b.tabsBtn.setOnClickListener { soon("Tabs manager") }
-        // The Hub is the command center — opens the drawer.
         b.hubBtn.setOnClickListener { b.drawerLayout.openDrawer(GravityCompat.START) }
     }
 
     private fun wireDrawer() {
         val close = { b.drawerLayout.closeDrawer(GravityCompat.START) }
-        b.navOmni.setOnClickListener { b.webView.loadUrl(omniUrl(ghost)); close() }
+        b.navOmni.setOnClickListener { b.webView.loadUrl(omniUrl()); close() }
         b.navNewTab.setOnClickListener { b.webView.loadUrl(HOME); close() }
-        b.navGhost.setOnClickListener { setGhost(!ghost); close() }
+        b.navGhost.setOnClickListener { setMode(if (mode == Mode.GHOST) Mode.NORMAL else Mode.GHOST); b.webView.loadUrl(omniUrl()); close() }
+        b.navChakra.setOnClickListener { setMode(if (mode == Mode.CHAKRA) Mode.NORMAL else Mode.CHAKRA); b.webView.loadUrl(omniUrl()); close() }
+        b.navSecurity.setOnClickListener { b.webView.loadUrl(omniUrl()); close() }
+        b.navNetwork.setOnClickListener { b.webView.loadUrl(omniUrl()); close() }
         b.navDevtools.setOnClickListener { toggleDevMode(); close() }
+        b.navWipe.setOnClickListener { nuclearWipe(); close() }
         b.navBookmarks.setOnClickListener { soon("Bookmarks"); close() }
         b.navHistory.setOnClickListener { soon("History"); close() }
         b.navDownloads.setOnClickListener { soon("Downloads"); close() }
+        b.navConnect.setOnClickListener { soon("Dhurta Connect"); close() }
+        b.navExtensions.setOnClickListener { soon("Extensions"); close() }
         b.navSettings.setOnClickListener { soon("Settings"); close() }
         b.navAbout.setOnClickListener { b.webView.loadUrl("https://dhurta.com"); close() }
     }
 
-    /** Developer Mode: enables WebView remote debugging (chrome://inspect). */
+    // ── Browsing level ──────────────────────────────────────────────────────
+    private fun setMode(target: Mode) {
+        if (target == mode) return
+        val wasProtected = protectedNow
+        mode = target
+        val nowProtected = protectedNow
+
+        if (nowProtected && !wasProtected) {
+            // Engage protection: embedded Tor + fail-closed device VPN.
+            ContextCompat.startForegroundService(
+                this, Intent(this, TorService::class.java).apply { action = TorService.ACTION_START },
+            )
+            val consent = VpnService.prepare(this)
+            if (consent != null) vpnConsent.launch(consent)
+            else startService(Intent(this, DhurtaVpnService::class.java).apply { action = DhurtaVpnService.ACTION_START })
+            Toast.makeText(this, getString(R.string.tor_connecting), Toast.LENGTH_SHORT).show()
+        } else if (!nowProtected && wasProtected) {
+            stopService(Intent(this, DhurtaVpnService::class.java))
+            startService(Intent(this, TorService::class.java).apply { action = TorService.ACTION_STOP })
+            Toast.makeText(this, "Protection off — direct connection", Toast.LENGTH_SHORT).show()
+        } else if (nowProtected) {
+            Toast.makeText(this, if (mode == Mode.GHOST) "Ghost Mode" else "Chakra Shield", Toast.LENGTH_SHORT).show()
+        }
+        updateBadge()
+    }
+
+    private fun rotateCircuit() {
+        if (mode != Mode.GHOST) return
+        // Restart the Tor service to force a fresh circuit.
+        startService(Intent(this, TorService::class.java).apply { action = TorService.ACTION_STOP })
+        ContextCompat.startForegroundService(
+            this, Intent(this, TorService::class.java).apply { action = TorService.ACTION_START },
+        )
+        Toast.makeText(this, "Requesting a fresh Tor circuit…", Toast.LENGTH_SHORT).show()
+    }
+
+    // ── Data hygiene ────────────────────────────────────────────────────────
+    private fun autoClean() {
+        b.webView.clearCache(true)
+        CookieManager.getInstance().removeAllCookies(null)
+        b.webView.clearHistory()
+        Toast.makeText(this, "Site data cleared — cookies, cache, history", Toast.LENGTH_SHORT).show()
+        refreshOmni()
+    }
+
+    private fun nuclearWipe() {
+        b.webView.clearCache(true)
+        b.webView.clearFormData()
+        b.webView.clearHistory()
+        CookieManager.getInstance().removeAllCookies(null)
+        CookieManager.getInstance().flush()
+        Toast.makeText(this, "☢ Nuclear Wipe — all site data destroyed", Toast.LENGTH_LONG).show()
+        b.webView.loadUrl(HOME)
+    }
+
     private fun toggleDevMode() {
         devMode = !devMode
         WebView.setWebContentsDebuggingEnabled(devMode)
         Toast.makeText(
             this,
-            if (devMode) "Developer Mode ON — connect chrome://inspect over USB"
-            else "Developer Mode OFF",
+            if (devMode) "Developer Mode ON — connect chrome://inspect over USB" else "Developer Mode OFF",
             Toast.LENGTH_LONG,
         ).show()
+    }
+
+    private fun refreshOmni() {
+        b.webView.url?.let { if (it.contains("omni.html")) b.webView.loadUrl(omniUrl()) }
     }
 
     private fun soon(what: String) =
@@ -195,41 +273,19 @@ class MainActivity : AppCompatActivity() {
     private fun displayUrl(url: String?): String =
         if (url == null || url.startsWith("file:///android_asset")) "" else url
 
-    private fun setGhost(enable: Boolean) {
-        ghost = enable
-        if (enable) {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, TorService::class.java).apply { action = TorService.ACTION_START },
-            )
-            val consent = VpnService.prepare(this)
-            if (consent != null) vpnConsent.launch(consent)
-            else startService(Intent(this, DhurtaVpnService::class.java).apply {
-                action = DhurtaVpnService.ACTION_START
-            })
-            Toast.makeText(this, getString(R.string.tor_connecting), Toast.LENGTH_SHORT).show()
-        } else {
-            stopService(Intent(this, DhurtaVpnService::class.java))
-            startService(Intent(this, TorService::class.java).apply { action = TorService.ACTION_STOP })
-        }
-        updateBadge()
-        // If Omni is on screen, refresh it so it reflects the new state.
-        b.webView.url?.let { if (it.contains("omni.html")) b.webView.loadUrl(omniUrl(ghost)) }
-    }
-
     private fun updateBadge() {
         b.protectionBadge.apply {
-            text = if (ghost) "PROTECTED" else "EXPOSED"
+            text = if (protectedNow) "PROTECTED" else "EXPOSED"
             setTextColor(
                 ContextCompat.getColor(
                     this@MainActivity,
-                    if (ghost) R.color.protected_green else R.color.exposed_red,
+                    if (protectedNow) R.color.protected_green else R.color.exposed_red,
                 ),
             )
         }
     }
 
-    /** Soft, looping glow pulse on the Hub ring. */
+    /** Soft looping glow pulse on the Hub. */
     private fun startHubPulse() {
         val ring = b.hubRing
         ValueAnimator.ofFloat(0.85f, 1.25f).apply {
@@ -243,7 +299,6 @@ class MainActivity : AppCompatActivity() {
             }
             start()
         }
-        // Subtle breathing on the Hub itself.
         ObjectAnimator.ofFloat(b.hubBtn, "scaleX", 1f, 1.05f, 1f).apply {
             duration = 2600; repeatCount = ValueAnimator.INFINITE; start()
         }

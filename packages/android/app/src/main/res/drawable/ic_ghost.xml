@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Real desktop Dhurta/Ghost trishula logo, bounded to a row-icon size. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:width="24dp" android:height="24dp" android:gravity="center">
+        <bitmap android:src="@drawable/dhurta_logo" android:gravity="fill" />
+    </item>
+</layer-list>
