@@ -12,8 +12,8 @@ android {
         applicationId = "express.hyperlocal.dhurta"
         minSdk = 26            // Android 8.0 — required for VpnService always-on + modern Gecko
         targetSdk = 34
-        versionCode = 10301    // 1.3.1
-        versionName = "1.3.1"  // aligned to package.json
+        versionCode = 10302    // 1.3.2
+        versionName = "1.3.2"  // aligned to package.json
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
