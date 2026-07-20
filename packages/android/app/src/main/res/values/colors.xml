@@ -12,4 +12,9 @@
     <color name="ghost_glow">#FF2BD6</color>
     <color name="protected_green">#39FF14</color>
     <color name="exposed_red">#EF4444</color>
+    <!-- Mobile cyberpunk accents (match the UI/UX concept) -->
+    <color name="neon_blue">#22D3FF</color>
+    <color name="cyber_purple">#A855F7</color>
+    <color name="dock_bg">#E60E0E17</color>
+    <color name="pill_bg">#CC12121C</color>
 </resources>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Dhurta Omni</title>
+<style>
+  :root{ --neon:#22d3ff; --purple:#a855f7; --green:#39ff9e; --red:#ff5470; --amber:#ffb648;
+    --text:#e9ecff; --muted:#7b81a4; --glass:rgba(255,255,255,.05); --gbord:rgba(255,255,255,.10); }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body{ color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; }
+  body{ background:
+      radial-gradient(60% 34% at 18% 8%, rgba(34,211,255,.16), transparent 60%),
+      radial-gradient(55% 34% at 88% 16%, rgba(168,85,247,.18), transparent 60%),
+      #06060c;
+    min-height:100vh; padding:22px 16px 40px; overflow-x:hidden; }
+  body::before{ content:""; position:fixed; inset:0; z-index:-1; background-image:
+      linear-gradient(rgba(255,255,255,.026) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.026) 1px,transparent 1px);
+    background-size:32px 32px; mask-image:radial-gradient(ellipse 80% 50% at 50% 20%,#000 40%,transparent 100%); }
+
+  .top{ display:flex; align-items:center; gap:12px; animation:rise .5s both; }
+  .top .back{ width:40px; height:40px; border-radius:13px; background:var(--glass); border:1px solid var(--gbord);
+    display:flex; align-items:center; justify-content:center; text-decoration:none; }
+  .top .back svg{ width:18px; height:18px; }
+  .top .logo{ width:34px; height:34px; filter:drop-shadow(0 0 12px rgba(255,140,40,.5)); }
+  .top h1{ font-size:15px; font-weight:800; letter-spacing:.14em; }
+  .top .s{ font-size:8px; letter-spacing:.2em; color:var(--neon); text-shadow:0 0 12px rgba(34,211,255,.6); margin-top:2px; }
+
+  .card{ background:var(--glass); border:1px solid var(--gbord); border-radius:18px; padding:16px; margin-top:14px;
+    backdrop-filter:blur(14px); animation:rise .5s both; }
+  .card.cyan{ box-shadow:0 0 0 1px rgba(34,211,255,.14),0 0 30px -14px rgba(34,211,255,.5); }
+  .card.purple{ box-shadow:0 0 0 1px rgba(168,85,247,.14),0 0 30px -14px rgba(168,85,247,.5); }
+  .lbl{ font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .lbl .d{ width:6px; height:6px; border-radius:50%; background:var(--neon); box-shadow:0 0 8px var(--neon); }
+
+  /* Score + status */
+  .scorewrap{ display:flex; align-items:center; gap:18px; }
+  .ring{ position:relative; width:92px; height:92px; flex:0 0 auto; }
+  .ring svg{ transform:rotate(-90deg); }
+  .ring .num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; }
+  .statusbadge{ display:inline-block; font-size:11px; font-weight:800; letter-spacing:.1em; padding:5px 11px; border-radius:9px; margin-top:4px; }
+  .prot{ color:var(--green); border:1px solid rgba(57,255,158,.4); text-shadow:0 0 10px rgba(57,255,158,.6); }
+  .exp{ color:var(--red); border:1px solid rgba(255,84,112,.4); text-shadow:0 0 10px rgba(255,84,112,.5); }
+  .stxt{ font-size:10px; color:var(--muted); margin-top:8px; line-height:1.5; }
+
+  .kv{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:11px; }
+  .kv:last-child{ border-bottom:none; }
+  .kv .k{ color:var(--muted); }
+  .kv .v{ font-family:'Consolas',monospace; text-align:right; max-width:62%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .v.cy{ color:var(--neon); } .v.gr{ color:var(--green); } .v.am{ color:var(--amber); } .v.rd{ color:var(--red); }
+
+  .levels{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-top:12px; }
+  .lvl{ border-radius:14px; padding:12px 8px; text-align:center; background:rgba(255,255,255,.03); border:1px solid var(--gbord);
+    text-decoration:none; color:var(--text); transition:transform .15s; }
+  .lvl:active{ transform:scale(.94); }
+  .lvl .em{ font-size:20px; }
+  .lvl .nm{ font-size:10px; font-weight:700; margin-top:6px; }
+  .lvl .sb{ font-size:7.5px; color:var(--muted); margin-top:3px; }
+  .lvl.on{ border-color:var(--purple); box-shadow:0 0 22px -8px var(--purple); background:rgba(168,85,247,.08); }
+  .lvl.on .nm{ color:var(--purple); }
+
+  .devbtn{ display:block; text-align:center; margin-top:12px; padding:12px; border-radius:13px; text-decoration:none;
+    font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--neon);
+    background:rgba(34,211,255,.06); border:1px solid rgba(34,211,255,.35); }
+  .foot{ text-align:center; margin-top:22px; font-size:8px; letter-spacing:.22em; color:#333a5c; }
+  .spin{ color:var(--muted); font-size:10px; }
+
+  @keyframes rise{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+  @keyframes sweep{ from{ stroke-dashoffset:239; } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <a class="back" href="dhurta://newtab"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ff" stroke-width="1.8" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <img class="logo" src="dhurta-logo.png" alt="">
+    <div>
+      <h1>DHURTA :: OMNI</h1>
+      <div class="s">PRIVACY CONTROL DECK · LOCAL-ONLY</div>
+    </div>
+  </div>
+
+  <!-- Privacy posture + status -->
+  <div class="card cyan">
+    <div class="scorewrap">
+      <div class="ring">
+        <svg width="92" height="92" viewBox="0 0 92 92">
+          <circle cx="46" cy="46" r="38" fill="none" stroke="#16171f" stroke-width="7"/>
+          <circle id="scoreArc" cx="46" cy="46" r="38" fill="none" stroke="#22d3ff" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="239" stroke-dashoffset="239"
+            style="animation:sweep 1s ease .1s both; filter:drop-shadow(0 0 6px #22d3ff)"/>
+        </svg>
+        <div class="num" id="scoreNum">–</div>
+      </div>
+      <div>
+        <div class="lbl"><span class="d"></span> Privacy Posture</div>
+        <span class="statusbadge" id="statusBadge">…</span>
+        <div class="stxt" id="statusText">Checking your exposure…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IP / DNS leak -->
+  <div class="card">
+    <div class="lbl"><span class="d" style="background:var(--amber);box-shadow:0 0 8px var(--amber)"></span> What Sites See — Live IP</div>
+    <div id="ipBox" style="margin-top:10px">
+      <div class="spin">› querying external lookup…</div>
+    </div>
+  </div>
+
+  <!-- Fingerprint surface -->
+  <div class="card">
+    <div class="lbl"><span class="d" style="background:var(--purple);box-shadow:0 0 8px var(--purple)"></span> Fingerprint Surface</div>
+    <div id="fp" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Browsing levels -->
+  <div class="card purple">
+    <div class="lbl"><span class="d" style="background:var(--purple);box-shadow:0 0 8px var(--purple)"></span> Browsing Level</div>
+    <div class="levels">
+      <a class="lvl" id="lvlNormal" href="dhurta://ghost-off">
+        <div class="em">🌐</div><div class="nm">Normal</div><div class="sb">Standard</div>
+      </a>
+      <a class="lvl" id="lvlChakra" href="dhurta://ghost-off">
+        <div class="em">⚡</div><div class="nm">Chakra</div><div class="sb">VPN + shields</div>
+      </a>
+      <a class="lvl" id="lvlGhost" href="dhurta://ghost-on">
+        <div class="em">👻</div><div class="nm">Ghost</div><div class="sb">Tor routing</div>
+      </a>
+    </div>
+    <a class="devbtn" href="dhurta://devtools">⚙  Enable Developer Mode (chrome://inspect)</a>
+  </div>
+
+  <div class="foot">RUNS 100% LOCALLY · NO SERVER · NO ACCOUNT</div>
+
+<script>
+  var ghost = /[?&]ghost=1/.test(location.search);
+
+  // ── Fingerprint surface ──
+  var fp = document.getElementById('fp');
+  function row(k,v,cls){ return '<div class="kv"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>'; }
+  var scr = screen.width+'×'+screen.height;
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+  fp.innerHTML =
+    row('Screen', scr, 'cy') +
+    row('CPU cores', navigator.hardwareConcurrency||'—', 'cy') +
+    row('Device memory', (navigator.deviceMemory?navigator.deviceMemory+' GB':'—'), 'cy') +
+    row('Platform', navigator.platform||'—') +
+    row('Languages', (navigator.languages||[navigator.language]).join(', ')) +
+    row('Timezone', tz, 'am') +
+    row('Do Not Track', (navigator.doNotTrack==='1'?'ON':'unset'), navigator.doNotTrack==='1'?'gr':'am') +
+    row('Cookies', navigator.cookieEnabled?'enabled':'blocked', navigator.cookieEnabled?'am':'gr') +
+    row('User-Agent', (navigator.userAgent||'—'));
+
+  // ── Score + status ──
+  // Client-side heuristic: DNT, cookies, and (from the app) Ghost state.
+  var pts = 0;
+  if (ghost) pts += 3;
+  if (navigator.doNotTrack === '1') pts += 1;
+  if (!navigator.cookieEnabled) pts += 1;
+  var score = Math.round((pts/5)*100);
+  var arc = document.getElementById('scoreArc');
+  var col = score>=70?'#39ff9e':score>=40?'#ffb648':'#ff5470';
+  arc.setAttribute('stroke', col);
+  arc.style.strokeDashoffset = (239 - (score/100)*239);
+  var num = document.getElementById('scoreNum'); num.textContent = score; num.style.color = col;
+
+  var badge = document.getElementById('statusBadge'), stxt = document.getElementById('statusText');
+  if (ghost){
+    badge.textContent = '● PROTECTED'; badge.className = 'statusbadge prot';
+    stxt.textContent = 'Ghost Mode is active — traffic routes through the Tor network via the device VPN.';
+    document.getElementById('lvlGhost').className = 'lvl on';
+  } else {
+    badge.textContent = '● EXPOSED'; badge.className = 'statusbadge exp';
+    stxt.textContent = 'Your real IP is visible to every site. Tap Ghost below to route through Tor.';
+    document.getElementById('lvlNormal').className = 'lvl on';
+  }
+
+  // ── Live IP ──
+  var ipBox = document.getElementById('ipBox');
+  fetch('https://api.ipify.org?format=json').then(function(r){return r.json();}).then(function(d){
+    return fetch('https://ipapi.co/'+d.ip+'/json/').then(function(r){return r.json();}).catch(function(){return {ip:d.ip};});
+  }).then(function(info){
+    ipBox.innerHTML =
+      row('IP address', info.ip||'—', ghost?'gr':'rd') +
+      row('Country', ((info.country_name||'—')+(info.country_code?' ('+info.country_code+')':'')), 'cy') +
+      row('City / Region', ((info.city||'—')+', '+(info.region||'—'))) +
+      row('ISP / Org', (info.org||'—')) +
+      '<div class="stxt" style="margin-top:8px">'+(ghost
+        ? '✓ This is your Tor exit — not your real location.'
+        : '✕ This is your REAL IP, visible to every site you visit.')+'</div>';
+  }).catch(function(){
+    ipBox.innerHTML = '<div class="stxt">Lookup failed — offline or blocked.</div>';
+  });
+</script>
+</body>
+</html>

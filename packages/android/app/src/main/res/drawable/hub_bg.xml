@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dhurta Hub — the raised center action, cyan→purple gradient. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:startColor="#22D3FF" android:centerColor="#3AA0FF" android:endColor="#A855F7"
+        android:angle="135" android:type="linear" />
+    <corners android:radius="19dp" />
+</shape>
