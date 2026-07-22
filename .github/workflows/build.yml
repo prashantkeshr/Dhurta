@@ -2,9 +2,12 @@ name: 🔱 Dhurta — Build & Release (Dhurta.inc)
 
 # Triggers:
 #   • Any v* tag push → full build + publish a DRAFT GitHub Release
+#   • Push to main → build + emulator-test (no release publish)
 #   • workflow_dispatch → manual run (android always; iOS only if opted in)
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   workflow_dispatch:
@@ -52,6 +55,9 @@ jobs:
   # ── Desktop: Windows, macOS, Linux ──
   desktop:
     needs: core
+    # Desktop installers are expensive (3-OS matrix, macOS minutes bill at 10x) —
+    # skip them on plain main pushes; those only need the Android build+test.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
       matrix:
@@ -188,7 +194,7 @@ jobs:
   # Linux runner is where the APK is actually produced.
   android:
     needs: core
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -218,11 +224,12 @@ jobs:
   # ── Android emulator smoke test ──
   # Boots a headless x86_64 Android VM on CI, installs the x86_64 APK, launches
   # the app, and captures a screenshot + logcat — proof the app actually runs
-  # and renders (the dev machine can't run an emulator locally). Manual-dispatch
-  # only so a flaky emulator never blocks a tagged release.
+  # and renders (the dev machine can't run an emulator locally). Runs on manual
+  # dispatch and main pushes — never on tags, so a flaky emulator can't block a
+  # tagged release.
   android-emulator-test:
     needs: android
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
