@@ -28,6 +28,42 @@
         <item name="android:gravity">center_vertical</item>
     </style>
 
+    <!-- Round emoji quick-action in the menu sheet's top row. -->
+    <style name="MenuQuick">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:background">?android:selectableItemBackgroundBorderless</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- Horizontal pair container for the menu sheet's two-column grid. -->
+    <style name="MenuRowPair">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <!-- One tappable feature cell inside a MenuRowPair. -->
+    <style name="MenuItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingHorizontal">18dp</item>
+        <item name="android:paddingVertical">13dp</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:background">?android:selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
     <!-- Small section heading between drawer groups. -->
     <style name="DrawerHeading">
         <item name="android:layout_width">match_parent</item>

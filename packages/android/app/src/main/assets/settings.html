@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Dhurta — Settings</title>
+<style>
+  :root { --bg:#07090d; --card:#0d1117; --border:#1d2430; --text:#e8e8e8; --muted:#7a8494;
+          --acc:#00e5ff; --saffron:#ffb300; --green:#00ff9d; --red:#ff5370; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--text); font-family:monospace; padding:18px 14px 40px; }
+  h1 { font-size:18px; letter-spacing:.2em; color:var(--saffron); margin-bottom:2px; }
+  .sub { font-size:9px; color:var(--muted); margin-bottom:20px; letter-spacing:.15em; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px;
+          padding:14px; margin-bottom:14px; animation:rise .4s ease both; }
+  .card:nth-child(3){animation-delay:.05s}.card:nth-child(4){animation-delay:.1s}
+  .card:nth-child(5){animation-delay:.15s}.card:nth-child(6){animation-delay:.2s}
+  @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+  .label { font-size:9px; color:var(--muted); letter-spacing:.2em; margin-bottom:10px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { flex:1; min-width:70px; text-align:center; padding:10px 6px; border-radius:10px;
+          border:1px solid var(--border); color:var(--muted); font-size:11px; text-decoration:none; }
+  .chip.on { border-color:var(--acc); color:var(--acc); box-shadow:0 0 12px #00e5ff33; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:10px 0;
+         border-bottom:1px solid var(--border); text-decoration:none; color:var(--text); font-size:12px; }
+  .row:last-child { border-bottom:none; }
+  .sw { width:40px; height:22px; border-radius:11px; background:var(--border); position:relative; transition:.2s; }
+  .sw::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px;
+               border-radius:50%; background:var(--muted); transition:.2s; }
+  .on>.sw { background:#00e5ff44; } .on>.sw::after { left:21px; background:var(--acc); }
+  .danger { color:var(--red); }
+  .hint { font-size:9px; color:var(--muted); margin-top:8px; line-height:1.6; }
+</style>
+</head>
+<body>
+<h1>⚙ SETTINGS</h1>
+<div class="sub">FULL USER CONTROL · DHURTA MOBILE</div>
+
+<div class="card">
+  <div class="label">SEARCH ENGINE</div>
+  <div class="chips">
+    <a class="chip" id="se-brave"  href="dhurta://se-brave">Brave</a>
+    <a class="chip" id="se-ddg"    href="dhurta://se-ddg">DuckDuckGo</a>
+    <a class="chip" id="se-google" href="dhurta://se-google">Google</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="label">TEXT SIZE</div>
+  <div class="chips">
+    <a class="chip" id="z-90"  href="dhurta://zoom-90">90%</a>
+    <a class="chip" id="z-100" href="dhurta://zoom-100">100%</a>
+    <a class="chip" id="z-110" href="dhurta://zoom-110">110%</a>
+    <a class="chip" id="z-125" href="dhurta://zoom-125">125%</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="label">WEB CONTENT</div>
+  <a class="row" id="t-js"   href="dhurta://toggle-js">JavaScript<span class="sw"></span></a>
+  <a class="row" id="t-dark" href="dhurta://toggle-dark">Force dark pages<span class="sw"></span></a>
+  <div class="hint">JavaScript off breaks many sites but kills most trackers. Force-dark repaints bright pages in the Dhurta obsidian look.</div>
+</div>
+
+<div class="card">
+  <div class="label">PRIVACY & DATA</div>
+  <a class="row" href="dhurta://omni">🔱 Omni privacy dashboard →</a>
+  <a class="row" href="dhurta://autoclean">🧹 Auto-Clean site data now</a>
+  <a class="row danger" href="dhurta://wipe">☢ Nuclear Wipe — destroy everything</a>
+</div>
+
+<div class="card">
+  <div class="label">DEVELOPER</div>
+  <a class="row" href="dhurta://inspect">🧪 Inspect element (on-page devtools)</a>
+  <a class="row" href="dhurta://devtools">🐞 USB debugging — chrome://inspect</a>
+</div>
+
+<script>
+  var q = {}; location.search.slice(1).split('&').forEach(function (kv) {
+    var p = kv.split('='); if (p[0]) q[p[0]] = decodeURIComponent(p[1] || '');
+  });
+  var se = document.getElementById('se-' + (q.se || 'brave')); if (se) se.classList.add('on');
+  var z = document.getElementById('z-' + (q.zoom || '100')); if (z) z.classList.add('on');
+  if (q.js !== '0') document.getElementById('t-js').classList.add('on');
+  if (q.dark === '1') document.getElementById('t-dark').classList.add('on');
+</script>
+</body>
+</html>
