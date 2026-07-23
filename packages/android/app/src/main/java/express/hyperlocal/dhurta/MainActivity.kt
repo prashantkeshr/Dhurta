@@ -176,12 +176,19 @@ class MainActivity : AppCompatActivity() {
                 if (view != web) return
                 b.progressBar.visibility = View.VISIBLE
                 if (!b.urlBar.hasFocus()) b.urlBar.setText(displayUrl(url))
+                if (!fullscreen && url != HOME) b.urlPill.visibility = View.VISIBLE
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
                 if (view == web) {
                     b.progressBar.visibility = View.GONE
                     if (!b.urlBar.hasFocus()) b.urlBar.setText(displayUrl(url))
+                    // The home page carries its own integrated search bar — hide the
+                    // native pill there so there's exactly one address field on screen.
+                    if (!fullscreen) {
+                        b.urlPill.visibility =
+                            if (url == HOME) View.GONE else View.VISIBLE
+                    }
                 }
                 if (url != null && url.startsWith("http") && !url.startsWith(INTERNAL_BASE)) {
                     recordHistory(url, view.title ?: url)
@@ -811,6 +818,34 @@ class MainActivity : AppCompatActivity() {
         }
         ObjectAnimator.ofFloat(b.hubBtn, "scaleY", 1f, 1.05f, 1f).apply {
             duration = 2600; repeatCount = ValueAnimator.INFINITE; start()
+        }
+    }
+
+    /** Pop-up video: leaving the app while HTML5 video is fullscreen floats it
+     *  in a picture-in-picture window over the home screen / other apps. */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (customView != null) {
+            try {
+                enterPictureInPictureMode(
+                    android.app.PictureInPictureParams.Builder()
+                        .setAspectRatio(android.util.Rational(16, 9))
+                        .build(),
+                )
+            } catch (e: Exception) {
+                // Device may not support PiP — nothing to do.
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        // When the floating window is dismissed, drop back out of video fullscreen.
+        if (!isInPictureInPictureMode && customView != null && !fullscreen) {
+            customViewCallback?.onCustomViewHidden()
         }
     }
 
