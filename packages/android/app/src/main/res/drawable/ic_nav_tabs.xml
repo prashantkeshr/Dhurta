@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2×2 grid — outline tabs switcher icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M4,4 C4,3.45 4.45,3 5,3 L10,3 C10.55,3 11,3.45 11,4 L11,9 C11,9.55 10.55,10 10,10 L5,10 C4.45,10 4,9.55 4,9 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.55"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M13,4 C13,3.45 13.45,3 14,3 L19,3 C19.55,3 20,3.45 20,4 L20,9 C20,9.55 19.55,10 19,10 L14,10 C13.45,10 13,9.55 13,9 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.55"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M4,14 C4,13.45 4.45,13 5,13 L10,13 C10.55,13 11,13.45 11,14 L11,19 C11,19.55 10.55,20 10,20 L5,20 C4.45,20 4,19.55 4,19 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.55"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M13,14 C13,13.45 13.45,13 14,13 L19,13 C19.55,13 20,13.45 20,14 L20,19 C20,19.55 19.55,20 19,20 L14,20 C13.45,20 13,19.55 13,19 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.55"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+</vector>

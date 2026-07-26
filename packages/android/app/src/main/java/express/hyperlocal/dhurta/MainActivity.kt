@@ -6,14 +6,18 @@ import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
 import android.os.Environment
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.webkit.CookieManager
 import android.webkit.URLUtil
@@ -28,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -39,6 +44,7 @@ import express.hyperlocal.dhurta.net.DhurtaVpnService
 import express.hyperlocal.dhurta.net.TorService
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.abs
 
 /**
  * Browser surface — Android System WebView (Chromium) inside the Dhurta
@@ -63,6 +69,10 @@ class MainActivity : AppCompatActivity() {
     private var fullscreen = false
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
+
+    // ── Animation state ──
+    private var pillHidden = false
+    private lateinit var gestureDetector: GestureDetectorCompat
 
     // ── Tabs ──
     private val tabs = mutableListOf<WebView>()
@@ -131,6 +141,7 @@ class MainActivity : AppCompatActivity() {
         prefs = getSharedPreferences("dhurta", Context.MODE_PRIVATE)
 
         tabs.add(b.webView)
+        setupGestures()
         configureWebView(b.webView)
         wireChrome()
         wireMenu()
@@ -168,8 +179,6 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
-                // Internal pages (home clock, Omni ring, Settings chips) always need
-                // JS, even when the user has switched it off for the open web.
                 view.settings.javaScriptEnabled = jsEnabled ||
                     url?.startsWith("file:///android_asset") == true ||
                     url?.startsWith(INTERNAL_BASE) == true
@@ -177,6 +186,11 @@ class MainActivity : AppCompatActivity() {
                 b.progressBar.visibility = View.VISIBLE
                 if (!b.urlBar.hasFocus()) b.urlBar.setText(displayUrl(url))
                 if (!fullscreen && url != HOME) b.urlPill.visibility = View.VISIBLE
+                // Always slide pill back down on navigation
+                if (!fullscreen && pillHidden) {
+                    pillHidden = false
+                    b.urlPill.animate().translationY(0f).setDuration(200).start()
+                }
             }
 
             override fun onPageFinished(view: WebView, url: String?) {
@@ -251,6 +265,29 @@ class MainActivity : AppCompatActivity() {
                 else "${activeMatchOrdinal + 1}/$numberOfMatches"
             }
         }
+
+        // Scroll-to-hide URL pill (only the active tab drives it)
+        w.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+            if (w != web || fullscreen) return@setOnScrollChangeListener
+            val dy = scrollY - oldScrollY
+            if (dy > 12 && !pillHidden) {
+                pillHidden = true
+                val h = b.urlPill.height.toFloat().coerceAtLeast(140f)
+                b.urlPill.animate().translationY(-h).setDuration(220)
+                    .setInterpolator(AccelerateDecelerateInterpolator()).start()
+            } else if (dy < -8 && pillHidden) {
+                pillHidden = false
+                b.urlPill.animate().translationY(0f).setDuration(200)
+                    .setInterpolator(AccelerateDecelerateInterpolator()).start()
+            }
+        }
+
+        // Swipe right → back, swipe left → forward (pass-through: WebView still scrolls)
+        @SuppressLint("ClickableViewAccessibility")
+        w.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            false
+        }
     }
 
     private fun applyForceDark(w: WebView) {
@@ -282,6 +319,9 @@ class MainActivity : AppCompatActivity() {
         tabs.forEachIndexed { idx, t -> t.visibility = if (idx == cur) View.VISIBLE else View.GONE }
         b.urlBar.setText(displayUrl(web.url))
         updateTabCount()
+        // Always show the pill when switching tabs
+        pillHidden = false
+        b.urlPill.animate().translationY(0f).setDuration(150).start()
     }
 
     private fun closeTab(i: Int) {
@@ -374,11 +414,11 @@ class MainActivity : AppCompatActivity() {
         b.urlBar.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO) { navigate(b.urlBar.text.toString()); true } else false
         }
-        b.reloadBtn.setOnClickListener { web.reload() }
-        b.backBtn.setOnClickListener { if (web.canGoBack()) web.goBack() }
-        b.forwardBtn.setOnClickListener { if (web.canGoForward()) web.goForward() }
-        b.tabsBtn.setOnClickListener { showTabs() }
-        b.menuBtn.setOnClickListener { showMenu(true) }
+        addSpringClick(b.reloadBtn) { web.reload() }
+        addSpringClick(b.backBtn) { if (web.canGoBack()) web.goBack() }
+        addSpringClick(b.forwardBtn) { if (web.canGoForward()) web.goForward() }
+        addSpringClick(b.tabsBtn) { showTabs() }
+        addSpringClick(b.menuBtn) { showMenu(true) }
         b.hubBtn.setOnClickListener { b.drawerLayout.openDrawer(GravityCompat.START) }
     }
 
@@ -788,15 +828,54 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateBadge() {
-        b.protectionBadge.apply {
-            text = if (protectedNow) "PROTECTED" else "EXPOSED"
-            setTextColor(
-                ContextCompat.getColor(
-                    this@MainActivity,
-                    if (protectedNow) R.color.protected_green else R.color.exposed_red,
-                ),
-            )
+        val colorRes = if (protectedNow) R.color.protected_green else R.color.exposed_red
+        val color = ContextCompat.getColor(this, colorRes)
+        b.lockIcon.setImageResource(
+            if (protectedNow) R.drawable.ic_nav_lock else R.drawable.ic_nav_lock_open,
+        )
+        b.lockIcon.imageTintList = ColorStateList.valueOf(color)
+    }
+
+    // ── Animation helpers ───────────────────────────────────────────────────
+
+    /** Spring-scale feedback on dock/chrome button taps. */
+    private fun addSpringClick(view: View, action: () -> Unit) {
+        view.setOnClickListener {
+            view.animate().scaleX(0.82f).scaleY(0.82f).setDuration(80).withEndAction {
+                view.animate().scaleX(1f).scaleY(1f).setDuration(180)
+                    .setInterpolator(OvershootInterpolator(2.5f)).start()
+            }.start()
+            action()
         }
+    }
+
+    /** Swipe-right = back, swipe-left = forward on the active WebView. */
+    private fun setupGestures() {
+        gestureDetector = GestureDetectorCompat(
+            this,
+            object : GestureDetector.SimpleOnGestureListener() {
+                private val MIN_DIST = 110f
+                private val MIN_VEL = 280f
+
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    vX: Float,
+                    vY: Float,
+                ): Boolean {
+                    if (e1 == null) return false
+                    val dX = e2.x - e1.x
+                    val dY = e2.y - e1.y
+                    if (abs(dX) < abs(dY) * 1.4f) return false  // mostly vertical — let WebView scroll
+                    if (abs(dX) < MIN_DIST || abs(vX) < MIN_VEL) return false
+                    return if (dX > 0 && web.canGoBack()) {
+                        web.goBack(); true
+                    } else if (dX < 0 && web.canGoForward()) {
+                        web.goForward(); true
+                    } else false
+                }
+            },
+        )
     }
 
     /** Soft looping glow pulse on the Hub. */
