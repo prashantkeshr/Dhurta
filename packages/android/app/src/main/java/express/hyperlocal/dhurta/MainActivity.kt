@@ -4,8 +4,10 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.net.Uri
@@ -32,6 +34,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
@@ -74,6 +79,10 @@ class MainActivity : AppCompatActivity() {
     // ── Animation state ──
     private var pillHidden = false
     private lateinit var gestureDetector: GestureDetectorCompat
+
+    // ── OTA update state ──
+    private var updateDownloadId = -1L
+    private var updateReceiver: BroadcastReceiver? = null
 
     // ── Tabs ──
     private val tabs = mutableListOf<WebView>()
@@ -157,6 +166,15 @@ class MainActivity : AppCompatActivity() {
         updateBadge()
         updateTabCount()
         web.loadUrl(HOME)
+
+        // Silent background update check — at most once per 24 h
+        val lastCheck = prefs.getLong("last_update_check", 0L)
+        if (System.currentTimeMillis() - lastCheck > 86_400_000L) {
+            lifecycleScope.launch {
+                delay(5_000) // let the home page settle before hitting the network
+                checkForUpdates(silent = true)
+            }
+        }
     }
 
     // ── WebView factory / shared configuration ──────────────────────────────
@@ -426,6 +444,7 @@ class MainActivity : AppCompatActivity() {
             "downloads" -> showDownloads()
             "bm-del" -> { deleteBookmark(uri.getQueryParameter("i")?.toIntOrNull() ?: -1); showBookmarks() }
             "hist-clear" -> { prefs.edit().remove("history").apply(); showHistory() }
+            "check-update" -> checkForUpdates(silent = false)
             "network" -> showNetworkMonitor()
             "net-clear" -> { synchronized(recentRequests) { recentRequests.clear() }; showNetworkMonitor() }
             "open" -> uri.getQueryParameter("u")?.let { web.loadUrl(it) }
@@ -919,6 +938,97 @@ class MainActivity : AppCompatActivity() {
         """.trimIndent()
     }
 
+    // ── OTA Self-Update ─────────────────────────────────────────────────────
+
+    private fun checkForUpdates(silent: Boolean) {
+        lifecycleScope.launch {
+            prefs.edit().putLong("last_update_check", System.currentTimeMillis()).apply()
+            val info = UpdateChecker.check(BuildConfig.VERSION_NAME)
+            if (info == null) {
+                if (!silent) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "✓ Dhurta is up to date (${BuildConfig.VERSION_NAME})",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                return@launch
+            }
+            val sizeMb = if (info.sizeBytes > 0) " · %.1f MB".format(info.sizeBytes / 1_048_576.0) else ""
+            AlertDialog.Builder(this@MainActivity, R.style.DhurtaDialog)
+                .setTitle("Update — ${info.tagName}")
+                .setMessage(
+                    "A newer version is available.\n\n" +
+                        "Installed : ${BuildConfig.VERSION_NAME}\n" +
+                        "Latest    : ${info.versionName}\n\n" +
+                        "File: ${info.assetName}$sizeMb\n\n" +
+                        "Download and install now?",
+                )
+                .setPositiveButton("⬇  Download & Install") { _, _ -> downloadUpdate(info) }
+                .setNegativeButton("Later", null)
+                .show()
+        }
+    }
+
+    private fun downloadUpdate(info: UpdateChecker.UpdateInfo) {
+        val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val req = DownloadManager.Request(Uri.parse(info.downloadUrl)).apply {
+            setTitle("Dhurta ${info.tagName}")
+            setDescription("Downloading update…")
+            setMimeType("application/vnd.android.package-archive")
+            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, info.assetName)
+        }
+        updateDownloadId = dm.enqueue(req)
+        Toast.makeText(this, "⬇ Downloading ${info.tagName}…", Toast.LENGTH_SHORT).show()
+
+        // Listen for completion — unregisters itself after firing
+        updateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L)
+                if (id == updateDownloadId) {
+                    unregisterReceiver(this)
+                    updateReceiver = null
+                    installDownloadedApk(id)
+                }
+            }
+        }
+        registerReceiver(updateReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+    }
+
+    private fun installDownloadedApk(downloadId: Long) {
+        val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        val uri = dm.getUriForDownloadedFile(downloadId) ?: run {
+            Toast.makeText(this, "Download failed — try again", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // Android 8+ requires the user to allow unknown-source installs for this app
+        if (!packageManager.canRequestPackageInstalls()) {
+            Toast.makeText(
+                this,
+                "Enable 'Install unknown apps' for Dhurta in Settings, then run the APK from Downloads",
+                Toast.LENGTH_LONG,
+            ).show()
+            startActivity(
+                Intent(
+                    android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+            return
+        }
+        try {
+            startActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                },
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not open installer: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
     // ── Animation helpers ───────────────────────────────────────────────────
 
     /** Spring-scale feedback on dock/chrome button taps. */
@@ -1012,6 +1122,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        updateReceiver?.let { try { unregisterReceiver(it) } catch (_: Exception) {} }
         tabs.forEach { it.destroy() }
         super.onDestroy()
     }
