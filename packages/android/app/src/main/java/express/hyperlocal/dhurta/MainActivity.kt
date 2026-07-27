@@ -10,7 +10,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.text.TextUtils
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.net.VpnService
 import android.os.Bundle
 import android.os.Environment
@@ -83,6 +90,9 @@ class MainActivity : AppCompatActivity() {
     // ── OTA update state ──
     private var updateDownloadId = -1L
     private var updateReceiver: BroadcastReceiver? = null
+
+    // ── Tab switcher overlay ──
+    private var tabSwitcherShown = false
 
     // ── Tabs ──
     private val tabs = mutableListOf<WebView>()
@@ -160,6 +170,7 @@ class MainActivity : AppCompatActivity() {
         wireChrome()
         wireMenu()
         wireFind()
+        wireTabSwitcher()
         wireDrawer()
         wireBack()
         startHubPulse()
@@ -223,10 +234,11 @@ class MainActivity : AppCompatActivity() {
                 b.progressBar.visibility = View.VISIBLE
                 if (!b.urlBar.hasFocus()) b.urlBar.setText(displayUrl(url))
                 if (!fullscreen && url != HOME) b.urlPill.visibility = View.VISIBLE
-                // Always slide pill back down on navigation
+                // Always slide pill + dock back into view on navigation
                 if (!fullscreen && pillHidden) {
                     pillHidden = false
                     b.urlPill.animate().translationY(0f).setDuration(200).start()
+                    b.dock.animate().translationY(0f).setDuration(200).start()
                 }
             }
 
@@ -315,18 +327,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Scroll-to-hide URL pill (only the active tab drives it)
+        // Scroll-to-hide URL pill + dock (only the active tab drives it)
         w.setOnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-            if (w != web || fullscreen) return@setOnScrollChangeListener
+            if (w != web || fullscreen || tabSwitcherShown) return@setOnScrollChangeListener
             val dy = scrollY - oldScrollY
             if (dy > 12 && !pillHidden) {
                 pillHidden = true
-                val h = b.urlPill.height.toFloat().coerceAtLeast(140f)
-                b.urlPill.animate().translationY(-h).setDuration(220)
+                val pillH = b.urlPill.height.toFloat().coerceAtLeast(140f)
+                val dockH = b.dock.height.toFloat().coerceAtLeast(100f) +
+                    22f * resources.displayMetrics.density
+                b.urlPill.animate().translationY(-pillH).setDuration(220)
+                    .setInterpolator(AccelerateDecelerateInterpolator()).start()
+                b.dock.animate().translationY(dockH).setDuration(260)
                     .setInterpolator(AccelerateDecelerateInterpolator()).start()
             } else if (dy < -8 && pillHidden) {
                 pillHidden = false
                 b.urlPill.animate().translationY(0f).setDuration(200)
+                    .setInterpolator(AccelerateDecelerateInterpolator()).start()
+                b.dock.animate().translationY(0f).setDuration(220)
                     .setInterpolator(AccelerateDecelerateInterpolator()).start()
             }
         }
@@ -368,9 +386,10 @@ class MainActivity : AppCompatActivity() {
         tabs.forEachIndexed { idx, t -> t.visibility = if (idx == cur) View.VISIBLE else View.GONE }
         b.urlBar.setText(displayUrl(web.url))
         updateTabCount()
-        // Always show the pill when switching tabs
+        // Always show pill + dock when switching tabs
         pillHidden = false
         b.urlPill.animate().translationY(0f).setDuration(150).start()
+        if (!tabSwitcherShown) b.dock.animate().translationY(0f).setDuration(150).start()
     }
 
     private fun closeTab(i: Int) {
@@ -403,6 +422,102 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateTabCount() { b.tabCount.text = tabs.size.toString() }
+
+    // ── Tab switcher (Opera-style card overlay) ─────────────────────────────
+
+    private fun wireTabSwitcher() {
+        b.tabSwitcherDone.setOnClickListener { hideTabSwitcher() }
+        b.tabSwitcherNewTab.setOnClickListener { newTab(HOME); hideTabSwitcher() }
+    }
+
+    private fun showTabSwitcher() {
+        tabSwitcherShown = true
+        b.tabSwitcherTitle.text = "${tabs.size} TAB${if (tabs.size != 1) "S" else ""}"
+        b.tabCardList.removeAllViews()
+        tabs.forEachIndexed { i, w -> b.tabCardList.addView(buildTabCard(i, w, i == cur)) }
+        b.tabSwitcherOverlay.visibility = View.VISIBLE
+        b.tabSwitcherOverlay.alpha = 0f
+        b.tabSwitcherOverlay.animate().alpha(1f).setDuration(200).start()
+        val dockH = b.dock.height.toFloat().coerceAtLeast(100f) +
+            22f * resources.displayMetrics.density
+        b.dock.animate().translationY(dockH).setDuration(200)
+            .setInterpolator(AccelerateDecelerateInterpolator()).start()
+    }
+
+    private fun hideTabSwitcher() {
+        tabSwitcherShown = false
+        b.tabSwitcherOverlay.animate().alpha(0f).setDuration(160)
+            .withEndAction { b.tabSwitcherOverlay.visibility = View.GONE }.start()
+        b.dock.animate().translationY(0f).setDuration(220)
+            .setInterpolator(OvershootInterpolator(1.5f)).start()
+    }
+
+    private fun buildTabCard(index: Int, w: WebView, isCurrent: Boolean): LinearLayout {
+        val dp = resources.displayMetrics.density
+        val bg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 16 * dp
+            setColor(if (isCurrent) 0xFF131320.toInt() else 0xFF0C0C17.toInt())
+            setStroke(
+                (if (isCurrent) 2 * dp else dp).toInt(),
+                if (isCurrent) 0xFFFF4500.toInt() else 0x1AFFFFFF,
+            )
+        }
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = bg
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (68 * dp).toInt(),
+            )
+            lp.bottomMargin = (10 * dp).toInt()
+            layoutParams = lp
+            setPadding((14 * dp).toInt(), 0, (8 * dp).toInt(), 0)
+            isClickable = true; isFocusable = true
+            setOnClickListener { switchTab(index); hideTabSwitcher() }
+        }
+        val textCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        textCol.addView(TextView(this).apply {
+            text = tabLabel(w).take(42)
+            textSize = 12f
+            setTextColor(if (isCurrent) Color.WHITE else Color.parseColor("#C8CCE8"))
+            setTypeface(null, Typeface.BOLD)
+            maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
+            )
+        })
+        textCol.addView(TextView(this).apply {
+            text = displayUrl(w.url).ifEmpty { "New Tab" }
+            textSize = 9f
+            setTextColor(if (isCurrent) Color.parseColor("#FF7A2F") else Color.parseColor("#7B81A4"))
+            maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).also { it.topMargin = (3 * dp).toInt() }
+        })
+        val closeBtn = TextView(this).apply {
+            text = "✕"
+            textSize = 15f
+            setTextColor(Color.parseColor("#7B81A4"))
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                (40 * dp).toInt(), LinearLayout.LayoutParams.MATCH_PARENT,
+            )
+            isClickable = true; isFocusable = true
+            setOnClickListener {
+                closeTab(index)
+                if (tabSwitcherShown) showTabSwitcher()
+            }
+        }
+        card.addView(textCol)
+        card.addView(closeBtn)
+        return card
+    }
 
     // ── dhurta:// internal routes — the mobile equivalent of desktop Omni actions ──
     private fun handleInternal(uri: Uri) {
@@ -469,7 +584,7 @@ class MainActivity : AppCompatActivity() {
         addSpringClick(b.reloadBtn) { web.reload() }
         addSpringClick(b.backBtn) { if (web.canGoBack()) web.goBack() }
         addSpringClick(b.forwardBtn) { if (web.canGoForward()) web.goForward() }
-        addSpringClick(b.tabsBtn) { showTabs() }
+        addSpringClick(b.tabsBtn) { showTabSwitcher() }
         addSpringClick(b.menuBtn) { showMenu(true) }
         b.hubBtn.setOnClickListener { b.drawerLayout.openDrawer(GravityCompat.START) }
     }
@@ -769,6 +884,7 @@ class MainActivity : AppCompatActivity() {
             override fun handleOnBackPressed() {
                 when {
                     customView != null -> customViewCallback?.onCustomViewHidden()
+                    tabSwitcherShown -> hideTabSwitcher()
                     b.menuOverlay.visibility == View.VISIBLE -> showMenu(false)
                     fullscreen -> toggleFullscreen()
                     b.findBar.visibility == View.VISIBLE -> hideFindBar()

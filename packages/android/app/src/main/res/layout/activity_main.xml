@@ -224,12 +224,11 @@
 
                 <ImageView
                     android:id="@+id/hubBtn"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
-                    android:padding="9dp"
-                    android:background="@drawable/hub_bg"
-                    android:src="@mipmap/ic_launcher"
+                    android:background="?android:selectableItemBackgroundBorderless"
+                    android:src="@mipmap/ic_launcher_round"
                     android:elevation="4dp"
                     android:contentDescription="Dhurta Hub" />
             </FrameLayout>
@@ -339,6 +338,103 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
+        </FrameLayout>
+
+        <!-- ── Opera-style card tab switcher overlay ── -->
+        <FrameLayout
+            android:id="@+id/tabSwitcherOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#EE07070E"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <!-- Header row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp">
+
+                    <TextView
+                        android:id="@+id/tabSwitcherTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="TABS"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.20"
+                        android:textColor="#E9ECFF"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tabSwitcherDone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Done"
+                        android:textSize="14sp"
+                        android:textColor="#FF4500"
+                        android:padding="10dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?android:selectableItemBackgroundBorderless" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#1AFFFFFF" />
+
+                <!-- Tab cards (populated in code) -->
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:scrollbars="none"
+                    android:overScrollMode="never"
+                    android:paddingHorizontal="16dp"
+                    android:clipToPadding="false">
+
+                    <LinearLayout
+                        android:id="@+id/tabCardList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="12dp" />
+                </ScrollView>
+
+                <!-- New tab capsule button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="76dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp">
+
+                    <TextView
+                        android:id="@+id/tabSwitcherNewTab"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:gravity="center"
+                        android:text="＋  New Tab"
+                        android:textSize="13sp"
+                        android:textColor="#FF4500"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.06"
+                        android:background="@drawable/dock_capsule"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+            </LinearLayout>
         </FrameLayout>
     </FrameLayout>
 
