@@ -45,6 +45,7 @@ import express.hyperlocal.dhurta.net.TorService
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs
+import java.util.Collections
 
 /**
  * Browser surface — Android System WebView (Chromium) inside the Dhurta
@@ -80,6 +81,8 @@ class MainActivity : AppCompatActivity() {
     private val web get() = tabs[cur]
     private val desktopTabs = HashSet<WebView>()
     private val tabTitles = HashMap<WebView, String>()
+    // Bounded log of all network requests made this session (METHOD + host), newest first.
+    private val recentRequests = Collections.synchronizedList(mutableListOf<String>())
 
     private enum class Mode { NORMAL, CHAKRA, GHOST }
     private val protectedNow get() = mode != Mode.NORMAL
@@ -119,6 +122,8 @@ class MainActivity : AppCompatActivity() {
         append("&zoom=").append(textZoom)
         append("&js=").append(if (jsEnabled) 1 else 0)
         append("&dark=").append(if (forceDark) 1 else 0)
+        append("&rtc=").append(if (rtc) 1 else 0)
+        append("&af=").append(if (af) 1 else 0)
     }
 
     private val vpnConsent = registerForActivityResult(
@@ -178,6 +183,20 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
 
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest,
+            ): android.webkit.WebResourceResponse? {
+                val url = request.url.toString()
+                if (!url.startsWith("file://") && !url.startsWith(INTERNAL_BASE) && !url.startsWith("data:")) {
+                    val method = request.method ?: "GET"
+                    val entry = "$method ${request.url.host ?: url.take(80)}"
+                    recentRequests.add(0, entry)
+                    if (recentRequests.size > 150) recentRequests.removeAt(recentRequests.size - 1)
+                }
+                return null
+            }
+
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 view.settings.javaScriptEnabled = jsEnabled ||
                     url?.startsWith("file:///android_asset") == true ||
@@ -208,6 +227,18 @@ class MainActivity : AppCompatActivity() {
                     recordHistory(url, view.title ?: url)
                 }
                 if (inspectorOn && view == web) injectInspector()
+                // Inject captured request log into the Omni dashboard after it loads.
+                if (url?.contains("omni.html") == true) {
+                    val snap: List<String>
+                    synchronized(recentRequests) { snap = recentRequests.take(50).toList() }
+                    val json = snap.joinToString(",") {
+                        "\"${it.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+                    }
+                    view.evaluateJavascript(
+                        "window.__dhurtaRequests=[$json];if(typeof renderRequests==='function')renderRequests();",
+                        null,
+                    )
+                }
             }
         }
 
@@ -344,7 +375,7 @@ class MainActivity : AppCompatActivity() {
         val labels = tabs.mapIndexed { i, w ->
             (if (i == cur) "● " else "○ ") + tabLabel(w).take(40)
         }.toTypedArray()
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(this, R.style.DhurtaDialog)
             .setTitle("Tabs (${tabs.size})")
             .setItems(labels) { _, i -> switchTab(i) }
             .setPositiveButton("➕ New tab") { _, _ -> newTab(HOME) }
@@ -365,8 +396,8 @@ class MainActivity : AppCompatActivity() {
             "ghost-on" -> setMode(Mode.GHOST)
             "ghost-off" -> setMode(Mode.NORMAL)
             "rotate" -> rotateCircuit()
-            "toggle-af" -> { af = !af; refreshOmni() }
-            "toggle-rtc" -> { rtc = !rtc; refreshOmni() }
+            "toggle-af" -> { af = !af; refreshOmni(); refreshSettings() }
+            "toggle-rtc" -> { rtc = !rtc; refreshOmni(); refreshSettings() }
             "toggle-ad" -> { ad = !ad; refreshOmni() }
             "autoclean" -> autoClean()
             "wipe" -> nuclearWipe()
@@ -395,6 +426,8 @@ class MainActivity : AppCompatActivity() {
             "downloads" -> showDownloads()
             "bm-del" -> { deleteBookmark(uri.getQueryParameter("i")?.toIntOrNull() ?: -1); showBookmarks() }
             "hist-clear" -> { prefs.edit().remove("history").apply(); showHistory() }
+            "network" -> showNetworkMonitor()
+            "net-clear" -> { synchronized(recentRequests) { recentRequests.clear() }; showNetworkMonitor() }
             "open" -> uri.getQueryParameter("u")?.let { web.loadUrl(it) }
         }
     }
@@ -565,20 +598,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun libraryPage(title: String, emoji: String, rows: String, actions: String = "") = """
         <!DOCTYPE html><html><head><meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
         <style>
-          body{background:#07090d;color:#e8e8e8;font-family:monospace;padding:18px 14px 40px;margin:0}
-          h1{font-size:18px;letter-spacing:.2em;color:#ffb300;margin:0 0 2px}
-          .sub{font-size:9px;color:#7a8494;margin-bottom:16px;letter-spacing:.15em}
-          .row{display:block;background:#0d1117;border:1px solid #1d2430;border-radius:12px;
-               padding:12px 14px;margin-bottom:10px;text-decoration:none;color:#e8e8e8}
-          .t{font-size:12px;margin-bottom:3px;word-break:break-all}
-          .u{font-size:9px;color:#00e5ff;word-break:break-all}
-          .m{font-size:9px;color:#7a8494;margin-top:3px}
-          .del{color:#ff5370;font-size:10px;float:right;text-decoration:none;padding:2px 6px}
-          .act{display:inline-block;color:#ff5370;font-size:10px;border:1px solid #1d2430;
-               border-radius:8px;padding:8px 12px;text-decoration:none;margin-bottom:14px}
-          .empty{color:#7a8494;font-size:11px;padding:30px 0;text-align:center}
+          body{background:#06060c;color:#e9ecff;font-family:'Segoe UI',system-ui,sans-serif;padding:18px 14px 40px;margin:0}
+          h1{font-size:16px;letter-spacing:.15em;color:#ff7a2f;margin:0 0 2px;font-weight:800}
+          .sub{font-size:8px;color:#7b81a4;margin-bottom:16px;letter-spacing:.18em}
+          .row{display:block;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+               padding:12px 14px;margin-bottom:10px;text-decoration:none;color:#e9ecff}
+          .t{font-size:12px;margin-bottom:4px;word-break:break-all;font-weight:500}
+          .u{font-size:9px;color:#22d3ff;word-break:break-all}
+          .m{font-size:9px;color:#7b81a4;margin-top:3px}
+          .del{color:#ff5470;font-size:10px;float:right;text-decoration:none;padding:2px 8px;
+               border:1px solid rgba(255,84,112,.3);border-radius:6px;margin-left:6px}
+          .act{display:inline-block;color:#ff5470;font-size:10px;border:1px solid rgba(255,84,112,.3);
+               border-radius:8px;padding:8px 14px;text-decoration:none;margin-bottom:14px}
+          .empty{color:#7b81a4;font-size:11px;padding:30px 0;text-align:center}
         </style></head><body>
         <h1>$emoji $title</h1><div class="sub">DHURTA LIBRARY</div>
         $actions
@@ -699,7 +733,7 @@ class MainActivity : AppCompatActivity() {
         b.navGhost.setOnClickListener { setMode(if (mode == Mode.GHOST) Mode.NORMAL else Mode.GHOST); web.loadUrl(omniUrl()); close() }
         b.navChakra.setOnClickListener { setMode(if (mode == Mode.CHAKRA) Mode.NORMAL else Mode.CHAKRA); web.loadUrl(omniUrl()); close() }
         b.navSecurity.setOnClickListener { web.loadUrl(omniUrl()); close() }
-        b.navNetwork.setOnClickListener { web.loadUrl(omniUrl()); close() }
+        b.navNetwork.setOnClickListener { showNetworkMonitor(); close() }
         b.navDevtools.setOnClickListener { toggleDevMode(); close() }
         b.navWipe.setOnClickListener { nuclearWipe(); close() }
         b.navBookmarks.setOnClickListener { showBookmarks(); close() }
@@ -834,6 +868,55 @@ class MainActivity : AppCompatActivity() {
             if (protectedNow) R.drawable.ic_nav_lock else R.drawable.ic_nav_lock_open,
         )
         b.lockIcon.imageTintList = ColorStateList.valueOf(color)
+    }
+
+    // ── Network Monitor ─────────────────────────────────────────────────────
+    private fun showNetworkMonitor() {
+        val snap: List<String>
+        synchronized(recentRequests) { snap = recentRequests.take(150).toList() }
+        loadInternal(networkPage(snap))
+    }
+
+    private fun networkPage(requests: List<String>): String {
+        val rows = if (requests.isEmpty()) {
+            "<div class=\"empty\">No requests captured yet — browse a few pages first.</div>"
+        } else {
+            requests.joinToString("") { req ->
+                val spaceIdx = req.indexOf(' ')
+                val method = if (spaceIdx > 0) req.substring(0, spaceIdx) else req
+                val host = if (spaceIdx > 0) esc(req.substring(spaceIdx + 1)) else ""
+                val cls = when (method) { "POST" -> "post"; "GET" -> "get"; else -> "other" }
+                "<div class=\"nrow\"><span class=\"m $cls\">${esc(method)}</span><span class=\"host\">$host</span></div>"
+            }
+        }
+        return """
+            <!DOCTYPE html><html><head><meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+            <style>
+              body{background:#06060c;color:#e9ecff;font-family:'Consolas',monospace;padding:18px 14px 40px;margin:0}
+              h1{font-size:15px;letter-spacing:.2em;color:#ff7a2f;margin:0 0 2px;font-weight:800}
+              .sub{font-size:8px;color:#7b81a4;margin-bottom:16px;letter-spacing:.2em}
+              .cnt{font-size:9px;color:#7b81a4;margin-bottom:12px}
+              .nrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:10px}
+              .m{width:42px;flex:0 0 auto;text-align:center;padding:2px 0;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:.05em}
+              .get{background:rgba(34,211,255,.12);color:#22d3ff;border:1px solid rgba(34,211,255,.25)}
+              .post{background:rgba(255,122,47,.12);color:#ff7a2f;border:1px solid rgba(255,122,47,.25)}
+              .other{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.25)}
+              .host{color:#c8cce8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+              .empty{color:#7b81a4;font-size:11px;padding:30px 0;text-align:center}
+              .act{display:inline-block;color:#ff5470;font-size:10px;border:1px solid rgba(255,84,112,.3);border-radius:8px;padding:8px 14px;text-decoration:none;margin-right:8px;margin-bottom:16px}
+              .back{display:inline-block;color:#22d3ff;font-size:10px;border:1px solid rgba(34,211,255,.3);border-radius:8px;padding:8px 14px;text-decoration:none;margin-bottom:16px}
+            </style></head><body>
+            <h1>🌐 NETWORK MONITOR</h1>
+            <div class="sub">DATA LEAVING THIS DEVICE · LIVE SESSION LOG</div>
+            <div>
+              <a class="back" href="dhurta://newtab">‹ Home</a>
+              <a class="act" href="dhurta://net-clear">🧹 Clear log</a>
+            </div>
+            <div class="cnt">${requests.size} request(s) captured this session</div>
+            $rows
+            </body></html>
+        """.trimIndent()
     }
 
     // ── Animation helpers ───────────────────────────────────────────────────

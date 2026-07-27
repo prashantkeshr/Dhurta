@@ -168,6 +168,13 @@
     <a class="devbtn wipe" href="dhurta://wipe">☢  Nuclear Wipe — clear all site data</a>
   </div>
 
+  <!-- Network Feed -->
+  <div class="card" style="animation-delay:.26s">
+    <div class="lbl"><span class="d" style="color:var(--saffron)"></span> Live Request Feed</div>
+    <div id="netfeed" style="margin-top:8px"><div class="spin">Waiting for request data…</div></div>
+    <a class="devbtn" href="dhurta://network" style="margin-top:10px;color:var(--saffron);background:rgba(255,122,47,.06);border-color:rgba(255,122,47,.35)">🌐 Full Network Monitor →</a>
+  </div>
+
   <div class="foot">RUNS 100% LOCALLY · NO SERVER · NO ACCOUNT · ZERO TELEMETRY</div>
 
 <script>
@@ -230,6 +237,21 @@
         ? '✓ Masked egress — not your real location.'
         : '✕ This is your REAL IP, visible to every site you visit.')+'</div>';
   }).catch(function(){ ipBox.innerHTML='<div class="stxt">Lookup failed — offline or blocked.</div>'; });
+
+  function renderRequests() {
+    var reqs = window.__dhurtaRequests || [];
+    var box = document.getElementById('netfeed');
+    if (!box) return;
+    if (!reqs.length) { box.innerHTML='<div class="spin">No requests yet — browse a page first, then re-open Omni.</div>'; return; }
+    box.innerHTML = reqs.slice(0,20).map(function(r) {
+      var sp = r.indexOf(' ');
+      var method = sp > 0 ? r.substring(0,sp) : r;
+      var host = sp > 0 ? r.substring(sp+1) : '';
+      var mcl = method==='POST' ? 'rd' : method==='GET' ? 'cy' : 'am';
+      return '<div class="kv"><span class="k"><span class="v '+mcl+'" style="font-size:8px;padding:1px 5px;border-radius:3px;margin-right:7px;background:rgba(255,255,255,.06)">'+method+'</span>'+host+'</span></div>';
+    }).join('');
+  }
+  renderRequests();
 </script>
 </body>
 </html>

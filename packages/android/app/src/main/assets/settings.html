@@ -5,39 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Dhurta — Settings</title>
 <style>
-  :root { --bg:#07090d; --card:#0d1117; --border:#1d2430; --text:#e8e8e8; --muted:#7a8494;
-          --acc:#00e5ff; --saffron:#ffb300; --green:#00ff9d; --red:#ff5370; }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:var(--bg); color:var(--text); font-family:monospace; padding:18px 14px 40px; }
-  h1 { font-size:18px; letter-spacing:.2em; color:var(--saffron); margin-bottom:2px; }
-  .sub { font-size:9px; color:var(--muted); margin-bottom:20px; letter-spacing:.15em; }
-  .card { background:var(--card); border:1px solid var(--border); border-radius:14px;
-          padding:14px; margin-bottom:14px; animation:rise .4s ease both; }
-  .card:nth-child(3){animation-delay:.05s}.card:nth-child(4){animation-delay:.1s}
-  .card:nth-child(5){animation-delay:.15s}.card:nth-child(6){animation-delay:.2s}
-  @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
-  .label { font-size:9px; color:var(--muted); letter-spacing:.2em; margin-bottom:10px; }
-  .chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .chip { flex:1; min-width:70px; text-align:center; padding:10px 6px; border-radius:10px;
-          border:1px solid var(--border); color:var(--muted); font-size:11px; text-decoration:none; }
-  .chip.on { border-color:var(--acc); color:var(--acc); box-shadow:0 0 12px #00e5ff33; }
-  .row { display:flex; align-items:center; justify-content:space-between; padding:10px 0;
-         border-bottom:1px solid var(--border); text-decoration:none; color:var(--text); font-size:12px; }
-  .row:last-child { border-bottom:none; }
-  .sw { width:40px; height:22px; border-radius:11px; background:var(--border); position:relative; transition:.2s; }
-  .sw::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px;
-               border-radius:50%; background:var(--muted); transition:.2s; }
-  .on>.sw { background:#00e5ff44; } .on>.sw::after { left:21px; background:var(--acc); }
-  .danger { color:var(--red); }
-  .hint { font-size:9px; color:var(--muted); margin-top:8px; line-height:1.6; }
+  :root {
+    --bg:#06060c; --card:rgba(255,255,255,.04); --border:rgba(255,255,255,.08);
+    --text:#e9ecff; --muted:#7b81a4; --saffron:#ff7a2f; --neon:#22d3ff;
+    --green:#39ff9e; --red:#ff5470; --purple:#a855f7;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; }
+  body{ background:var(--bg); padding:18px 14px 50px; min-height:100vh; }
+
+  .top{ display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .back{ width:38px; height:38px; border-radius:12px; background:var(--card); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; text-decoration:none; flex-shrink:0; }
+  .back svg{ width:18px; height:18px; }
+  .top h1{ font-size:17px; font-weight:800; letter-spacing:.15em; color:var(--saffron); }
+  .top .sub{ font-size:8px; color:var(--muted); letter-spacing:.2em; margin-top:2px; }
+
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:14px 16px; margin-bottom:12px; animation:rise .35s ease both; }
+  .card:nth-child(2){animation-delay:.04s}.card:nth-child(3){animation-delay:.08s}
+  .card:nth-child(4){animation-delay:.12s}.card:nth-child(5){animation-delay:.16s}
+  .card:nth-child(6){animation-delay:.2s}.card:nth-child(7){animation-delay:.24s}
+  .card.orange{ box-shadow:0 0 0 1px rgba(255,122,47,.1),0 0 28px -12px rgba(255,122,47,.4); }
+  @keyframes rise{ from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+  .section-label{ font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{ flex:1; min-width:70px; text-align:center; padding:10px 6px; border-radius:12px;
+    border:1px solid var(--border); color:var(--muted); font-size:11px; text-decoration:none;
+    font-weight:600; background:rgba(255,255,255,.02); }
+  .chip.on{ border-color:var(--saffron); color:var(--saffron);
+    box-shadow:0 0 14px rgba(255,122,47,.25); background:rgba(255,122,47,.08); }
+
+  .row{ display:flex; align-items:center; justify-content:space-between; padding:12px 0;
+    border-bottom:1px solid rgba(255,255,255,.05); text-decoration:none; color:var(--text); font-size:13px; }
+  .row:last-child{ border-bottom:none; }
+  .row .info{ flex:1; line-height:1.4; }
+  .row .info .desc{ font-size:10px; color:var(--muted); margin-top:2px; display:block; }
+  .sw{ width:42px; height:24px; border-radius:12px; background:rgba(255,255,255,.1);
+    position:relative; flex-shrink:0; transition:.2s; }
+  .sw::after{ content:''; position:absolute; top:3px; left:3px; width:18px; height:18px;
+    border-radius:50%; background:var(--muted); transition:.2s; }
+  .row.on .sw{ background:rgba(255,122,47,.3); }
+  .row.on .sw::after{ left:21px; background:var(--saffron); box-shadow:0 0 8px rgba(255,122,47,.6); }
+
+  .action{ display:flex; align-items:center; padding:12px 0; text-decoration:none; color:var(--text);
+    font-size:13px; border-bottom:1px solid rgba(255,255,255,.05); gap:10px; }
+  .action:last-child{ border-bottom:none; }
+  .action .arrow{ color:var(--muted); font-size:16px; margin-left:auto; }
+  .action.danger{ color:var(--red); }
+  .action.accent{ color:var(--saffron); }
+  .action.neon{ color:var(--neon); }
+
+  .hint{ font-size:9px; color:var(--muted); margin-top:10px; line-height:1.6;
+    padding-top:8px; border-top:1px solid rgba(255,255,255,.05); }
+  .foot{ text-align:center; margin-top:22px; font-size:8px; letter-spacing:.2em; color:#333a5c; }
 </style>
 </head>
 <body>
-<h1>⚙ SETTINGS</h1>
-<div class="sub">FULL USER CONTROL · DHURTA MOBILE</div>
 
-<div class="card">
-  <div class="label">SEARCH ENGINE</div>
+<div class="top">
+  <a class="back" href="dhurta://newtab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ff" stroke-width="1.8" stroke-linecap="round">
+      <path d="M15 5l-7 7 7 7"/>
+    </svg>
+  </a>
+  <div>
+    <h1>SETTINGS</h1>
+    <div class="sub">FULL USER CONTROL · DHURTA MOBILE</div>
+  </div>
+</div>
+
+<div class="card orange">
+  <div class="section-label">Search Engine</div>
   <div class="chips">
     <a class="chip" id="se-brave"  href="dhurta://se-brave">Brave</a>
     <a class="chip" id="se-ddg"    href="dhurta://se-ddg">DuckDuckGo</a>
@@ -46,7 +87,7 @@
 </div>
 
 <div class="card">
-  <div class="label">TEXT SIZE</div>
+  <div class="section-label">Text Size</div>
   <div class="chips">
     <a class="chip" id="z-90"  href="dhurta://zoom-90">90%</a>
     <a class="chip" id="z-100" href="dhurta://zoom-100">100%</a>
@@ -56,33 +97,77 @@
 </div>
 
 <div class="card">
-  <div class="label">WEB CONTENT</div>
-  <a class="row" id="t-js"   href="dhurta://toggle-js">JavaScript<span class="sw"></span></a>
-  <a class="row" id="t-dark" href="dhurta://toggle-dark">Force dark pages<span class="sw"></span></a>
-  <div class="hint">JavaScript off breaks many sites but kills most trackers. Force-dark repaints bright pages in the Dhurta obsidian look.</div>
+  <div class="section-label">Web Content</div>
+  <a class="row" id="t-js" href="dhurta://toggle-js">
+    <span class="info">JavaScript<span class="desc">Disable to block most trackers. Breaks many sites.</span></span>
+    <span class="sw"></span>
+  </a>
+  <a class="row" id="t-dark" href="dhurta://toggle-dark">
+    <span class="info">Force Dark Mode<span class="desc">Repaints bright pages in the Dhurta obsidian theme.</span></span>
+    <span class="sw"></span>
+  </a>
 </div>
 
 <div class="card">
-  <div class="label">PRIVACY & DATA</div>
-  <a class="row" href="dhurta://omni">🔱 Omni privacy dashboard →</a>
-  <a class="row" href="dhurta://autoclean">🧹 Auto-Clean site data now</a>
-  <a class="row danger" href="dhurta://wipe">☢ Nuclear Wipe — destroy everything</a>
+  <div class="section-label">Security &amp; Privacy</div>
+  <a class="row" id="t-af" href="dhurta://toggle-af">
+    <span class="info">Anti-Fingerprint<span class="desc">Obscures browser identity from tracker scripts.</span></span>
+    <span class="sw"></span>
+  </a>
+  <a class="row" id="t-rtc" href="dhurta://toggle-rtc">
+    <span class="info">Block WebRTC<span class="desc">Prevents WebRTC from leaking your real IP address.</span></span>
+    <span class="sw"></span>
+  </a>
+  <a class="action accent" href="dhurta://omni">
+    <span>🔱 Privacy Dashboard (Omni)</span><span class="arrow">›</span>
+  </a>
+  <a class="action neon" href="dhurta://network">
+    <span>🌐 Network Monitor — live request feed</span><span class="arrow">›</span>
+  </a>
 </div>
 
 <div class="card">
-  <div class="label">DEVELOPER</div>
-  <a class="row" href="dhurta://inspect">🧪 Inspect element (on-page devtools)</a>
-  <a class="row" href="dhurta://devtools">🐞 USB debugging — chrome://inspect</a>
+  <div class="section-label">Data Management</div>
+  <a class="action" href="dhurta://autoclean">
+    <span>🧹 Auto-Clean Site Data Now</span><span class="arrow">›</span>
+  </a>
+  <a class="action" href="dhurta://bookmarks">
+    <span>🔖 Bookmarks</span><span class="arrow">›</span>
+  </a>
+  <a class="action" href="dhurta://history">
+    <span>🕑 History</span><span class="arrow">›</span>
+  </a>
+  <a class="action" href="dhurta://downloads">
+    <span>⬇ Downloads</span><span class="arrow">›</span>
+  </a>
+  <a class="action danger" href="dhurta://wipe">
+    <span>☢ Nuclear Wipe — destroy all site data</span><span class="arrow">›</span>
+  </a>
 </div>
+
+<div class="card">
+  <div class="section-label">Developer</div>
+  <a class="action" href="dhurta://inspect">
+    <span>🧪 Inspect Element</span><span class="arrow">›</span>
+  </a>
+  <a class="action" href="dhurta://devtools">
+    <span>🐞 USB Debugging — chrome://inspect</span><span class="arrow">›</span>
+  </a>
+</div>
+
+<div class="foot">DHURTA MOBILE · v1.4.4 · ZERO TELEMETRY · NO ACCOUNT</div>
 
 <script>
-  var q = {}; location.search.slice(1).split('&').forEach(function (kv) {
+  var q = {};
+  location.search.slice(1).split('&').forEach(function(kv) {
     var p = kv.split('='); if (p[0]) q[p[0]] = decodeURIComponent(p[1] || '');
   });
   var se = document.getElementById('se-' + (q.se || 'brave')); if (se) se.classList.add('on');
   var z = document.getElementById('z-' + (q.zoom || '100')); if (z) z.classList.add('on');
   if (q.js !== '0') document.getElementById('t-js').classList.add('on');
   if (q.dark === '1') document.getElementById('t-dark').classList.add('on');
+  if (q.rtc === '1') document.getElementById('t-rtc').classList.add('on');
+  if (q.af === '1') document.getElementById('t-af').classList.add('on');
 </script>
 </body>
 </html>
