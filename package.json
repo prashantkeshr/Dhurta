@@ -1,6 +1,6 @@
 {
   "name": "dhurta",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Dhurta 🔱 — a sovereign, privacy-native desktop browser by Dhurta.inc.",
   "main": "dist-electron/main.js",
   "author": {
