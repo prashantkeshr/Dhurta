@@ -64,6 +64,23 @@
         <item name="android:singleLine">true</item>
     </style>
 
+    <!-- 3-column grid cell for the menu sheet — centred emoji + label. -->
+    <style name="MenuItemGrid">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingHorizontal">4dp</item>
+        <item name="android:paddingVertical">14dp</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">9.5sp</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:background">?android:selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
     <!-- Dark-themed AlertDialog for tabs, bookmarks, and other in-browser popups. -->
     <style name="DhurtaDialog" parent="Theme.AppCompat.Dialog.Alert">
         <item name="android:backgroundDimAmount">0.75</item>

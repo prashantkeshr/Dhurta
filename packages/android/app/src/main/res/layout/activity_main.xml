@@ -36,15 +36,34 @@
                 android:paddingEnd="4dp"
                 android:background="@drawable/pill_bg">
 
-                <!-- Lock icon — tinted green (protected) or red (exposed) -->
-                <ImageView
-                    android:id="@+id/lockIcon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_nav_lock_open"
-                    android:layout_marginEnd="10dp"
-                    android:contentDescription="Security status"
-                    app:tint="@color/exposed_red" />
+                <!-- Lock icon + EXPOSED / PROTECTED badge stacked vertically -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginEnd="8dp">
+
+                    <ImageView
+                        android:id="@+id/lockIcon"
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_nav_lock_open"
+                        android:contentDescription="Security status"
+                        app:tint="@color/exposed_red" />
+
+                    <TextView
+                        android:id="@+id/securityBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="EXPOSED"
+                        android:textSize="5.5sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.06"
+                        android:textColor="@color/exposed_red"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
 
                 <EditText
                     android:id="@+id/urlBar"
@@ -315,27 +334,38 @@
 
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/border" />
 
-                    <!-- Two-column feature grid -->
+                    <!-- 3×3 feature grid -->
                     <LinearLayout style="@style/MenuRowPair">
-                        <TextView android:id="@+id/mFind" style="@style/MenuItem" android:text="🔍  Find in page" />
-                        <TextView android:id="@+id/mDesktop" style="@style/MenuItem" android:text="🖥  Desktop site" />
+                        <TextView android:id="@+id/mFind"       style="@style/MenuItemGrid" android:text="🔍&#10;Find" />
+                        <TextView android:id="@+id/mDesktop"    style="@style/MenuItemGrid" android:text="🖥&#10;Desktop" />
+                        <TextView android:id="@+id/mFullscreen" style="@style/MenuItemGrid" android:text="⛶&#10;Fullscreen" />
                     </LinearLayout>
                     <LinearLayout style="@style/MenuRowPair">
-                        <TextView android:id="@+id/mFullscreen" style="@style/MenuItem" android:text="⛶  Fullscreen" />
-                        <TextView android:id="@+id/mInspect" style="@style/MenuItem" android:text="🧪  Inspect element" />
+                        <TextView android:id="@+id/mInspect"    style="@style/MenuItemGrid" android:text="🧪&#10;Inspect" />
+                        <TextView android:id="@+id/mBookmarks"  style="@style/MenuItemGrid" android:text="🔖&#10;Bookmarks" />
+                        <TextView android:id="@+id/mHistory"    style="@style/MenuItemGrid" android:text="🕑&#10;History" />
                     </LinearLayout>
                     <LinearLayout style="@style/MenuRowPair">
-                        <TextView android:id="@+id/mBookmarks" style="@style/MenuItem" android:text="🔖  Bookmarks" />
-                        <TextView android:id="@+id/mHistory" style="@style/MenuItem" android:text="🕑  History" />
+                        <TextView android:id="@+id/mDownloads"  style="@style/MenuItemGrid" android:text="⬇&#10;Downloads" />
+                        <TextView android:id="@+id/mAutoClean"  style="@style/MenuItemGrid" android:text="🧹&#10;Auto-Clean" />
+                        <TextView android:id="@+id/mSettings"   style="@style/MenuItemGrid" android:text="⚙&#10;Settings" />
                     </LinearLayout>
-                    <LinearLayout style="@style/MenuRowPair">
-                        <TextView android:id="@+id/mDownloads" style="@style/MenuItem" android:text="⬇  Downloads" />
-                        <TextView android:id="@+id/mAutoClean" style="@style/MenuItem" android:text="🧹  Auto-Clean" />
-                    </LinearLayout>
-                    <LinearLayout style="@style/MenuRowPair">
-                        <TextView android:id="@+id/mSettings" style="@style/MenuItem" android:text="⚙  Settings" />
-                        <TextView android:id="@+id/mExit" style="@style/MenuItem" android:text="✕  Close menu" />
-                    </LinearLayout>
+
+                    <!-- Close row (full-width) -->
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/border" />
+                    <TextView
+                        android:id="@+id/mExit"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="✕  Close menu"
+                        android:gravity="center"
+                        android:paddingVertical="12dp"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_muted"
+                        android:fontFamily="monospace"
+                        android:background="?android:selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true" />
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
         </FrameLayout>

@@ -257,6 +257,14 @@ class MainActivity : AppCompatActivity() {
                     recordHistory(url, view.title ?: url)
                 }
                 if (inspectorOn && view == web) injectInspector()
+                // Inject ghost state into the new tab page so it can apply the red tint.
+                if (url == HOME || url?.startsWith("file:///android_asset/newtab") == true) {
+                    val isGhost = mode == Mode.GHOST
+                    view.evaluateJavascript(
+                        "document.body.classList.toggle('ghost', $isGhost);",
+                        null,
+                    )
+                }
                 // Inject captured request log into the Omni dashboard after it loads.
                 if (url?.contains("omni.html") == true) {
                     val snap: List<String>
@@ -431,9 +439,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showTabSwitcher() {
+        val dp = resources.displayMetrics.density
         tabSwitcherShown = true
-        b.tabSwitcherTitle.text = "${tabs.size} TAB${if (tabs.size != 1) "S" else ""}"
+        val isGhost = mode == Mode.GHOST
+
+        // Ghost vs normal — background tint and title
+        b.tabSwitcherOverlay.setBackgroundColor(
+            if (isGhost) 0xEE0A0003.toInt() else 0xEE07070E.toInt(),
+        )
+        b.tabSwitcherTitle.text = if (isGhost)
+            "👻  ${tabs.size} GHOST TAB${if (tabs.size != 1) "S" else ""}"
+        else
+            "${tabs.size} TAB${if (tabs.size != 1) "S" else ""}"
+        b.tabSwitcherTitle.setTextColor(
+            if (isGhost) Color.parseColor("#FF5050") else Color.parseColor("#E9ECFF"),
+        )
+
         b.tabCardList.removeAllViews()
+
+        // Ghost zone header
+        if (isGhost) {
+            val header = TextView(this).apply {
+                text = "👻  TOR ROUTING ACTIVE · ZERO LOGS · ANONYMOUS"
+                textSize = 7.5f
+                setTextColor(Color.parseColor("#FF5050"))
+                gravity = Gravity.CENTER
+                typeface = Typeface.MONOSPACE
+                val bg = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = 8 * dp
+                    setColor(0x15FF2020.toInt())
+                    setStroke(dp.toInt(), 0x28FF4040)
+                }
+                background = bg
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+                lp.bottomMargin = (14 * dp).toInt()
+                layoutParams = lp
+                setPadding(0, (8 * dp).toInt(), 0, (8 * dp).toInt())
+                letterSpacing = 0.12f
+            }
+            b.tabCardList.addView(header)
+        }
+
         tabs.forEachIndexed { i, w -> b.tabCardList.addView(buildTabCard(i, w, i == cur)) }
         b.tabSwitcherOverlay.visibility = View.VISIBLE
         b.tabSwitcherOverlay.alpha = 0f
@@ -1003,6 +1052,12 @@ class MainActivity : AppCompatActivity() {
             if (protectedNow) R.drawable.ic_nav_lock else R.drawable.ic_nav_lock_open,
         )
         b.lockIcon.imageTintList = ColorStateList.valueOf(color)
+        b.securityBadge.text = when (mode) {
+            Mode.GHOST  -> "GHOST"
+            Mode.CHAKRA -> "CHAKRA"
+            else        -> "EXPOSED"
+        }
+        b.securityBadge.setTextColor(color)
     }
 
     // ── Network Monitor ─────────────────────────────────────────────────────
@@ -1147,9 +1202,10 @@ class MainActivity : AppCompatActivity() {
 
     // ── Animation helpers ───────────────────────────────────────────────────
 
-    /** Spring-scale feedback on dock/chrome button taps. */
+    /** Spring-scale + haptic feedback on dock/chrome button taps. */
     private fun addSpringClick(view: View, action: () -> Unit) {
         view.setOnClickListener {
+            view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
             view.animate().scaleX(0.82f).scaleY(0.82f).setDuration(80).withEndAction {
                 view.animate().scaleX(1f).scaleY(1f).setDuration(180)
                     .setInterpolator(OvershootInterpolator(2.5f)).start()
