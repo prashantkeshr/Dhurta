@@ -79,6 +79,15 @@ export default function ExtensionsPanel() {
     else showToast('Remove failed', false)
   }
 
+  const handleToggle = async (ext: Extension) => {
+    const r = await api().toggleExtension(ext.id)
+    if (r.error) { showToast(`Toggle failed: ${r.error}`, false); return }
+    setExtensions(prev => prev.map(e => {
+      if (e.id === ext.id) return { ...e, enabled: r.enabled, id: r.newId ?? e.id }
+      return e
+    }))
+  }
+
   // Launch = open the extension popup window above the browser
   const handleLaunch = async (ext: Extension) => {
     const result = await api().openExtensionPopup(ext.id) as any
@@ -94,7 +103,9 @@ export default function ExtensionsPanel() {
           <h2 className="text-xs font-mono text-saffron uppercase tracking-widest">Extensions</h2>
           <div className="flex items-center gap-2">
             {extensions.length > 0 && (
-              <span className="text-[10px] font-mono text-muted">{extensions.length} active</span>
+              <span className="text-[10px] font-mono text-muted">
+                {extensions.filter(e => e.enabled !== false).length}/{extensions.length} active
+              </span>
             )}
             <button onClick={refresh} title="Refresh list"
               className="text-muted hover:text-saffron transition-colors text-[10px] font-mono">↺</button>
@@ -134,6 +145,7 @@ export default function ExtensionsPanel() {
               ext={ext}
               onLaunch={() => handleLaunch(ext)}
               onRemove={() => handleRemove(ext)}
+              onToggle={() => handleToggle(ext)}
             />
           ))
         )}
@@ -189,26 +201,35 @@ export default function ExtensionsPanel() {
 }
 
 // ── Extension card ────────────────────────────────────────────────────────────
-function ExtensionCard({ ext, onLaunch, onRemove }: {
+function ExtensionCard({ ext, onLaunch, onRemove, onToggle }: {
   ext: Extension
   onLaunch(): void
   onRemove(): void
+  onToggle(): void
 }) {
   const [iconFailed, setIconFailed] = useState(false)
-  const icon     = bestIconUrl(ext)
-  const hasPage  = !!ext.popupPage || !!ext.optionsPage
+  const [toggling, setToggling]     = useState(false)
+  const icon        = bestIconUrl(ext)
+  const hasPage     = !!ext.popupPage || !!ext.optionsPage
   const isContentOnly = !hasPage && !ext.popupPage
+  const isEnabled   = ext.enabled !== false
+
+  const handleToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setToggling(true)
+    try { await onToggle() } finally { setToggling(false) }
+  }
 
   return (
-    <div className="border-b border-border/40 hover:bg-obsidian/40 transition-colors">
+    <div className={['border-b border-border/40 transition-colors', isEnabled ? 'hover:bg-obsidian/40' : 'opacity-60 hover:opacity-80'].join(' ')}>
 
       {/* Main row */}
       <div className="flex items-center gap-3 px-3 py-2.5">
         {/* Icon */}
         <div className="w-9 h-9 flex items-center justify-center border border-border bg-obsidian shrink-0 overflow-hidden">
           {icon && !iconFailed
-            ? <img src={icon} alt="" className="w-7 h-7 object-contain" onError={() => setIconFailed(true)} />
-            : <span className="text-lg">🧩</span>
+            ? <img src={icon} alt="" className={['w-7 h-7 object-contain', !isEnabled ? 'grayscale' : ''].join(' ')} onError={() => setIconFailed(true)} />
+            : <span className={['text-lg', !isEnabled ? 'grayscale' : ''].join(' ')}>🧩</span>
           }
         </div>
 
@@ -225,26 +246,51 @@ function ExtensionCard({ ext, onLaunch, onRemove }: {
           )}
           {/* Status badge */}
           <div className="flex gap-1 mt-1">
-            {hasPage ? (
+            {!isEnabled ? (
+              <span className="text-[8px] font-mono border border-border text-muted px-1.5 py-px">DISABLED</span>
+            ) : hasPage ? (
               <span className="text-[8px] font-mono border border-saffron/50 text-saffron px-1.5 py-px">POPUP</span>
             ) : (
               <span className="text-[8px] font-mono border border-green-700/50 text-green-400/80 px-1.5 py-px">● RUNNING</span>
             )}
           </div>
         </div>
+
+        {/* Enable/Disable toggle */}
+        <button
+          onClick={handleToggle}
+          disabled={toggling}
+          title={isEnabled ? 'Disable extension' : 'Enable extension'}
+          className="shrink-0 relative w-9 h-5 rounded-full border transition-colors disabled:opacity-50"
+          style={{
+            background: isEnabled ? '#FF450033' : 'transparent',
+            borderColor: isEnabled ? '#FF4500' : '#555',
+          }}
+        >
+          <span
+            className="absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all duration-200"
+            style={{
+              left: isEnabled ? 'calc(100% - 1.125rem)' : '0.125rem',
+              background: isEnabled ? '#FF4500' : '#555',
+            }}
+          />
+        </button>
       </div>
 
       {/* Action bar */}
       <div className="flex gap-0 border-t border-border/20">
-        {/* Launch — always shown; dimmed when extension is content-script only with no UI page */}
+        {/* Launch — disabled when extension is off */}
         <button
-          onClick={onLaunch}
-          title={isContentOnly ? 'No popup page — will try to open extension UI' : 'Open extension'}
+          onClick={isEnabled ? onLaunch : undefined}
+          title={!isEnabled ? 'Enable extension first' : isContentOnly ? 'No popup page — will try to open extension UI' : 'Open extension'}
+          disabled={!isEnabled}
           className={[
             'flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono border-r border-border/30 transition-colors',
-            hasPage
+            isEnabled && hasPage
               ? 'text-saffron bg-saffron/5 hover:bg-saffron hover:text-black'
-              : 'text-muted/60 hover:text-saffron hover:bg-saffron/5',
+              : isEnabled
+              ? 'text-muted/60 hover:text-saffron hover:bg-saffron/5'
+              : 'text-muted/30 cursor-not-allowed',
           ].join(' ')}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">

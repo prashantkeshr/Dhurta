@@ -41,6 +41,7 @@ interface ExtEntry {
   name: string
   path: string
   source: 'unpacked' | 'crx' | 'webstore' | 'amo'
+  enabled?: boolean
 }
 
 function _extRegistryPath() {
@@ -88,8 +89,9 @@ export async function loadInstalledExtensions() {
   const registry = readExtRegistry()
   const loadedPaths = new Set<string>()
 
-  // 1. Load everything in the registry
+  // 1. Load everything in the registry (skip explicitly-disabled entries)
   for (const entry of registry) {
+    if (entry.enabled === false) continue
     const manifestPath = path.join(entry.path, 'manifest.json')
     if (!fs.existsSync(manifestPath)) {
       console.warn('[Extensions] manifest missing, skipping:', entry.path)
@@ -2446,37 +2448,56 @@ export function registerIpcHandlers() {
     }
   })
   ipcMain.handle('extensions:getAll', () => {
-    return session.defaultSession.getAllExtensions().map(e => {
+    const registry = readExtRegistry()
+    const loadedMap = new Map<string, Electron.Extension>()
+    for (const e of session.defaultSession.getAllExtensions()) loadedMap.set(e.id, e)
+
+    function _buildExtData(extPath: string, extId: string, extName: string, extEnabled: boolean) {
       let optionsPage: string | undefined
       let popupPage: string | undefined
       let icons: Record<string, string> | undefined
-      let name = e.name
-      let description = (e as any).description ?? ''
+      let name = extName
+      let description = ''
+      let version = ''
       try {
-        const manifest = JSON.parse(fs.readFileSync(path.join(e.path, 'manifest.json'), 'utf8'))
-        // Resolve localized __MSG_*__ name/description strings
-        name = resolveExtMessage(e.name, e.path, manifest.default_locale)
-        description = resolveExtMessage(description, e.path, manifest.default_locale)
-        // Options page — manifest v2 "options_page", v3 "options_ui.page"
+        const manifest = JSON.parse(fs.readFileSync(path.join(extPath, 'manifest.json'), 'utf8'))
+        name = resolveExtMessage(extName, extPath, manifest.default_locale)
+        description = resolveExtMessage(manifest.description ?? '', extPath, manifest.default_locale)
+        version = manifest.version ?? ''
         const op = manifest.options_page || manifest.options_ui?.page
-        if (op) optionsPage = `chrome-extension://${e.id}/${op.replace(/^\//, '')}`
-        // Best launch URL — popup, sandbox, background-script target, common HTML
-        const launchUrl = findExtensionLaunchUrl(manifest, e.id, e.path)
+        if (op) optionsPage = `chrome-extension://${extId}/${op.replace(/^\//, '')}`
+        const launchUrl = findExtensionLaunchUrl(manifest, extId, extPath)
         if (launchUrl) popupPage = launchUrl
-        // Icons
         if (manifest.icons) icons = manifest.icons
       } catch (_) {}
       return {
-        id: e.id,
-        name,
-        path: e.path,
-        version: (e as any).version ?? '',
-        description,
+        id: extId, name, path: extPath, version, description, enabled: extEnabled,
         ...(optionsPage && { optionsPage }),
         ...(popupPage && { popupPage }),
         ...(icons && { icons }),
       }
-    })
+    }
+
+    const result: ReturnType<typeof _buildExtData>[] = []
+    const seen = new Set<string>()
+
+    // Registry order (enabled + disabled)
+    for (const entry of registry) {
+      seen.add(entry.id)
+      const isEnabled = entry.enabled !== false
+      const live = loadedMap.get(entry.id)
+      const extPath = (live ?? entry).path
+      result.push(_buildExtData(extPath, entry.id, (live?.name ?? entry.name), isEnabled))
+    }
+
+    // Loaded but not in registry (edge case — migration, manual load)
+    for (const e of loadedMap.values()) {
+      if (!seen.has(e.id)) {
+        result.push(_buildExtData(e.path, e.id, e.name, true))
+      }
+    }
+
+    return result
   })
 
   ipcMain.handle('extensions:openOptions', (_e, extId: string) => {
@@ -2517,6 +2538,28 @@ export function registerIpcHandlers() {
     } catch (e) {
       console.error('[Extensions] remove failed:', e)
       return false
+    }
+  })
+
+  ipcMain.handle('extensions:toggle', async (_e, id: string) => {
+    const reg = readExtRegistry()
+    const entry = reg.find(e => e.id === id)
+    if (!entry) return { error: 'Extension not found in registry' }
+
+    const wasEnabled = entry.enabled !== false
+    if (wasEnabled) {
+      // Disable: unload from sessions but keep registry entry
+      try { await session.defaultSession.removeExtension(id) } catch (_) {}
+      try { await session.fromPartition('persist:default').removeExtension(id) } catch (_) {}
+      writeExtRegistry(reg.map(e => e.id === id ? { ...e, enabled: false } : e))
+      return { enabled: false }
+    } else {
+      // Enable: reload from disk
+      const ext = await _loadExtIntoSessions(entry.path)
+      if (!ext) return { error: 'Failed to load extension' }
+      const newId = ext.id
+      writeExtRegistry(reg.map(e => e.id === id ? { ...e, id: newId, enabled: true } : e))
+      return { enabled: true, newId }
     }
   })
 

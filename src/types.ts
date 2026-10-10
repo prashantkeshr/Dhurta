@@ -81,8 +81,9 @@ export interface Extension {
   description: string
   path?: string
   icons?: Record<string, string>
-  optionsPage?: string   // chrome-extension:// URL to options page, if present
-  popupPage?: string     // chrome-extension:// URL to browser action popup, if present
+  optionsPage?: string
+  popupPage?: string
+  enabled?: boolean
 }
 
 export interface SecuritySettings {
@@ -217,6 +218,7 @@ export interface DhurtaAPI {
   installExtensionFromAMO(slug: string): Promise<{ id?: string; name?: string; error?: string }>
   getExtensions(): Promise<Extension[]>
   removeExtension(id: string): Promise<boolean>
+  toggleExtension(id: string): Promise<{ enabled?: boolean; newId?: string; error?: string }>
   openExtensionOptions(id: string): Promise<{ url?: string; error?: string }>
   showExtensionTrayMenu(): Promise<void>
   isBookmarked(url: string): Promise<boolean>
