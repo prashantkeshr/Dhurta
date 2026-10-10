@@ -57,8 +57,8 @@ export default function SettingsPanel() {
   useEffect(() => {
     if (typeof window.dhurta === 'undefined') return
     Promise.all([
-      api().getSetting('cookieGuard'),
-      api().getSetting('adBlocker'),
+      api().getSetting('security_cookieGuard'),
+      api().getSetting('security_adBlocker'),
       api().getSetting('incinerateDays'),
       api().getSetting('searchEngine'),
       api().getSetting('searchEngineCustomUrl'),
@@ -88,8 +88,8 @@ export default function SettingsPanel() {
   useEffect(() => {
     const handler = (e: Event) => {
       const { key, value } = (e as CustomEvent<{ key: string; value: string }>).detail
-      if (key === 'cookieGuard') setCookieGuard(value === 'true')
-      if (key === 'adBlocker')   setAdBlocker(value === 'true')
+      if (key === 'security_cookieGuard') setCookieGuard(value === 'true')
+      if (key === 'security_adBlocker')   setAdBlocker(value === 'true')
     }
     window.addEventListener('dhurta:settingChanged', handler)
     return () => window.removeEventListener('dhurta:settingChanged', handler)
@@ -471,10 +471,10 @@ export default function SettingsPanel() {
             <PageTitle>Privacy</PageTitle>
             <SettingGroup title="Tracking Protection">
               <SettingRow label="Cookie Guard" desc="Block third-party cookies and auto-delete first-party every 60 min.">
-                <Toggle value={cookieGuard} onChange={v => { setCookieGuard(v); api().setSetting('cookieGuard', String(v)) }} />
+                <Toggle value={cookieGuard} onChange={v => { setCookieGuard(v); api().setSetting('security_cookieGuard', String(v)) }} />
               </SettingRow>
               <SettingRow label="Ad & Tracker Blocker" desc="Native EasyList-based ad and tracker blocking.">
-                <Toggle value={adBlocker} onChange={v => { setAdBlocker(v); api().setSetting('adBlocker', String(v)) }} />
+                <Toggle value={adBlocker} onChange={v => { setAdBlocker(v); api().setSetting('security_adBlocker', String(v)) }} />
               </SettingRow>
             </SettingGroup>
 

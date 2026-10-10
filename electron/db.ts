@@ -44,8 +44,6 @@ export function initDatabase() {
   const defaults: Record<string, string> = {
     incinerateDays: '30',
     ghostMode: 'false',
-    cookieGuard: 'false',
-    adBlocker: 'false',
     gesturePinchZoom: 'true',
     gestureSwipe: 'true',
     security_antiFingerprint: 'false',
@@ -73,6 +71,21 @@ export function initDatabase() {
     ;['security_antiFingerprint','security_blockWebRTC','security_autoClean',
       'security_ipRotation','security_cookieGuard','security_adBlocker'].forEach(k => forceOff.run(k, 'false'))
     forceOff.run('_migration_v2_secoff', '1')
+  }
+
+  // v3 migration: unify bare 'cookieGuard'/'adBlocker' keys into their
+  // security_-prefixed canonical forms so the net layer (which always reads
+  // security_cookieGuard / security_adBlocker) and the UI share one row.
+  const migratedV3 = db.prepare("SELECT value FROM settings WHERE key = '_migration_v3_unify_keys'").get()
+  if (!migratedV3) {
+    const upsert = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+    const del    = db.prepare('DELETE FROM settings WHERE key = ?')
+    for (const [bare, canonical] of [['cookieGuard', 'security_cookieGuard'], ['adBlocker', 'security_adBlocker']] as const) {
+      const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(bare) as { value: string } | undefined
+      if (row?.value === 'true') upsert.run(canonical, 'true')
+      del.run(bare)
+    }
+    upsert.run('_migration_v3_unify_keys', '1')
   }
 
   // Seed default favourites on first run only (table starts empty)

@@ -3565,8 +3565,8 @@ export function setupWindowListeners() {
       // in OmniPage.tsx / useBrowser.ts), since Ghost Mode's whole point is
       // leaving nothing behind.
       set('security_autoClean',       'false')
-      set('cookieGuard',              'true')
-      set('adBlocker',                'true')
+      set('security_cookieGuard',     'true')
+      set('security_adBlocker',       'true')
       set('security_ipRotation',      'true')
       set('chakra_initialized',       'true')
     }

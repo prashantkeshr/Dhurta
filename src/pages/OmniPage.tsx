@@ -241,8 +241,8 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     notify('security_blockWebRTC', 'false')
     notify('security_autoClean', 'false')
     notify('security_ipRotation', 'false')
-    notify('cookieGuard', 'false')
-    notify('adBlocker', 'false')
+    notify('security_cookieGuard', 'false')
+    notify('security_adBlocker', 'false')
   }
 
   const enableGhostMode = async () => {
@@ -255,8 +255,8 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     notify('security_blockWebRTC', 'true')
     notify('security_autoClean', 'true')
     notify('security_ipRotation', 'true')
-    notify('cookieGuard', 'true')
-    notify('adBlocker', 'true')
+    notify('security_cookieGuard', 'true')
+    notify('security_adBlocker', 'true')
   }
 
   const toggleGhost = async () => {
@@ -356,8 +356,8 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     await api().vpnDisconnect().catch(() => {})
     notify('security_antiFingerprint', 'false')
     notify('security_blockWebRTC', 'false')
-    notify('cookieGuard', 'false')
-    notify('adBlocker', 'false')
+    notify('security_cookieGuard', 'false')
+    notify('security_adBlocker', 'false')
     notify('security_ipRotation', 'false')
     setSettings(s => ({ ...s, antiFingerprint: false, blockWebRTC: false, ipRotation: false }))
   }
@@ -366,8 +366,8 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
     const vpnResult = await api().vpnConnect().catch(() => ({ success: false }))
     notify('security_antiFingerprint', 'true')
     notify('security_blockWebRTC', 'true')
-    notify('cookieGuard', 'true')
-    notify('adBlocker', 'true')
+    notify('security_cookieGuard', 'true')
+    notify('security_adBlocker', 'true')
     const vpnOk = (vpnResult as { success?: boolean }).success ?? false
     notify('security_ipRotation', vpnOk ? 'true' : 'false')
     setSettings(s => ({ ...s, antiFingerprint: true, blockWebRTC: true, ipRotation: vpnOk }))

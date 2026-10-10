@@ -371,8 +371,8 @@ export function useBrowser() {
     await api().vpnDisconnect().catch(() => {})
     notifySetting('security_antiFingerprint', 'false')
     notifySetting('security_blockWebRTC', 'false')
-    notifySetting('cookieGuard', 'false')
-    notifySetting('adBlocker', 'false')
+    notifySetting('security_cookieGuard', 'false')
+    notifySetting('security_adBlocker', 'false')
     notifySetting('security_ipRotation', 'false')
     setChakraBusy(false)
   }, [])
@@ -386,8 +386,8 @@ export function useBrowser() {
     notifySetting('security_blockWebRTC', 'false')
     notifySetting('security_autoClean', 'false')
     notifySetting('security_ipRotation', 'false')
-    notifySetting('cookieGuard', 'false')
-    notifySetting('adBlocker', 'false')
+    notifySetting('security_cookieGuard', 'false')
+    notifySetting('security_adBlocker', 'false')
   }, [])
 
   const toggleGhost = useCallback(async () => {
@@ -423,8 +423,8 @@ export function useBrowser() {
       notifySetting('security_blockWebRTC', 'true')
       notifySetting('security_autoClean', 'true')
       notifySetting('security_ipRotation', 'true')
-      notifySetting('cookieGuard', 'true')
-      notifySetting('adBlocker', 'true')
+      notifySetting('security_cookieGuard', 'true')
+      notifySetting('security_adBlocker', 'true')
       // Open ghost tab on New Tab page — no external URL needed
       await newTab(undefined, true)
     }
@@ -445,8 +445,8 @@ export function useBrowser() {
       const vpnOk = (vpnResult as { success?: boolean }).success === true
       notifySetting('security_antiFingerprint', 'true')
       notifySetting('security_blockWebRTC', 'true')
-      notifySetting('cookieGuard', 'true')
-      notifySetting('adBlocker', 'true')
+      notifySetting('security_cookieGuard', 'true')
+      notifySetting('security_adBlocker', 'true')
       notifySetting('security_ipRotation', vpnOk ? 'true' : 'false')
       setChakraBusy(false)
       if (!vpnOk) {
