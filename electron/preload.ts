@@ -174,6 +174,8 @@ contextBridge.exposeInMainWorld('dhurta', {
   getExtensions: () => ipcRenderer.invoke('extensions:getAll'),
   removeExtension: (id: string) => ipcRenderer.invoke('extensions:remove', id),
   toggleExtension: (id: string) => ipcRenderer.invoke('extensions:toggle', id),
+  printPage: () => ipcRenderer.invoke('page:print'),
+  savePageAsPDF: () => ipcRenderer.invoke('page:savePDF'),
   openExtensionOptions: (id: string) => ipcRenderer.invoke('extensions:openOptions', id),
   showExtensionTrayMenu: () => ipcRenderer.invoke('extensions:showTrayMenu'),
 

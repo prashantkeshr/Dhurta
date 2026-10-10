@@ -1139,7 +1139,7 @@ function attachViewEvents(tab: Tab) {
   })
 
 
-  wc.on('before-input-event', (_e, input) => {
+  wc.on('before-input-event', (e, input) => {
     if (input.type !== 'keyDown' || !input.control || input.meta || input.shift) return
     let next: number | null = null
     if (input.key === '=' || input.key === '+') {
@@ -1148,6 +1148,9 @@ function attachViewEvents(tab: Tab) {
       next = Math.max(0.3, Math.round((wc.getZoomFactor() - 0.1) * 10) / 10)
     } else if (input.key === '0') {
       next = 1
+    } else if (input.key === 'p') {
+      e.preventDefault()
+      wc.print()
     }
     if (next !== null) {
       wc.setZoomFactor(next)
@@ -2364,6 +2367,30 @@ export function registerIpcHandlers() {
     return { id, url: newTab.url, title: newTab.title, ghost: newTab.ghost }
   })
 
+  // Print / Save as PDF
+  ipcMain.handle('page:print', () => {
+    tabs.get(activeTabId)?.view.webContents.print()
+  })
+  ipcMain.handle('page:savePDF', async () => {
+    const tab = tabs.get(activeTabId)
+    const win = getMainWindow()
+    if (!tab || !win) return { error: 'No active tab' }
+    const { filePath } = await dialog.showSaveDialog(win, {
+      title: 'Save Page as PDF',
+      defaultPath: `${tab.title || 'page'}.pdf`,
+      filters: [{ name: 'PDF', extensions: ['pdf'] }],
+    })
+    if (!filePath) return { cancelled: true }
+    try {
+      const data = await tab.view.webContents.printToPDF({})
+      fs.writeFileSync(filePath, data)
+      shell.showItemInFolder(filePath)
+      return { ok: true, filePath }
+    } catch (e) {
+      return { error: String(e) }
+    }
+  })
+
   // Find in page
   ipcMain.handle('findInPage:start', (_e, text: string) => {
     tabs.get(activeTabId)?.view.webContents.findInPage(text, { forward: true, findNext: false })
@@ -3089,7 +3116,24 @@ export function registerIpcHandlers() {
       }},
       { label: 'Copy URL',          click: () => { const tab = tabs.get(activeTabId); if (tab) clipboard.writeText(tab.url) }},
       { label: 'View Source',        click: () => { const tab = tabs.get(activeTabId); if (tab) send('openInNewTab', { url: 'view-source:' + tab.url, ghost: tab.ghost }) }},
-      { label: 'Print',             click: () => { tabs.get(activeTabId)?.view.webContents.print() }},
+      { label: 'Print…',            accelerator: 'CmdOrCtrl+P', click: () => { tabs.get(activeTabId)?.view.webContents.print() }},
+      { label: 'Save as PDF…',      click: async () => {
+        const tab = tabs.get(activeTabId)
+        if (!tab) return
+        const win2 = getMainWindow()
+        if (!win2) return
+        const { filePath } = await dialog.showSaveDialog(win2, {
+          title: 'Save Page as PDF',
+          defaultPath: `${tab.title || 'page'}.pdf`,
+          filters: [{ name: 'PDF', extensions: ['pdf'] }],
+        })
+        if (!filePath) return
+        try {
+          const data = await tab.view.webContents.printToPDF({})
+          fs.writeFileSync(filePath, data)
+          shell.showItemInFolder(filePath)
+        } catch (e) { console.error('[Print] PDF failed:', e) }
+      }},
       { type: 'separator' },
       // ── DevTools ──────────────────────────────────────────────────────────
       { label: 'DevTools',           accelerator: 'F12', click: () => {

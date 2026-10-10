@@ -219,6 +219,8 @@ export interface DhurtaAPI {
   getExtensions(): Promise<Extension[]>
   removeExtension(id: string): Promise<boolean>
   toggleExtension(id: string): Promise<{ enabled?: boolean; newId?: string; error?: string }>
+  printPage(): Promise<void>
+  savePageAsPDF(): Promise<{ ok?: boolean; filePath?: string; cancelled?: boolean; error?: string }>
   openExtensionOptions(id: string): Promise<{ url?: string; error?: string }>
   showExtensionTrayMenu(): Promise<void>
   isBookmarked(url: string): Promise<boolean>

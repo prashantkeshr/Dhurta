@@ -316,6 +316,7 @@ export default function App() {
         else if (e.key === '-') { e.preventDefault(); zoomOut() }
         else if (e.key === '0') { e.preventDefault(); zoomReset() }
         else if (e.key === 't') { e.preventDefault(); newTab() }
+        else if (e.key === 'p') { e.preventDefault(); window.dhurta.printPage() }
       }
     }
     window.addEventListener('keydown', onKey)
