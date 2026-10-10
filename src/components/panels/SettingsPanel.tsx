@@ -191,7 +191,7 @@ export default function SettingsPanel() {
           ))}
         </nav>
         <div className="p-3 border-t border-border">
-          <p className="text-[9px] text-muted font-mono">Dhurta v1.0</p>
+          <p className="text-[9px] text-muted font-mono">Dhurta v{__APP_VERSION__}</p>
         </div>
       </div>
 
