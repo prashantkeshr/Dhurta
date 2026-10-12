@@ -1158,6 +1158,14 @@ function attachViewEvents(tab: Tab) {
     }
   })
 
+  // HTTPS-only: intercept in-page link clicks / JS-initiated navigations
+  wc.on('will-navigate', (event, navUrl) => {
+    if (getSecurityFlag('security_httpsOnly') && navUrl.startsWith('http://')) {
+      event.preventDefault()
+      wc.loadURL(navUrl.replace(/^http:\/\//, 'https://'))
+    }
+  })
+
   // HTML5 fullscreen via preload's fullscreenchange listener (more reliable than
   // enter-html-full-screen which sometimes doesn't fire for shadow-DOM video players)
   wc.on('ipc-message', (_e, channel, ...args) => {
@@ -1992,6 +2000,10 @@ export function registerIpcHandlers() {
       } else {
         resolved = getSearchUrl(url)
       }
+    }
+    // HTTPS-only: upgrade http:// → https:// on explicit user navigation
+    if (getSecurityFlag('security_httpsOnly') && resolved.startsWith('http://')) {
+      resolved = resolved.replace(/^http:\/\//, 'https://')
     }
     // dhurta:// internal pages render in React — hide BrowserView, don't loadURL.
     if (DHURTA_INTERNAL_PAGES.has(resolved)) {

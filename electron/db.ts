@@ -52,6 +52,7 @@ export function initDatabase() {
     security_ipRotation: 'false',
     security_cookieGuard: 'false',
     security_adBlocker: 'false',
+    security_httpsOnly: 'false',
   }
 
   const insert = db.prepare(
@@ -69,7 +70,7 @@ export function initDatabase() {
   if (!migrated) {
     const forceOff = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
     ;['security_antiFingerprint','security_blockWebRTC','security_autoClean',
-      'security_ipRotation','security_cookieGuard','security_adBlocker'].forEach(k => forceOff.run(k, 'false'))
+      'security_ipRotation','security_cookieGuard','security_adBlocker','security_httpsOnly'].forEach(k => forceOff.run(k, 'false'))
     forceOff.run('_migration_v2_secoff', '1')
   }
 

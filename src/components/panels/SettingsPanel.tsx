@@ -39,6 +39,7 @@ export default function SettingsPanel() {
   const [section,         setSection]         = useState<Section>('general')
   const [cookieGuard,     setCookieGuard]     = useState(true)
   const [adBlocker,       setAdBlocker]       = useState(true)
+  const [httpsOnly,       setHttpsOnly]       = useState(false)
   const [incinerateDays,  setIncinerateDays]  = useState(30)
   const [searchEngine,    setSearchEngine]    = useState('brave')
   const [customSearchUrl, setCustomSearchUrl] = useState('')
@@ -59,6 +60,7 @@ export default function SettingsPanel() {
     Promise.all([
       api().getSetting('security_cookieGuard'),
       api().getSetting('security_adBlocker'),
+      api().getSetting('security_httpsOnly'),
       api().getSetting('incinerateDays'),
       api().getSetting('searchEngine'),
       api().getSetting('searchEngineCustomUrl'),
@@ -67,9 +69,10 @@ export default function SettingsPanel() {
       api().getSetting('newTabTheme'),
       api().getSetting('gesturePinchZoom'),
       api().getSetting('gestureSwipe'),
-    ] as const).then(([cg, ab, id, se, cu, sr, wps, nt, gp, gs]) => {
+    ] as const).then(([cg, ab, ho, id, se, cu, sr, wps, nt, gp, gs]) => {
       setCookieGuard(cg !== 'false')
       setAdBlocker(ab !== 'false')
+      setHttpsOnly(ho === 'true')
       setIncinerateDays(Number(id ?? 30))
       const validEngines = SEARCH_ENGINES.map(e => e.value)
       setSearchEngine(validEngines.includes(se ?? '') ? (se ?? 'brave') : 'brave')
@@ -475,6 +478,15 @@ export default function SettingsPanel() {
               </SettingRow>
               <SettingRow label="Ad & Tracker Blocker" desc="Native EasyList-based ad and tracker blocking.">
                 <Toggle value={adBlocker} onChange={v => { setAdBlocker(v); api().setSetting('security_adBlocker', String(v)) }} />
+              </SettingRow>
+            </SettingGroup>
+
+            <SettingGroup title="Connection">
+              <SettingRow
+                label="HTTPS-Only Mode"
+                desc="Automatically upgrade http:// navigations to https://. HTTP-only sites will show a connection error."
+              >
+                <Toggle value={httpsOnly} onChange={v => { setHttpsOnly(v); saveAndNotify('security_httpsOnly', String(v)) }} />
               </SettingRow>
             </SettingGroup>
 
