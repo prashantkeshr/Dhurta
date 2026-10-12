@@ -3173,6 +3173,8 @@ export function registerIpcHandlers() {
         if (!wc) return
         wc.isDevToolsOpened() ? wc.closeDevTools() : wc.openDevTools({ mode: 'bottom' })
       }},
+      { type: 'separator' },
+      { label: 'Keyboard Shortcuts',  accelerator: '?', click: () => send('panel', { panel: 'shortcuts' }) },
     ])
     menu.popup({ window: win })
   })

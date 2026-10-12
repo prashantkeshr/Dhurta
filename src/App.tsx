@@ -17,6 +17,7 @@ import DownloadsPanel from './components/panels/DownloadsPanel'
 import ExtensionsPanel from './components/panels/ExtensionsPanel'
 import DataHubPanel from './components/panels/DataHubPanel'
 import TransparencyPanel from './components/panels/TransparencyPanel'
+import ShortcutsPanel from './components/panels/ShortcutsPanel'
 import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import UpdateBanner from './components/UpdateBanner'
@@ -51,6 +52,7 @@ const PANEL_WIDTHS: Record<string, number> = {
   extensions: 300,
   data: 360,
   transparency: 360,
+  shortcuts: 272,
 }
 
 export default function App() {
@@ -310,6 +312,13 @@ export default function App() {
       if (e.key === 'F11') { e.preventDefault(); window.dhurta.toggleFullscreen() }
       if (e.key === 'F12') { e.preventDefault(); window.dhurta.devToolsToggle('detach') }
       if (e.key === 'Escape' && activePanel) { e.preventDefault(); setActivePanel(null) }
+      if (e.key === '?' && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+          e.preventDefault()
+          setActivePanel(p => p === 'shortcuts' ? null : 'shortcuts')
+        }
+      }
       if (e.ctrlKey && e.key === 'f') { e.preventDefault() } // handled by ThreeDotMenu
       if (e.ctrlKey) {
         if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn() }
@@ -429,6 +438,7 @@ export default function App() {
                 {activePanel === 'extensions' && <ExtensionsPanel />}
                 {activePanel === 'data' && <DataHubPanel onNavigate={handleNavigate} />}
                 {activePanel === 'transparency' && <TransparencyPanel />}
+                {activePanel === 'shortcuts' && <ShortcutsPanel />}
                 {activePanel === 'connect' && (
                   <ConnectPanel
                     activeUrl={activeTab?.url ?? ''}
