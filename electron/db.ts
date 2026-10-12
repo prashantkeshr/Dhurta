@@ -44,6 +44,7 @@ export function initDatabase() {
   const defaults: Record<string, string> = {
     incinerateDays: '30',
     ghostMode: 'false',
+    downloadAskWhere: 'false',
     gesturePinchZoom: 'true',
     gestureSwipe: 'true',
     security_antiFingerprint: 'false',

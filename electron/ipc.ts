@@ -1496,6 +1496,21 @@ function _handleWillDownload(_event: Electron.Event, item: DownloadItem) {
     do { savePath = path.join(downloadDir, `${base} (${n++})${ext}`) }
     while (fs.existsSync(savePath))
   }
+
+  // "Ask where to save" — show a synchronous save dialog in place of auto-save
+  try {
+    const askRow = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('downloadAskWhere') as any
+    if (askRow?.value === 'true') {
+      const chosen = dialog.showSaveDialogSync(win, {
+        title: 'Save File',
+        defaultPath: savePath,
+        buttonLabel: 'Save',
+      })
+      if (!chosen) { item.cancel(); return }
+      savePath = chosen
+    }
+  } catch (_) {}
+
   item.setSavePath(savePath)
 
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`

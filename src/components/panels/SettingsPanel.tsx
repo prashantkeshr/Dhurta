@@ -49,6 +49,7 @@ export default function SettingsPanel() {
   const [wallpapers,      setWallpapers]      = useState<string[]>([])
   const [activeTheme,     setActiveTheme]     = useState('dark')
   const [downloadPath,    setDownloadPath]    = useState('')
+  const [downloadAskWhere, setDownloadAskWhere] = useState(false)
   const [lockStatus,      setLockStatus]      = useState({ hasPin: false })
   const [lockRemoveMode,  setLockRemoveMode]  = useState<'none' | 'pin' | 'recovery'>('none')
   const [lockRemoveInput, setLockRemoveInput] = useState('')
@@ -84,6 +85,7 @@ export default function SettingsPanel() {
       setGestureSwipe(gs !== 'false')
     })
     api().getDownloadDefaultPath().then(setDownloadPath).catch(() => {})
+    api().getSetting('downloadAskWhere').then(v => setDownloadAskWhere(v === 'true')).catch(() => {})
     api().appLockStatus().then(s => setLockStatus({ hasPin: s.hasPin })).catch(() => {})
   }, [])
 
@@ -329,8 +331,14 @@ export default function SettingsPanel() {
 
             <SettingGroup title="Downloads">
               <SettingRow
+                label="Ask where to save"
+                desc="Show a save dialog for every download instead of auto-saving to the folder below."
+              >
+                <Toggle value={downloadAskWhere} onChange={v => { setDownloadAskWhere(v); saveAndNotify('downloadAskWhere', String(v)) }} />
+              </SettingRow>
+              <SettingRow
                 label="Save location"
-                desc="Where downloaded files are saved on your computer."
+                desc="Default folder when not asking. Ignored when 'Ask where to save' is on."
               >
                 <button
                   onClick={changeDownloadPath}
