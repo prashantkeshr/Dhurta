@@ -513,6 +513,9 @@ interface Tab {
   loading: boolean
   ghost: boolean
   jsDisabled: boolean
+  pinned: boolean
+  muted: boolean
+  playing: boolean
   requests: RequestEntry[]
 }
 
@@ -1230,6 +1233,16 @@ function attachViewEvents(tab: Tab) {
     wc.executeJavaScript(`const h=document.getElementById('__dhurta_fs_hint');if(h)h.remove()`).catch(()=>{})
   })
 
+  wc.on('media-started-playing', () => {
+    tab.playing = true
+    safeSend(win, 'tab:playingChanged', { id: tab.id, playing: true })
+  })
+
+  wc.on('media-paused', () => {
+    tab.playing = false
+    safeSend(win, 'tab:playingChanged', { id: tab.id, playing: false })
+  })
+
   // Right-click context menu — native OS menu that renders above the BrowserView
   wc.on('context-menu', (_e, params) => {
     const win = getMainWindow()
@@ -1292,6 +1305,15 @@ function attachViewEvents(tab: Tab) {
     items.push({ label: 'View Page Source',  click: () => safeSend(win, 'context-menu:action', { action: 'openInNewTab', url: 'view-source:' + wc.getURL(), ghost: tab.ghost }) })
     items.push({ type: 'separator' })
     items.push({ label: 'Inspect Element',   click: () => wc.inspectElement(params.x, params.y) })
+    items.push({ type: 'separator' })
+    items.push({
+      label: tab.muted ? 'Unmute Tab' : 'Mute Tab',
+      click: () => {
+        tab.muted = !tab.muted
+        try { wc.setAudioMuted(tab.muted) } catch (_) {}
+        safeSend(win, 'tab:muteChanged', { id: tab.id, muted: tab.muted })
+      },
+    })
     items.push({
       label: 'Add to Bookmarks',
       click: () => {
@@ -1898,6 +1920,9 @@ export function registerIpcHandlers() {
       loading: false,
       ghost,
       jsDisabled: false,
+      pinned: false,
+      muted: false,
+      playing: false,
       requests: [],
     }
     tabs.set(id, tab)
@@ -1977,8 +2002,32 @@ export function registerIpcHandlers() {
       favicon: t.favicon,
       loading: t.loading,
       ghost: t.ghost,
+      pinned: t.pinned,
+      muted: t.muted,
+      playing: t.playing,
       active: t.id === activeTabId,
     }))
+  })
+
+  // Pin / unpin a tab — toggles pinned state; returns new pinned value
+  ipcMain.handle('tab:pin', (_e, id: number) => {
+    const tab = tabs.get(id)
+    if (!tab) return false
+    tab.pinned = !tab.pinned
+    const win = getMainWindow()
+    if (win) win.webContents.send('menu:action', { action: 'pinTab', tabId: id, pinned: tab.pinned })
+    return tab.pinned
+  })
+
+  // Mute / unmute a tab — toggles audio mute state; returns new muted value
+  ipcMain.handle('tab:mute', (_e, id: number) => {
+    const tab = tabs.get(id)
+    if (!tab) return false
+    tab.muted = !tab.muted
+    try { tab.view.webContents.setAudioMuted(tab.muted) } catch (_) {}
+    const win = getMainWindow()
+    if (win) win.webContents.send('tab:muteChanged', { id, muted: tab.muted })
+    return tab.muted
   })
 
   // Navigation
@@ -2207,10 +2256,10 @@ export function registerIpcHandlers() {
   })
 
   // Bookmarks
-  ipcMain.handle('bookmark:add', (_e, b: { url: string; title: string; favicon?: string }) => {
+  ipcMain.handle('bookmark:add', (_e, b: { url: string; title: string; favicon?: string; folderId?: number | null }) => {
     getDb()
-      .prepare('INSERT OR IGNORE INTO bookmarks (url, title, favicon) VALUES (?, ?, ?)')
-      .run(b.url, b.title, b.favicon ?? '')
+      .prepare('INSERT OR IGNORE INTO bookmarks (url, title, favicon, folder_id) VALUES (?, ?, ?, ?)')
+      .run(b.url, b.title, b.favicon ?? '', b.folderId ?? null)
   })
   ipcMain.handle('bookmark:getAll', () => {
     return getDb().prepare('SELECT * FROM bookmarks ORDER BY created_at DESC').all()
@@ -2224,6 +2273,28 @@ export function registerIpcHandlers() {
   ipcMain.handle('bookmark:getOrder', () => {
     const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get('bookmarkOrder') as { value: string } | undefined
     try { return JSON.parse(row?.value ?? '[]') } catch { return [] }
+  })
+
+  // Bookmark folders
+  ipcMain.handle('bookmark:getFolders', () => {
+    return getDb().prepare('SELECT * FROM bookmark_folders ORDER BY sort_order ASC, name ASC').all()
+  })
+  ipcMain.handle('bookmark:createFolder', (_e, name: string) => {
+    const res = getDb().prepare('INSERT INTO bookmark_folders (name) VALUES (?)').run(name)
+    return { id: res.lastInsertRowid, name }
+  })
+  ipcMain.handle('bookmark:renameFolder', (_e, id: number, name: string) => {
+    getDb().prepare('UPDATE bookmark_folders SET name = ? WHERE id = ?').run(name, id)
+    return true
+  })
+  ipcMain.handle('bookmark:deleteFolder', (_e, id: number) => {
+    getDb().prepare('UPDATE bookmarks SET folder_id = NULL WHERE folder_id = ?').run(id)
+    getDb().prepare('DELETE FROM bookmark_folders WHERE id = ?').run(id)
+    return true
+  })
+  ipcMain.handle('bookmark:moveToFolder', (_e, bookmarkId: number, folderId: number | null) => {
+    getDb().prepare('UPDATE bookmarks SET folder_id = ? WHERE id = ?').run(folderId, bookmarkId)
+    return true
   })
 
   // Settings
@@ -2320,10 +2391,18 @@ export function registerIpcHandlers() {
     if (!win) return
     const send = (action: string, extra?: Record<string, unknown>) =>
       win.webContents.send('menu:action', { action, ...extra })
+    const isPinned = tabs.get(opts.tabId)?.pinned ?? false
     const items: Electron.MenuItemConstructorOptions[] = [
       { label: 'New Tab',       click: () => send('newTab') },
       { label: 'New Ghost Tab', click: () => send('newGhostTab') },
       { type: 'separator' },
+      { label: isPinned ? 'Unpin Tab' : 'Pin Tab', click: () => {
+        const tab = tabs.get(opts.tabId)
+        if (tab) {
+          tab.pinned = !tab.pinned
+          send('pinTab', { tabId: opts.tabId, pinned: tab.pinned })
+        }
+      }},
       { label: 'Duplicate Tab',       click: () => send('duplicateTab') },
       { label: 'Bookmark This Tab',   click: () => send('bookmarkTab',   { tabId: opts.tabId }) },
       { type: 'separator' },
@@ -2385,6 +2464,7 @@ export function registerIpcHandlers() {
       loading: false,
       ghost: tab.ghost,
       jsDisabled: false,
+      pinned: false,
       requests: [],
     }
     tabs.set(id, newTab)

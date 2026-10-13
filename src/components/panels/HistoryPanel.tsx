@@ -37,6 +37,8 @@ export default function HistoryPanel({ onNavigate }: Props) {
     await api().setIncinerate(days)
   }
 
+  const grouped = query ? null : groupByDate(entries)
+
   return (
     <div className="panel-overlay flex flex-col h-full bg-surface border-r border-border w-72">
       <div className="p-3 border-b border-border">
@@ -66,36 +68,81 @@ export default function HistoryPanel({ onNavigate }: Props) {
       <div className="flex-1 overflow-y-auto">
         {entries.length === 0 ? (
           <p className="text-muted text-xs text-center mt-8 font-mono">No history</p>
-        ) : (
-          entries.map((e) => (
-            <div
-              key={e.id}
-              className="group flex items-center gap-2 px-3 py-2 hover:bg-surface-2 cursor-pointer border-b border-border"
-            >
-              {e.favicon ? (
-                <img src={e.favicon} className="w-3 h-3 shrink-0" alt="" />
-              ) : (
-                <div className="w-3 h-3 border border-border shrink-0" />
-              )}
-              <div className="flex-1 min-w-0" onClick={() => onNavigate(e.url)}>
-                <p className="text-xs text-text truncate">{e.title || e.url}</p>
-                <p className="text-[10px] text-muted font-mono truncate">{formatUrl(e.url)}</p>
+        ) : grouped ? (
+          // Date-grouped view (no active search)
+          grouped.map(({ label, items }) => (
+            <div key={label}>
+              <div className="sticky top-0 z-10 px-3 py-1 bg-obsidian/90 border-b border-border/50">
+                <span className="text-[10px] font-mono text-saffron uppercase tracking-widest">{label}</span>
               </div>
-              <button
-                onClick={() => deleteEntry(e.id)}
-                className="shrink-0 opacity-0 group-hover:opacity-100 text-muted hover:text-saffron transition-opacity"
-              >
-                <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
-                  <line x1="0" y1="0" x2="8" y2="8" />
-                  <line x1="8" y1="0" x2="0" y2="8" />
-                </svg>
-              </button>
+              {items.map((e) => <HistoryRow key={e.id} entry={e} onNavigate={onNavigate} onDelete={deleteEntry} />)}
             </div>
           ))
+        ) : (
+          // Flat search results
+          entries.map((e) => <HistoryRow key={e.id} entry={e} onNavigate={onNavigate} onDelete={deleteEntry} />)
         )}
       </div>
     </div>
   )
+}
+
+function HistoryRow({ entry: e, onNavigate, onDelete }: {
+  entry: HistoryEntry
+  onNavigate: (url: string) => void
+  onDelete: (id: number) => void
+}) {
+  return (
+    <div className="group flex items-center gap-2 px-3 py-2 hover:bg-surface-2 cursor-pointer border-b border-border">
+      {e.favicon ? (
+        <img src={e.favicon} className="w-3 h-3 shrink-0" alt="" />
+      ) : (
+        <div className="w-3 h-3 border border-border shrink-0" />
+      )}
+      <div className="flex-1 min-w-0" onClick={() => onNavigate(e.url)}>
+        <p className="text-xs text-text truncate">{e.title || e.url}</p>
+        <p className="text-[10px] text-muted font-mono truncate">{formatUrl(e.url)}</p>
+      </div>
+      <button
+        onClick={() => onDelete(e.id)}
+        className="shrink-0 opacity-0 group-hover:opacity-100 text-muted hover:text-saffron transition-opacity"
+      >
+        <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
+          <line x1="0" y1="0" x2="8" y2="8" />
+          <line x1="8" y1="0" x2="0" y2="8" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+type Group = { label: string; items: HistoryEntry[] }
+
+function groupByDate(entries: HistoryEntry[]): Group[] {
+  const now = Date.now()
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0)
+  const todayMs = startOfToday.getTime()
+  const yesterdayMs = todayMs - 86400000
+  const weekMs = todayMs - 6 * 86400000
+
+  const buckets: Record<string, HistoryEntry[]> = {
+    Today: [],
+    Yesterday: [],
+    'This Week': [],
+    Older: [],
+  }
+
+  for (const e of entries) {
+    const t = e.visited_at
+    if (t >= todayMs) buckets['Today'].push(e)
+    else if (t >= yesterdayMs) buckets['Yesterday'].push(e)
+    else if (t >= weekMs) buckets['This Week'].push(e)
+    else buckets['Older'].push(e)
+  }
+
+  return Object.entries(buckets)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, items }))
 }
 
 function formatUrl(url: string) {

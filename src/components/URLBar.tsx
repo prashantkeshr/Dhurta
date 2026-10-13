@@ -27,6 +27,8 @@ interface Props {
   onOpenDownloads?: () => void
   onThemeToggle?: () => void
   onWarmthChange?: (level: number) => void
+  showBookmarksBar?: boolean
+  onToggleBookmarksBar?: () => void
 }
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
@@ -57,6 +59,8 @@ export default function URLBar({
   warmthLevel = 0,
   onThemeToggle,
   onWarmthChange,
+  showBookmarksBar = false,
+  onToggleBookmarksBar,
 }: Props) {
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState(url)
@@ -358,6 +362,18 @@ export default function URLBar({
             <path d="M10.5 8.5A6 6 0 0 1 3.5 2a5.5 5.5 0 1 0 7 6.5z" opacity="0.9" />
           </svg>
         )}
+      </NavBtn>
+
+      {/* Bookmarks bar toggle */}
+      <NavBtn onClick={() => onToggleBookmarksBar?.()} title={showBookmarksBar ? 'Hide bookmarks bar' : 'Show bookmarks bar'} active={showBookmarksBar}>
+        <svg width="13" height="11" viewBox="0 0 13 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+          <line x1="1" y1="2" x2="12" y2="2" />
+          <circle cx="3" cy="2" r="1" fill="currentColor" stroke="none" />
+          <circle cx="7" cy="2" r="1" fill="currentColor" stroke="none" />
+          <circle cx="11" cy="2" r="1" fill="currentColor" stroke="none" />
+          <line x1="1" y1="6" x2="12" y2="6" strokeOpacity="0.4" />
+          <line x1="1" y1="9.5" x2="12" y2="9.5" strokeOpacity="0.4" />
+        </svg>
       </NavBtn>
 
       {/* Three-dot — native OS popup so it shows above BrowserViews on real pages */}

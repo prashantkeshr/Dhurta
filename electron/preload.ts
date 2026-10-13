@@ -20,6 +20,7 @@ const VALID_CHANNELS = new Set([
   'update:checking', 'update:available', 'update:not-available',
   'update:progress', 'update:downloaded', 'update:error',
   'connTrouble:action',
+  'tab:muteChanged', 'tab:playingChanged',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -90,11 +91,18 @@ contextBridge.exposeInMainWorld('dhurta', {
   setIncinerate: (days: number) => ipcRenderer.invoke('history:setIncinerate', days),
 
   // Bookmarks
-  addBookmark: (b: { url: string; title: string; favicon?: string }) => ipcRenderer.invoke('bookmark:add', b),
+  addBookmark: (b: { url: string; title: string; favicon?: string; folderId?: number | null }) => ipcRenderer.invoke('bookmark:add', b),
   getBookmarks: () => ipcRenderer.invoke('bookmark:getAll'),
   deleteBookmark: (id: number) => ipcRenderer.invoke('bookmark:delete', id),
   reorderBookmarks: (orderedIds: number[]) => ipcRenderer.invoke('bookmark:reorder', orderedIds),
   getBookmarkOrder: () => ipcRenderer.invoke('bookmark:getOrder'),
+
+  // Bookmark folders
+  getBookmarkFolders: () => ipcRenderer.invoke('bookmark:getFolders'),
+  createBookmarkFolder: (name: string) => ipcRenderer.invoke('bookmark:createFolder', name),
+  renameBookmarkFolder: (id: number, name: string) => ipcRenderer.invoke('bookmark:renameFolder', id, name),
+  deleteBookmarkFolder: (id: number) => ipcRenderer.invoke('bookmark:deleteFolder', id),
+  moveBookmarkToFolder: (bookmarkId: number, folderId: number | null) => ipcRenderer.invoke('bookmark:moveToFolder', bookmarkId, folderId),
 
   // Settings
   getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
@@ -203,6 +211,12 @@ contextBridge.exposeInMainWorld('dhurta', {
   // Tab context menu — native OS menu so it renders above BrowserViews
   showTabContextMenu: (opts: { tabId: number; tabCount: number; x: number; y: number }) =>
     ipcRenderer.invoke('tab:showContextMenu', opts),
+
+  // Pin / unpin a tab
+  pinTab: (id: number) => ipcRenderer.invoke('tab:pin', id),
+
+  // Mute / unmute a tab
+  muteTab: (id: number) => ipcRenderer.invoke('tab:mute', id),
 
   // Sidebar apps popup — native BrowserWindow like the download popup
   showAppsPopup: (pos: { x: number; y: number }) => ipcRenderer.invoke('popup:showApps', pos),

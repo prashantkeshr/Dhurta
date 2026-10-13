@@ -11,6 +11,8 @@ interface Props {
   onDuplicate: (id: number) => void
   onBookmark: (id: number) => void
   onCloseOthers: (id: number) => void
+  onPin: (id: number) => void
+  onMute: (id: number) => void
   pipActive?: boolean
   pipTitle?: string
 }
@@ -18,7 +20,7 @@ interface Props {
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
 
-export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, onNewGhost, onDuplicate, onBookmark, onCloseOthers, pipActive, pipTitle }: Props) {
+export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, onNewGhost, onDuplicate, onBookmark, onCloseOthers, onPin, onMute, pipActive, pipTitle }: Props) {
   const appsRef = useRef<HTMLButtonElement>(null)
 
   // PiP chip drag state — position in viewport coords
@@ -47,6 +49,13 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
 
   const isActiveLoading = tabs.find(t => t.id === activeTabId)?.loading ?? false
 
+  // Pinned tabs always appear before regular tabs
+  const sortedTabs = [...tabs].sort((a, b) => {
+    const ap = a.pinned ? 0 : 1
+    const bp = b.pinned ? 0 : 1
+    return ap - bp
+  })
+
   // Tab right-click: use native OS menu (rendered above BrowserView) in Electron
   const handleTabContextMenu = async (e: React.MouseEvent, tabId: number) => {
     e.preventDefault()
@@ -74,32 +83,73 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
           <div className="tab-loading-bar" />
         </div>
       )}
-      {tabs.map((tab) => (
-        <div
-          key={tab.id}
-          onClick={() => onSwitch(tab.id)}
-          onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
-          className={[
-            'tab-sharp flex items-center gap-1.5 h-full px-3 min-w-[120px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
-            tab.id === activeTabId ? 'tab-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
-          ].join(' ')}
-        >
-          <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
-            {tab.loading ? <LoadingSpinner /> : tab.favicon ? <img src={tab.favicon} className="w-3.5 h-3.5" alt="" /> : <DefaultFavicon ghost={tab.ghost} />}
-          </span>
-          <span className="text-xs truncate flex-1 font-sans">
-            {tab.ghost && <span className="text-saffron mr-1 text-[10px]">👻</span>}
-            {tab.title || 'New Tab'}
-          </span>
-          <button
-            onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
-            className="shrink-0 w-4 h-4 flex items-center justify-center text-muted opacity-0 group-hover:opacity-100 hover:text-saffron transition-opacity"
+      {sortedTabs.map((tab) => (
+        tab.pinned ? (
+          // Pinned tab: narrow chip with just favicon + pin dot, no title/close
+          <div
+            key={tab.id}
+            onClick={() => onSwitch(tab.id)}
+            onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
+            title={tab.title || 'New Tab'}
+            className={[
+              'tab-sharp flex items-center justify-center h-full w-10 cursor-pointer border-r border-border shrink-0 relative group select-none',
+              tab.id === activeTabId ? 'tab-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
+            ].join(' ')}
           >
-            <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
-              <line x1="0" y1="0" x2="8" y2="8" /><line x1="8" y1="0" x2="0" y2="8" />
-            </svg>
-          </button>
-        </div>
+            <span className="w-3.5 h-3.5 flex items-center justify-center relative">
+              {tab.loading ? <LoadingSpinner /> : tab.favicon ? <img src={tab.favicon} className="w-3.5 h-3.5" alt="" /> : <DefaultFavicon ghost={tab.ghost} />}
+              {/* Pin indicator dot */}
+              <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-saffron" />
+            </span>
+          </div>
+        ) : (
+          // Normal tab
+          <div
+            key={tab.id}
+            onClick={() => onSwitch(tab.id)}
+            onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
+            className={[
+              'tab-sharp flex items-center gap-1.5 h-full px-3 min-w-[120px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
+              tab.id === activeTabId ? 'tab-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
+            ].join(' ')}
+          >
+            <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+              {tab.loading ? <LoadingSpinner /> : tab.favicon ? <img src={tab.favicon} className="w-3.5 h-3.5" alt="" /> : <DefaultFavicon ghost={tab.ghost} />}
+            </span>
+            <span className="text-xs truncate flex-1 font-sans">
+              {tab.ghost && <span className="text-saffron mr-1 text-[10px]">👻</span>}
+              {tab.title || 'New Tab'}
+            </span>
+            {(tab.playing || tab.muted) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onMute(tab.id) }}
+                title={tab.muted ? 'Unmute tab' : 'Mute tab'}
+                className="shrink-0 w-4 h-4 flex items-center justify-center text-muted hover:text-saffron transition-colors"
+              >
+                {tab.muted ? (
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
+                    <path d="M1 4h2l3-3v9L3 7H1V4z" />
+                    <line x1="7" y1="4" x2="10" y2="7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                    <line x1="10" y1="4" x2="7" y2="7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
+                    <path d="M1 4h2l3-3v9L3 7H1V4z" />
+                    <path d="M7.5 3.5c1 0.8 1 3.2 0 4" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                )}
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
+              className="shrink-0 w-4 h-4 flex items-center justify-center text-muted opacity-0 group-hover:opacity-100 hover:text-saffron transition-opacity"
+            >
+              <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
+                <line x1="0" y1="0" x2="8" y2="8" /><line x1="8" y1="0" x2="0" y2="8" />
+              </svg>
+            </button>
+          </div>
+        )
       ))}
 
       <button

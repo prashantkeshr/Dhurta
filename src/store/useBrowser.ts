@@ -229,6 +229,10 @@ export function useBrowser() {
         })
       } else if (payload.action === 'navigate' && payload.url) {
         window.dispatchEvent(new CustomEvent('dhurta:navigate', { detail: payload.url }))
+      } else if (payload.action === 'pinTab' && payload.tabId != null) {
+        setTabs(prev => prev.map(t => t.id === payload.tabId ? { ...t, pinned: payload.pinned as boolean } : t))
+      } else if (payload.action === 'muteTab' && payload.tabId != null) {
+        setTabs(prev => prev.map(t => t.id === payload.tabId ? { ...t, muted: payload.muted as boolean } : t))
       }
     }
 
@@ -248,6 +252,13 @@ export function useBrowser() {
     const onPipOpened = (title: string) => { setPipActive(true); setPipTitle(title ?? '') }
     const onPipClosed = () => { setPipActive(false); setPipTitle('') }
 
+    const onMuteChanged = (data: { id: number; muted: boolean }) => {
+      setTabs(prev => prev.map(t => t.id === data.id ? { ...t, muted: data.muted } : t))
+    }
+    const onPlayingChanged = (data: { id: number; playing: boolean }) => {
+      setTabs(prev => prev.map(t => t.id === data.id ? { ...t, playing: data.playing } : t))
+    }
+
     api().on('tab:loadStart', onLoadStart as never)
     api().on('tab:titleChanged', onTitleChanged as never)
     api().on('tab:faviconChanged', onFaviconChanged as never)
@@ -261,6 +272,8 @@ export function useBrowser() {
     api().on('ghost:tor-failed', onTorFailed as never)
     api().on('pip:opened', onPipOpened as never)
     api().on('pip:closed', onPipClosed as never)
+    api().on('tab:muteChanged', onMuteChanged as never)
+    api().on('tab:playingChanged', onPlayingChanged as never)
 
     return () => {
       api().off('tab:loadStart', onLoadStart as never)
@@ -276,6 +289,8 @@ export function useBrowser() {
       api().off('ghost:tor-failed', onTorFailed as never)
       api().off('pip:opened', onPipOpened as never)
       api().off('pip:closed', onPipClosed as never)
+      api().off('tab:muteChanged', onMuteChanged as never)
+      api().off('tab:playingChanged', onPlayingChanged as never)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -514,6 +529,16 @@ export function useBrowser() {
     if (kept) setUrlInput(kept.url)
   }, [tabs])
 
+  const pinTab = useCallback(async (id: number) => {
+    const pinned = await api().pinTab(id)
+    setTabs(prev => prev.map(t => t.id === id ? { ...t, pinned } : t))
+  }, [])
+
+  const muteTab = useCallback(async (id: number) => {
+    const muted = await api().muteTab(id)
+    setTabs(prev => prev.map(t => t.id === id ? { ...t, muted } : t))
+  }, [])
+
   return {
     tabs,
     activeTabId,
@@ -548,5 +573,7 @@ export function useBrowser() {
     zoomStep,
     duplicateTab,
     closeOtherTabs,
+    pinTab,
+    muteTab,
   }
 }

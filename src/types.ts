@@ -6,6 +6,9 @@ export interface Tab {
   loading: boolean
   ghost: boolean
   active: boolean
+  pinned?: boolean
+  muted?: boolean
+  playing?: boolean
 }
 
 export interface HistoryEntry {
@@ -21,6 +24,14 @@ export interface Bookmark {
   url: string
   title: string
   favicon: string
+  folder_id?: number | null
+  created_at: number
+}
+
+export interface BookmarkFolder {
+  id: number
+  name: string
+  sort_order: number
   created_at: number
 }
 
@@ -46,6 +57,7 @@ export type Panel =
   | 'extensions'
   | 'data'
   | 'transparency'
+  | 'shortcuts'
 
 export interface LockStatus {
   locked: boolean
@@ -169,9 +181,14 @@ export interface DhurtaAPI {
   getHistory(query?: string, limit?: number): Promise<HistoryEntry[]>
   deleteHistory(id: number): Promise<void>
   setIncinerate(days: number): Promise<void>
-  addBookmark(b: { url: string; title: string; favicon?: string }): Promise<void>
+  addBookmark(b: { url: string; title: string; favicon?: string; folderId?: number | null }): Promise<void>
   getBookmarks(): Promise<Bookmark[]>
   deleteBookmark(id: number): Promise<void>
+  getBookmarkFolders(): Promise<BookmarkFolder[]>
+  createBookmarkFolder(name: string): Promise<{ id: number; name: string }>
+  renameBookmarkFolder(id: number, name: string): Promise<boolean>
+  deleteBookmarkFolder(id: number): Promise<boolean>
+  moveBookmarkToFolder(bookmarkId: number, folderId: number | null): Promise<boolean>
   updateBookmark(id: number, updates: { url?: string; title?: string }): Promise<boolean>
   reorderBookmarks(orderedIds: number[]): Promise<void>
   getBookmarkOrder(): Promise<number[]>
@@ -221,6 +238,8 @@ export interface DhurtaAPI {
   toggleExtension(id: string): Promise<{ enabled?: boolean; newId?: string; error?: string }>
   printPage(): Promise<void>
   savePageAsPDF(): Promise<{ ok?: boolean; filePath?: string; cancelled?: boolean; error?: string }>
+  pinTab(id: number): Promise<boolean>
+  muteTab(id: number): Promise<boolean>
   openExtensionOptions(id: string): Promise<{ url?: string; error?: string }>
   showExtensionTrayMenu(): Promise<void>
   isBookmarked(url: string): Promise<boolean>

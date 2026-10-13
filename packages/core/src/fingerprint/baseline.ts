@@ -68,6 +68,58 @@ export function buildBaselineScript(
       return p;
     }, configurable: true });
   } catch (e) {}
+  // window.chrome — reCAPTCHA v2/v3 and Cloudflare Turnstile score the browser
+  // as a bot when chrome.runtime is absent from a Chromium UA. Inject the
+  // minimal surface CAPTCHA providers probe so the fingerprint score stays high.
+  try {
+    if (!window.chrome) window.chrome = {};
+    var _cr = window.chrome;
+    if (!_cr.runtime) {
+      _cr.runtime = {
+        id: undefined, lastError: undefined,
+        connect: function() { return { postMessage: function(){}, disconnect: function(){}, onMessage: { addListener: function(){}, removeListener: function(){} }, onDisconnect: { addListener: function(){}, removeListener: function(){} } }; },
+        sendMessage: function() {},
+        onMessage:         { addListener: function(){}, removeListener: function(){}, hasListener: function(){ return false; } },
+        onConnect:         { addListener: function(){}, removeListener: function(){}, hasListener: function(){ return false; } },
+        onInstalled:       { addListener: function(){}, removeListener: function(){}, hasListener: function(){ return false; } },
+        onStartup:         { addListener: function(){}, removeListener: function(){}, hasListener: function(){ return false; } },
+        onUpdateAvailable: { addListener: function(){}, removeListener: function(){}, hasListener: function(){ return false; } },
+        getManifest: function(){ return {}; },
+        getURL: function(p){ return 'chrome-extension://invalid/' + (p||''); },
+        reload: function(){},
+        requestUpdateCheck: function(){},
+      };
+    }
+    if (!_cr.app) {
+      _cr.app = {
+        isInstalled: false,
+        getDetails: function(){ return null; },
+        getIsInstalled: function(){ return false; },
+        InstallState: { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' },
+        RunningState: { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' }
+      };
+    }
+    if (!_cr.csi) {
+      _cr.csi = function() {
+        return { onloadT: Date.now(), pageT: Math.round(performance.now()), startE: 0, tran: 15 };
+      };
+    }
+    if (!_cr.loadTimes) {
+      _cr.loadTimes = function() {
+        var t = performance.timing || {};
+        var ns = t.navigationStart || Date.now();
+        return {
+          requestTime: ns / 1000, startLoadTime: ns / 1000,
+          commitLoadTime: (t.responseStart || ns) / 1000,
+          finishDocumentLoadTime: 0, finishLoadTime: 0,
+          firstPaintTime: 0, firstPaintAfterLoadTime: 0,
+          navigationType: 'Other', wasFetchedViaSpdy: false,
+          wasNpnNegotiated: false, npnNegotiatedProtocol: 'h2',
+          wasAlternateProtocolAvailable: false, connectionInfo: 'h2',
+        };
+      };
+    }
+  } catch (e) {}
   // Client Hints (userAgentData)
   try {
     var UA_BRANDS = ${brands};

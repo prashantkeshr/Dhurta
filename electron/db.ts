@@ -22,11 +22,19 @@ export function initDatabase() {
       visited_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
     );
 
+    CREATE TABLE IF NOT EXISTS bookmark_folders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+    );
+
     CREATE TABLE IF NOT EXISTS bookmarks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       url TEXT NOT NULL UNIQUE,
       title TEXT,
       favicon TEXT,
+      folder_id INTEGER REFERENCES bookmark_folders(id) ON DELETE SET NULL,
       created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
     );
 
@@ -99,6 +107,13 @@ export function initDatabase() {
     seedBm.run('dhurta-tool://setu', 'Dhurta Setu', '')
     seedBm.run('https://www.youtube.com', 'YouTube', 'https://www.youtube.com/favicon.ico')
     seedBm.run('https://aistudio.google.com', 'Google AI Studio', 'https://www.gstatic.com/aistudio/ai_studio_favicon.png')
+  }
+
+  // v4 migration: add folder_id column to bookmarks for existing installs
+  const migratedV4 = db.prepare("SELECT value FROM settings WHERE key = '_migration_v4_bookmark_folders'").get()
+  if (!migratedV4) {
+    try { db.exec('ALTER TABLE bookmarks ADD COLUMN folder_id INTEGER REFERENCES bookmark_folders(id) ON DELETE SET NULL') } catch (_) {}
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('_migration_v4_bookmark_folders', '1')").run()
   }
 
   // Backfill: ensure Dhurta Setu exists as a bookmark for existing installs

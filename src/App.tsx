@@ -18,6 +18,7 @@ import ExtensionsPanel from './components/panels/ExtensionsPanel'
 import DataHubPanel from './components/panels/DataHubPanel'
 import TransparencyPanel from './components/panels/TransparencyPanel'
 import ShortcutsPanel from './components/panels/ShortcutsPanel'
+import BookmarksBar from './components/BookmarksBar'
 import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import UpdateBanner from './components/UpdateBanner'
@@ -28,7 +29,7 @@ import BookmarksPage from './pages/BookmarksPage'
 import DownloadsPage from './pages/DownloadsPage'
 import OmniPage from './pages/OmniPage'
 import UpdatePage from './pages/UpdatePage'
-import type { SecuritySettings, Extension, LockStatus, Download } from './types'
+import type { SecuritySettings, Extension, LockStatus, Download, Bookmark } from './types'
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
 
@@ -90,6 +91,8 @@ export default function App() {
     zoomStep,
     duplicateTab,
     closeOtherTabs,
+    pinTab,
+    muteTab,
     pipActive,
     pipTitle,
   } = useBrowser()
@@ -101,6 +104,10 @@ export default function App() {
   const [lockStatus, setLockStatus] = useState<LockStatus>({ locked: false, hasPin: false })
   const [downloads, setDownloads] = useState<Download[]>([])
   const [warmthLevel, setWarmthLevel] = useState(0)
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
+  const [showBookmarksBar, setShowBookmarksBar] = useState(() => {
+    try { return localStorage.getItem('dhurta_bookmarks_bar') === 'true' } catch { return false }
+  })
   const contentRef = useRef<HTMLDivElement>(null)
   const contentAreaRef = useRef<HTMLDivElement>(null)
 
@@ -134,6 +141,34 @@ export default function App() {
   const warmthStyle = warmthLevel > 0
     ? { filter: `sepia(${(warmthLevel / 200).toFixed(3)}) brightness(${(1 - warmthLevel / 1000).toFixed(3)})` }
     : undefined
+
+  // ── Bookmarks bar ────────────────────────────────────────────────────────────
+  const loadBookmarks = useCallback(() => {
+    if (!isElectron) return
+    window.dhurta.getBookmarks().then(setBookmarks).catch(() => {})
+  }, [])
+
+  useEffect(() => { loadBookmarks() }, [loadBookmarks])
+
+  useEffect(() => {
+    const handler = () => loadBookmarks()
+    window.addEventListener('dhurta:bookmarksChanged', handler)
+    return () => window.removeEventListener('dhurta:bookmarksChanged', handler)
+  }, [loadBookmarks])
+
+  const toggleBookmarksBar = useCallback(() => {
+    setShowBookmarksBar(v => {
+      const next = !v
+      try { localStorage.setItem('dhurta_bookmarks_bar', String(next)) } catch {}
+      return next
+    })
+  }, [])
+
+  const removeBookmarkFromBar = useCallback(async (id: number) => {
+    if (!isElectron) return
+    await window.dhurta.deleteBookmark(id)
+    loadBookmarks()
+  }, [loadBookmarks])
 
   // ── App Lock ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -282,6 +317,7 @@ export default function App() {
       title: activeTab.title,
       favicon: activeTab.favicon,
     })
+    window.dispatchEvent(new CustomEvent('dhurta:bookmarksChanged'))
   }, [activeTab])
 
   const handleBookmarkTab = useCallback(async (tabId: number) => {
@@ -289,6 +325,7 @@ export default function App() {
     const t = tabs.find(t => t.id === tabId)
     if (!t) return
     await window.dhurta.addBookmark({ url: t.url, title: t.title, favicon: t.favicon })
+    window.dispatchEvent(new CustomEvent('dhurta:bookmarksChanged'))
   }, [tabs])
 
   const handleBack = useCallback(() => {
@@ -471,6 +508,8 @@ export default function App() {
                 onDuplicate={duplicateTab}
                 onBookmark={handleBookmarkTab}
                 onCloseOthers={closeOtherTabs}
+                onPin={pinTab}
+                onMute={muteTab}
                 pipActive={pipActive}
                 pipTitle={pipTitle}
               />
@@ -500,7 +539,16 @@ export default function App() {
                 onThemeToggle={toggleTheme}
                 warmthLevel={warmthLevel}
                 onWarmthChange={handleWarmthChange}
+                showBookmarksBar={showBookmarksBar}
+                onToggleBookmarksBar={toggleBookmarksBar}
               />
+              {showBookmarksBar && (
+                <BookmarksBar
+                  bookmarks={bookmarks}
+                  onNavigate={handleNavigate}
+                  onRemove={removeBookmarkFromBar}
+                />
+              )}
             </>
           )}
 
