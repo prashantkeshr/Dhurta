@@ -21,6 +21,7 @@ const VALID_CHANNELS = new Set([
   'update:progress', 'update:downloaded', 'update:error',
   'connTrouble:action',
   'tab:muteChanged', 'tab:playingChanged',
+  'tabGroup:changed',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -217,6 +218,14 @@ contextBridge.exposeInMainWorld('dhurta', {
 
   // Mute / unmute a tab
   muteTab: (id: number) => ipcRenderer.invoke('tab:mute', id),
+
+  // Tab groups
+  getTabGroups: () => ipcRenderer.invoke('tabGroup:getAll'),
+  createTabGroup: (color: string, name?: string) => ipcRenderer.invoke('tabGroup:create', color, name),
+  assignTabToGroup: (tabId: number, groupId: number | null) => ipcRenderer.invoke('tabGroup:assignTab', tabId, groupId),
+  updateTabGroup: (groupId: number, updates: { name?: string; color?: string }) => ipcRenderer.invoke('tabGroup:update', groupId, updates),
+  deleteTabGroup: (groupId: number) => ipcRenderer.invoke('tabGroup:delete', groupId),
+  toggleTabGroup: (groupId: number) => ipcRenderer.invoke('tabGroup:toggle', groupId),
 
   // Sidebar apps popup — native BrowserWindow like the download popup
   showAppsPopup: (pos: { x: number; y: number }) => ipcRenderer.invoke('popup:showApps', pos),

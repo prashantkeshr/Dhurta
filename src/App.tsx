@@ -93,6 +93,10 @@ export default function App() {
     closeOtherTabs,
     pinTab,
     muteTab,
+    groups,
+    toggleTabGroup,
+    renameTabGroup,
+    deleteTabGroup,
     pipActive,
     pipTitle,
   } = useBrowser()
@@ -510,6 +514,10 @@ export default function App() {
                 onCloseOthers={closeOtherTabs}
                 onPin={pinTab}
                 onMute={muteTab}
+                groups={groups}
+                onToggleGroup={toggleTabGroup}
+                onRenameGroup={renameTabGroup}
+                onDeleteGroup={deleteTabGroup}
                 pipActive={pipActive}
                 pipTitle={pipTitle}
               />

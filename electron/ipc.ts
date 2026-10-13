@@ -516,7 +516,15 @@ interface Tab {
   pinned: boolean
   muted: boolean
   playing: boolean
+  groupId: number | null
   requests: RequestEntry[]
+}
+
+interface TabGroup {
+  id: number
+  name: string
+  color: string
+  collapsed: boolean
 }
 
 interface RequestEntry {
@@ -530,6 +538,8 @@ interface RequestEntry {
 
 let tabIdCounter = 1
 const tabs = new Map<number, Tab>()
+let groupIdCounter = 1
+const tabGroups = new Map<number, TabGroup>()
 let activeTabId = -1
 let currentPanelWidth = 0
 let warmthLevel = 0  // 0-100; applied as sepia+brightness filter to every BrowserView page
@@ -1923,6 +1933,7 @@ export function registerIpcHandlers() {
       pinned: false,
       muted: false,
       playing: false,
+      groupId: null,
       requests: [],
     }
     tabs.set(id, tab)
@@ -2005,6 +2016,7 @@ export function registerIpcHandlers() {
       pinned: t.pinned,
       muted: t.muted,
       playing: t.playing,
+      groupId: t.groupId,
       active: t.id === activeTabId,
     }))
   })
@@ -2028,6 +2040,65 @@ export function registerIpcHandlers() {
     const win = getMainWindow()
     if (win) win.webContents.send('tab:muteChanged', { id, muted: tab.muted })
     return tab.muted
+  })
+
+  // ── Tab Groups ─────────────────────────────────────────────────────────────
+  const broadcastGroups = () => {
+    const win = getMainWindow()
+    if (!win) return
+    win.webContents.send('tabGroup:changed', {
+      groups: [...tabGroups.values()],
+      tabs: [...tabs.values()].map(t => ({ id: t.id, groupId: t.groupId })),
+    })
+  }
+
+  ipcMain.handle('tabGroup:getAll', () => ({
+    groups: [...tabGroups.values()],
+    tabs: [...tabs.values()].map(t => ({ id: t.id, groupId: t.groupId })),
+  }))
+
+  ipcMain.handle('tabGroup:create', (_e, color: string, name?: string) => {
+    const id = groupIdCounter++
+    const group: TabGroup = { id, name: name || 'Group', color, collapsed: false }
+    tabGroups.set(id, group)
+    broadcastGroups()
+    return group
+  })
+
+  ipcMain.handle('tabGroup:assignTab', (_e, tabId: number, groupId: number | null) => {
+    const tab = tabs.get(tabId)
+    if (!tab) return false
+    tab.groupId = groupId
+    // Remove empty groups
+    for (const [gid] of tabGroups) {
+      if (![...tabs.values()].some(t => t.groupId === gid)) tabGroups.delete(gid)
+    }
+    broadcastGroups()
+    return true
+  })
+
+  ipcMain.handle('tabGroup:update', (_e, groupId: number, updates: { name?: string; color?: string }) => {
+    const group = tabGroups.get(groupId)
+    if (!group) return false
+    if (updates.name  !== undefined) group.name  = updates.name
+    if (updates.color !== undefined) group.color = updates.color
+    broadcastGroups()
+    return true
+  })
+
+  ipcMain.handle('tabGroup:delete', (_e, groupId: number) => {
+    for (const tab of tabs.values()) if (tab.groupId === groupId) tab.groupId = null
+    tabGroups.delete(groupId)
+    broadcastGroups()
+    return true
+  })
+
+  ipcMain.handle('tabGroup:toggle', (_e, groupId: number) => {
+    const group = tabGroups.get(groupId)
+    if (!group) return false
+    group.collapsed = !group.collapsed
+    broadcastGroups()
+    return group.collapsed
   })
 
   // Navigation
@@ -2391,18 +2462,66 @@ export function registerIpcHandlers() {
     if (!win) return
     const send = (action: string, extra?: Record<string, unknown>) =>
       win.webContents.send('menu:action', { action, ...extra })
-    const isPinned = tabs.get(opts.tabId)?.pinned ?? false
+    const tab     = tabs.get(opts.tabId)
+    const isPinned = tab?.pinned ?? false
+    const currentGroupId = tab?.groupId ?? null
+
+    const GROUP_COLORS = [
+      { label: '🔴 Red',    color: 'red' },
+      { label: '🟠 Orange', color: 'orange' },
+      { label: '🟡 Yellow', color: 'yellow' },
+      { label: '🟢 Green',  color: 'green' },
+      { label: '🔵 Blue',   color: 'blue' },
+      { label: '🟣 Purple', color: 'purple' },
+      { label: '🩷 Pink',   color: 'pink' },
+      { label: '⬜ Gray',   color: 'gray' },
+    ]
+
+    const existingGroups = [...tabGroups.values()]
+    const newGroupItems: Electron.MenuItemConstructorOptions[] = GROUP_COLORS.map(({ label, color }) => ({
+      label,
+      click: () => {
+        const id = groupIdCounter++
+        const group: TabGroup = { id, name: 'Group', color, collapsed: false }
+        tabGroups.set(id, group)
+        if (tab) tab.groupId = id
+        broadcastGroups()
+      },
+    }))
+
+    const addToGroupSubmenu: Electron.MenuItemConstructorOptions[] = [
+      ...existingGroups.map(g => ({
+        label: `${g.name}`,
+        click: () => {
+          if (tab) { tab.groupId = g.id; broadcastGroups() }
+        },
+      } as Electron.MenuItemConstructorOptions)),
+      ...(existingGroups.length ? [{ type: 'separator' } as Electron.MenuItemConstructorOptions] : []),
+      { label: 'New Group', submenu: newGroupItems },
+    ]
+
     const items: Electron.MenuItemConstructorOptions[] = [
       { label: 'New Tab',       click: () => send('newTab') },
       { label: 'New Ghost Tab', click: () => send('newGhostTab') },
       { type: 'separator' },
       { label: isPinned ? 'Unpin Tab' : 'Pin Tab', click: () => {
-        const tab = tabs.get(opts.tabId)
         if (tab) {
           tab.pinned = !tab.pinned
           send('pinTab', { tabId: opts.tabId, pinned: tab.pinned })
         }
       }},
+      { label: 'Add to Group', submenu: addToGroupSubmenu },
+      ...(currentGroupId !== null
+        ? [{ label: 'Remove from Group', click: () => {
+            if (tab) {
+              tab.groupId = null
+              for (const [gid] of tabGroups) {
+                if (![...tabs.values()].some(t => t.groupId === gid)) tabGroups.delete(gid)
+              }
+              broadcastGroups()
+            }
+          }} as Electron.MenuItemConstructorOptions]
+        : []),
       { label: 'Duplicate Tab',       click: () => send('duplicateTab') },
       { label: 'Bookmark This Tab',   click: () => send('bookmarkTab',   { tabId: opts.tabId }) },
       { type: 'separator' },

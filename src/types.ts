@@ -9,6 +9,14 @@ export interface Tab {
   pinned?: boolean
   muted?: boolean
   playing?: boolean
+  groupId?: number | null
+}
+
+export interface TabGroup {
+  id: number
+  name: string
+  color: string
+  collapsed: boolean
 }
 
 export interface HistoryEntry {
@@ -240,6 +248,12 @@ export interface DhurtaAPI {
   savePageAsPDF(): Promise<{ ok?: boolean; filePath?: string; cancelled?: boolean; error?: string }>
   pinTab(id: number): Promise<boolean>
   muteTab(id: number): Promise<boolean>
+  getTabGroups(): Promise<{ groups: TabGroup[]; tabs: { id: number; groupId: number | null }[] }>
+  createTabGroup(color: string, name?: string): Promise<TabGroup>
+  assignTabToGroup(tabId: number, groupId: number | null): Promise<boolean>
+  updateTabGroup(groupId: number, updates: { name?: string; color?: string }): Promise<boolean>
+  deleteTabGroup(groupId: number): Promise<boolean>
+  toggleTabGroup(groupId: number): Promise<boolean>
   openExtensionOptions(id: string): Promise<{ url?: string; error?: string }>
   showExtensionTrayMenu(): Promise<void>
   isBookmarked(url: string): Promise<boolean>

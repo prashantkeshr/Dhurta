@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Tab, Panel } from '../types'
+import type { Tab, TabGroup, Panel } from '../types'
 
 const api = () => window.dhurta
 
@@ -44,6 +44,7 @@ export function useBrowser() {
   const [chakraWarning,  setChakraWarning]  = useState<string | null>(null)
   const [pipActive,    setPipActive]     = useState(false)
   const [pipTitle,     setPipTitle]      = useState('')
+  const [groups,       setGroups]        = useState<TabGroup[]>([])
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -94,6 +95,17 @@ export function useBrowser() {
     if (!isElectron) return
 
     const bootstrap = async () => {
+      // Load initial group state (only if this version of preload exposes it)
+      if (typeof api().getTabGroups === 'function') {
+        api().getTabGroups().then(({ groups: g, tabs: gt }) => {
+          setGroups(g)
+          setTabs(prev => prev.map(t => {
+            const gt2 = gt.find(x => x.id === t.id)
+            return gt2 ? { ...t, groupId: gt2.groupId } : t
+          }))
+        }).catch(() => {})
+      }
+
       const existing = await api().getTabs()
       if (existing.length > 0) {
         // Already have tabs (hot-reload dev scenario)
@@ -258,6 +270,13 @@ export function useBrowser() {
     const onPlayingChanged = (data: { id: number; playing: boolean }) => {
       setTabs(prev => prev.map(t => t.id === data.id ? { ...t, playing: data.playing } : t))
     }
+    const onGroupChanged = (data: { groups: TabGroup[]; tabs: { id: number; groupId: number | null }[] }) => {
+      setGroups(data.groups)
+      setTabs(prev => prev.map(t => {
+        const entry = data.tabs.find(x => x.id === t.id)
+        return entry !== undefined ? { ...t, groupId: entry.groupId } : t
+      }))
+    }
 
     api().on('tab:loadStart', onLoadStart as never)
     api().on('tab:titleChanged', onTitleChanged as never)
@@ -274,6 +293,7 @@ export function useBrowser() {
     api().on('pip:closed', onPipClosed as never)
     api().on('tab:muteChanged', onMuteChanged as never)
     api().on('tab:playingChanged', onPlayingChanged as never)
+    api().on('tabGroup:changed', onGroupChanged as never)
 
     return () => {
       api().off('tab:loadStart', onLoadStart as never)
@@ -291,6 +311,7 @@ export function useBrowser() {
       api().off('pip:closed', onPipClosed as never)
       api().off('tab:muteChanged', onMuteChanged as never)
       api().off('tab:playingChanged', onPlayingChanged as never)
+      api().off('tabGroup:changed', onGroupChanged as never)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -539,6 +560,18 @@ export function useBrowser() {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, muted } : t))
   }, [])
 
+  const toggleTabGroup = useCallback(async (groupId: number) => {
+    await api().toggleTabGroup(groupId)
+  }, [])
+
+  const renameTabGroup = useCallback(async (groupId: number, name: string) => {
+    await api().updateTabGroup(groupId, { name })
+  }, [])
+
+  const deleteTabGroup = useCallback(async (groupId: number) => {
+    await api().deleteTabGroup(groupId)
+  }, [])
+
   return {
     tabs,
     activeTabId,
@@ -575,5 +608,9 @@ export function useBrowser() {
     closeOtherTabs,
     pinTab,
     muteTab,
+    groups,
+    toggleTabGroup,
+    renameTabGroup,
+    deleteTabGroup,
   }
 }
