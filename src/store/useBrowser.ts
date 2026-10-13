@@ -277,6 +277,9 @@ export function useBrowser() {
         return entry !== undefined ? { ...t, groupId: entry.groupId } : t
       }))
     }
+    const onReaderChanged = (data: { id: number; readerMode: boolean }) => {
+      setTabs(prev => prev.map(t => t.id === data.id ? { ...t, readerMode: data.readerMode } : t))
+    }
 
     api().on('tab:loadStart', onLoadStart as never)
     api().on('tab:titleChanged', onTitleChanged as never)
@@ -294,6 +297,7 @@ export function useBrowser() {
     api().on('tab:muteChanged', onMuteChanged as never)
     api().on('tab:playingChanged', onPlayingChanged as never)
     api().on('tabGroup:changed', onGroupChanged as never)
+    api().on('tab:readerChanged', onReaderChanged as never)
 
     return () => {
       api().off('tab:loadStart', onLoadStart as never)
@@ -312,6 +316,7 @@ export function useBrowser() {
       api().off('tab:muteChanged', onMuteChanged as never)
       api().off('tab:playingChanged', onPlayingChanged as never)
       api().off('tabGroup:changed', onGroupChanged as never)
+      api().off('tab:readerChanged', onReaderChanged as never)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -560,6 +565,14 @@ export function useBrowser() {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, muted } : t))
   }, [])
 
+  const toggleReader = useCallback(async (tabId: number) => {
+    if (typeof api().toggleReaderMode !== 'function') return
+    const result = await api().toggleReaderMode(tabId)
+    if (result !== null) {
+      setTabs(prev => prev.map(t => t.id === tabId ? { ...t, readerMode: result.active } : t))
+    }
+  }, [])
+
   const toggleTabGroup = useCallback(async (groupId: number) => {
     await api().toggleTabGroup(groupId)
   }, [])
@@ -609,6 +622,7 @@ export function useBrowser() {
     pinTab,
     muteTab,
     groups,
+    toggleReader,
     toggleTabGroup,
     renameTabGroup,
     deleteTabGroup,

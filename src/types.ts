@@ -10,6 +10,7 @@ export interface Tab {
   muted?: boolean
   playing?: boolean
   groupId?: number | null
+  readerMode?: boolean
 }
 
 export interface TabGroup {
@@ -254,6 +255,7 @@ export interface DhurtaAPI {
   updateTabGroup(groupId: number, updates: { name?: string; color?: string }): Promise<boolean>
   deleteTabGroup(groupId: number): Promise<boolean>
   toggleTabGroup(groupId: number): Promise<boolean>
+  toggleReaderMode(tabId: number): Promise<{ active: boolean; title: string } | null>
   openExtensionOptions(id: string): Promise<{ url?: string; error?: string }>
   showExtensionTrayMenu(): Promise<void>
   isBookmarked(url: string): Promise<boolean>

@@ -517,6 +517,7 @@ interface Tab {
   muted: boolean
   playing: boolean
   groupId: number | null
+  readerMode: boolean
   requests: RequestEntry[]
 }
 
@@ -728,6 +729,11 @@ function attachViewEvents(tab: Tab) {
   wc.on('did-start-loading', () => {
     tab.loading = true
     tab.requests = []
+    // Navigation clears reader mode — the overlay no longer exists on the new page
+    if (tab.readerMode) {
+      tab.readerMode = false
+      safeSend(win, 'tab:readerChanged', { id: tab.id, readerMode: false })
+    }
     safeSend(win, 'tab:loadStart', tab.id)
   })
 
@@ -1934,6 +1940,7 @@ export function registerIpcHandlers() {
       muted: false,
       playing: false,
       groupId: null,
+      readerMode: false,
       requests: [],
     }
     tabs.set(id, tab)
@@ -2017,6 +2024,7 @@ export function registerIpcHandlers() {
       muted: t.muted,
       playing: t.playing,
       groupId: t.groupId,
+      readerMode: t.readerMode,
       active: t.id === activeTabId,
     }))
   })
@@ -2099,6 +2107,84 @@ export function registerIpcHandlers() {
     group.collapsed = !group.collapsed
     broadcastGroups()
     return group.collapsed
+  })
+
+  // ── Reader Mode ────────────────────────────────────────────────────────────
+  const READER_SCRIPT = `(function() {
+  var OVERLAY_ID = '__dhurta_reader__';
+  var existing = document.getElementById(OVERLAY_ID);
+  if (existing) {
+    document.body.style.overflow = '';
+    existing.remove();
+    return { active: false };
+  }
+  function bestArticle() {
+    var selectors = ['article','[role="article"]','main article','.article-body',
+      '.post-content','.entry-content','.story-body','.article__body',
+      '.post-body','.article-text','[class*="ArticleBody"]','[class*="article-body"]',
+      '[class*="post-content"]','[itemprop="articleBody"]','main','[role="main"]'];
+    for (var i = 0; i < selectors.length; i++) {
+      var el = document.querySelector(selectors[i]);
+      if (el && el.querySelectorAll('p').length >= 2) return el;
+    }
+    var divs = Array.prototype.slice.call(document.querySelectorAll('div,section'));
+    divs = divs.filter(function(d) { return d.querySelectorAll('p').length >= 3; });
+    divs.sort(function(a, b) { return b.innerText.length - a.innerText.length; });
+    return divs[0] || document.body;
+  }
+  var src    = bestArticle();
+  var title  = (document.querySelector('h1') || {}).innerText || document.title || '';
+  title = title.trim();
+  var bylineEl = document.querySelector('[rel~="author"],[class*="author"],[class*="byline"],[itemprop="author"]');
+  var byline = bylineEl ? (bylineEl.innerText || '').trim() : '';
+  var siteMeta = document.querySelector('meta[property="og:site_name"]');
+  var siteName = (siteMeta && siteMeta.getAttribute('content')) || location.hostname;
+  var clone = src.cloneNode(true);
+  var junk = ['script','style','nav','header','footer','aside','iframe','noscript',
+    '[class*="-ad-"],[class*=" ad "]','[id*="ad-"],[class*="cookie"],[class*="banner"]'];
+  junk.forEach(function(sel) { try { clone.querySelectorAll(sel).forEach(function(el){ el.remove(); }); } catch(e){} });
+  var ov = document.createElement('div');
+  ov.id = OVERLAY_ID;
+  ov.setAttribute('style','position:fixed;inset:0;z-index:2147483647;overflow-y:auto;background:#141414;color:#ddd8d0;box-sizing:border-box;');
+  ov.innerHTML = '<div style="max-width:680px;margin:0 auto;padding:44px 24px 88px;box-sizing:border-box;">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;font-family:system-ui,sans-serif;">' +
+    '<span style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.1em;">' + siteName + '</span>' +
+    '<button id="__dhurta_reader_close__" style="background:none;border:1px solid #444;color:#888;font-size:11px;padding:4px 14px;cursor:pointer;font-family:monospace;border-radius:2px;transition:all .15s;">✕ Exit Reader</button>' +
+    '</div>' +
+    '<h1 style="font-size:28px;line-height:1.3;margin:0 0 10px;color:#f0ede8;font-family:Georgia,serif;font-weight:400;">' + title + '</h1>' +
+    (byline ? '<p style="font-size:13px;color:#888;margin:0 0 36px;font-family:system-ui,sans-serif;">' + byline + '</p>' : '<div style="height:36px"></div>') +
+    '<div id="__dhurta_reader_body__" style="font-size:19px;line-height:1.8;color:#ccc8c0;font-family:Georgia,serif;"></div>' +
+    '</div>';
+  document.getElementById('__dhurta_reader_body__') || ov.querySelector('#__dhurta_reader_body__');
+  document.body.appendChild(ov);
+  ov.querySelector('#__dhurta_reader_body__').appendChild(clone);
+  ov.querySelectorAll('img').forEach(function(img){ img.style.cssText='max-width:100%;height:auto;border-radius:4px;margin:16px 0;display:block;'; });
+  ov.querySelectorAll('a').forEach(function(a){ a.style.color='#f8a000'; a.style.textDecoration='none'; });
+  ov.querySelectorAll('p').forEach(function(p){ p.style.margin='0 0 22px'; });
+  ov.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(function(h){ h.style.cssText='color:#f0ede8;margin:36px 0 12px;line-height:1.3;font-weight:500;'; });
+  ov.querySelectorAll('blockquote').forEach(function(bq){ bq.style.cssText='border-left:3px solid #f8a000;padding-left:18px;color:#999;margin:28px 0;font-style:italic;'; });
+  ov.querySelectorAll('pre').forEach(function(pre){ pre.style.cssText='background:#1e1e1e;padding:16px;border-radius:4px;overflow-x:auto;font-size:14px;margin:24px 0;'; });
+  ov.querySelectorAll('code').forEach(function(c){ if (!c.closest('pre')) c.style.cssText='background:#1e1e1e;color:#e8b56a;padding:2px 6px;border-radius:3px;font-size:15px;'; });
+  document.body.style.overflow = 'hidden';
+  ov.querySelector('#__dhurta_reader_close__').addEventListener('click', function() {
+    document.body.style.overflow = '';
+    ov.remove();
+  });
+  return { active: true, title: title };
+})();`
+
+  ipcMain.handle('reader:toggle', async (_e, tabId: number) => {
+    const tab = tabs.get(tabId)
+    if (!tab) return null
+    let result: { active: boolean; title: string } | null = null
+    try {
+      result = await tab.view.webContents.executeJavaScript(READER_SCRIPT) as any
+    } catch (_) { return null }
+    if (!result) return null
+    tab.readerMode = result.active
+    const win = getMainWindow()
+    if (win) win.webContents.send('tab:readerChanged', { id: tabId, readerMode: tab.readerMode })
+    return result
   })
 
   // Navigation

@@ -29,6 +29,8 @@ interface Props {
   onWarmthChange?: (level: number) => void
   showBookmarksBar?: boolean
   onToggleBookmarksBar?: () => void
+  readerMode?: boolean
+  onToggleReader?: () => void
 }
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
@@ -61,6 +63,8 @@ export default function URLBar({
   onWarmthChange,
   showBookmarksBar = false,
   onToggleBookmarksBar,
+  readerMode = false,
+  onToggleReader,
 }: Props) {
   const [editing, setEditing] = useState(false)
   const [input, setInput] = useState(url)
@@ -362,6 +366,16 @@ export default function URLBar({
             <path d="M10.5 8.5A6 6 0 0 1 3.5 2a5.5 5.5 0 1 0 7 6.5z" opacity="0.9" />
           </svg>
         )}
+      </NavBtn>
+
+      {/* Reader mode toggle */}
+      <NavBtn onClick={() => onToggleReader?.()} title={readerMode ? 'Exit reader mode' : 'Enter reader mode'} active={readerMode}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="1" y="1" width="11" height="11" rx="1.5" />
+          <line x1="3.5" y1="4.5" x2="9.5" y2="4.5" />
+          <line x1="3.5" y1="6.5" x2="9.5" y2="6.5" />
+          <line x1="3.5" y1="8.5" x2="7" y2="8.5" />
+        </svg>
       </NavBtn>
 
       {/* Bookmarks bar toggle */}

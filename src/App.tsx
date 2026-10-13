@@ -94,6 +94,7 @@ export default function App() {
     pinTab,
     muteTab,
     groups,
+    toggleReader,
     toggleTabGroup,
     renameTabGroup,
     deleteTabGroup,
@@ -549,6 +550,8 @@ export default function App() {
                 onWarmthChange={handleWarmthChange}
                 showBookmarksBar={showBookmarksBar}
                 onToggleBookmarksBar={toggleBookmarksBar}
+                readerMode={activeTab?.readerMode ?? false}
+                onToggleReader={() => activeTabId > 0 && toggleReader(activeTabId)}
               />
               {showBookmarksBar && (
                 <BookmarksBar

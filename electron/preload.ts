@@ -22,6 +22,7 @@ const VALID_CHANNELS = new Set([
   'connTrouble:action',
   'tab:muteChanged', 'tab:playingChanged',
   'tabGroup:changed',
+  'tab:readerChanged',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -218,6 +219,9 @@ contextBridge.exposeInMainWorld('dhurta', {
 
   // Mute / unmute a tab
   muteTab: (id: number) => ipcRenderer.invoke('tab:mute', id),
+
+  // Reader mode
+  toggleReaderMode: (tabId: number) => ipcRenderer.invoke('reader:toggle', tabId),
 
   // Tab groups
   getTabGroups: () => ipcRenderer.invoke('tabGroup:getAll'),
