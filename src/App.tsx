@@ -18,6 +18,7 @@ import ExtensionsPanel from './components/panels/ExtensionsPanel'
 import DataHubPanel from './components/panels/DataHubPanel'
 import TransparencyPanel from './components/panels/TransparencyPanel'
 import ShortcutsPanel from './components/panels/ShortcutsPanel'
+import AIPanel from './components/panels/AIPanel'
 import BookmarksBar from './components/BookmarksBar'
 import LockScreen from './components/LockScreen'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
@@ -54,6 +55,7 @@ const PANEL_WIDTHS: Record<string, number> = {
   data: 360,
   transparency: 360,
   shortcuts: 272,
+  ai: 320,
 }
 
 export default function App() {
@@ -481,6 +483,13 @@ export default function App() {
                 {activePanel === 'data' && <DataHubPanel onNavigate={handleNavigate} />}
                 {activePanel === 'transparency' && <TransparencyPanel />}
                 {activePanel === 'shortcuts' && <ShortcutsPanel />}
+                {activePanel === 'ai' && (
+                  <AIPanel
+                    activeTabId={activeTabId}
+                    activeTabUrl={activeTab?.url}
+                    activeTabTitle={activeTab?.title}
+                  />
+                )}
                 {activePanel === 'connect' && (
                   <ConnectPanel
                     activeUrl={activeTab?.url ?? ''}

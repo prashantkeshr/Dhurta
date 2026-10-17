@@ -2187,6 +2187,28 @@ export function registerIpcHandlers() {
     return result
   })
 
+  // AI assistant — extract readable page text for local LLM
+  ipcMain.handle('ai:getPageText', async (_e, tabId: number) => {
+    const tab = tabs.get(tabId)
+    if (!tab) return ''
+    try {
+      const text = await tab.view.webContents.executeJavaScript(`
+        (() => {
+          const sel = ['article','[role="article"]','main','#content','.content','.post-body','.article-body','body']
+          for (const s of sel) {
+            const el = document.querySelector(s)
+            if (el) {
+              const t = el.innerText || el.textContent || ''
+              if (t.trim().length > 200) return t.trim().slice(0, 12000)
+            }
+          }
+          return (document.body.innerText || '').trim().slice(0, 12000)
+        })()
+      `)
+      return typeof text === 'string' ? text : ''
+    } catch (_) { return '' }
+  })
+
   // Navigation
   ipcMain.handle('nav:loadURL', async (_e, url: string) => {
     const tab = tabs.get(activeTabId)

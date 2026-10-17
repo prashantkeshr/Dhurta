@@ -223,6 +223,9 @@ contextBridge.exposeInMainWorld('dhurta', {
   // Reader mode
   toggleReaderMode: (tabId: number) => ipcRenderer.invoke('reader:toggle', tabId),
 
+  // AI assistant — extract page text for local LLM
+  getPageTextForAI: (tabId: number) => ipcRenderer.invoke('ai:getPageText', tabId),
+
   // Tab groups
   getTabGroups: () => ipcRenderer.invoke('tabGroup:getAll'),
   createTabGroup: (color: string, name?: string) => ipcRenderer.invoke('tabGroup:create', color, name),

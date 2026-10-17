@@ -287,6 +287,17 @@ export default function Sidebar({
         </svg>
       </Icon>
 
+      {/* AI Assistant — local LLM panel */}
+      <Icon label="AI Assistant (local LLM)" active={activePanel === 'ai'} onClick={() => toggle('ai')}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="8" cy="5.5" r="3" />
+          <path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5" />
+          <path d="M6 5.5q.5-1 1-.5t1-.5" strokeWidth="1.2" />
+          <circle cx="6.5" cy="5.5" r="0.5" fill="currentColor" stroke="none" />
+          <circle cx="9.5" cy="5.5" r="0.5" fill="currentColor" stroke="none" />
+        </svg>
+      </Icon>
+
       <div className="w-6 h-px bg-border my-2" />
 
       {/* Settings */}

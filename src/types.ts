@@ -67,6 +67,7 @@ export type Panel =
   | 'data'
   | 'transparency'
   | 'shortcuts'
+  | 'ai'
 
 export interface LockStatus {
   locked: boolean
@@ -275,6 +276,7 @@ export interface DhurtaAPI {
   getTransparencyData(): Promise<TransparencyData>
   exportMyData(): Promise<string>
   sendCrashReport(): Promise<{ success: boolean; url?: string; error?: string }>
+  getPageTextForAI(tabId: number): Promise<string>
   on(channel: string, cb: (...args: unknown[]) => void): void
   off(channel: string, cb: (...args: unknown[]) => void): void
 }
