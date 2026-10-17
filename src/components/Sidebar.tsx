@@ -32,8 +32,10 @@ function PrimaryBtn({ children, label, active, onClick }: {
       title={label}
       onClick={onClick}
       className={[
-        'w-10 h-10 flex items-center justify-center transition-all duration-150',
-        active ? 'text-saffron drop-shadow-[0_0_6px_#f8a00066]' : 'text-text/70 hover:text-saffron',
+        'w-10 h-10 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
+        active
+          ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]'
+          : 'text-text/70 hover:text-saffron hover:bg-white/5',
       ].join(' ')}
     >
       {children}
@@ -50,10 +52,10 @@ function SecBtn({ children, label, active, danger, onClick }: {
       title={label}
       onClick={onClick}
       className={[
-        'w-9 h-9 flex items-center justify-center transition-all duration-150',
-        active  ? 'text-saffron'
-        : danger ? 'text-text/35 hover:text-[#FF4500]'
-        : 'text-text/40 hover:text-saffron',
+        'w-9 h-9 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
+        active  ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]'
+        : danger ? 'text-text/35 hover:text-[#FF4500] hover:bg-white/5'
+        : 'text-text/40 hover:text-saffron hover:bg-white/5',
       ].join(' ')}
     >
       {children}
@@ -70,8 +72,8 @@ function UtilBtn({ children, label, active, onClick }: {
       title={label}
       onClick={onClick}
       className={[
-        'w-8 h-8 flex items-center justify-center transition-all duration-150',
-        active ? 'text-saffron' : 'text-text/30 hover:text-text/70',
+        'w-8 h-8 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
+        active ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]' : 'text-text/30 hover:text-text/70 hover:bg-white/5',
       ].join(' ')}
     >
       {children}
@@ -122,7 +124,7 @@ export default function Sidebar({
           ? (torActive ? 'Ghost ON · Tor active ✓' : 'Ghost ON · upgrading to Tor…')
           : 'Enable Ghost Mode — Tor routing + fingerprint spoofing'}
         onClick={onToggleGhost}
-        className="w-10 h-10 flex items-center justify-center mb-0.5 transition-all duration-300 relative"
+        className="w-10 h-10 flex items-center justify-center mb-0.5 transition-all duration-300 active:scale-[0.92] relative"
         style={ghostMode ? {
           borderRadius: '50%',
           boxShadow: '0 0 14px 5px #FF003344, 0 0 30px 8px #FF003322',
@@ -144,7 +146,7 @@ export default function Sidebar({
         title={chakraBusy ? 'Activating…' : chakraActive ? 'Chakra Shield ON — click to disable' : 'Chakra Shield — enable all privacy features'}
         onClick={onToggleChakra}
         disabled={chakraBusy}
-        className="w-10 h-10 flex items-center justify-center transition-all duration-300 disabled:opacity-50"
+        className="w-10 h-10 flex items-center justify-center transition-all duration-300 active:scale-[0.92] disabled:opacity-50"
       >
         <img src="./chakra-icon.png" alt="Chakra" draggable={false}
           className={['w-8 h-8 object-contain', chakraActive ? 'chakra-active' : 'chakra-idle'].join(' ')} />
@@ -166,7 +168,7 @@ export default function Sidebar({
       {/* ━━━ TIER 2 — Navigation & Page Actions ━━━ */}
       {/* Apps */}
       <button ref={appsRef} title="Dhurta Apps" onClick={handleAppsClick}
-        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron transition-colors">
+        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron hover:bg-white/5 transition-all duration-100 active:scale-[0.92]">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
           <circle cx="2.5" cy="2.5" r="1.3" /><circle cx="6.5" cy="2.5" r="1.3" /><circle cx="10.5" cy="2.5" r="1.3" />
           <circle cx="2.5" cy="6.5" r="1.3" /><circle cx="6.5" cy="6.5" r="1.3" /><circle cx="10.5" cy="6.5" r="1.3" />
@@ -176,7 +178,7 @@ export default function Sidebar({
 
       {/* Tools */}
       <button ref={toolsRef} title="Dhurta Tools — Setu, Connect, Developer, Omni, Bridge" onClick={handleToolsClick}
-        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron transition-colors">
+        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron hover:bg-white/5 transition-all duration-100 active:scale-[0.92]">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M10.5 2.5a3 3 0 0 0-3.3 4.8L3 11.5l1.5 1.5 4.2-4.2a3 3 0 0 0 4.8-3.3L11.5 7.5 10 6l2-2z" />
         </svg>
@@ -309,7 +311,7 @@ export default function Sidebar({
       <button
         title="Nuclear Wipe — Destroy all data and quit"
         onClick={onNuclearWipe}
-        className="nuclear-btn w-9 h-9 flex items-center justify-center border border-border/40 text-text/25 hover:border-[#FF4500]/60 hover:text-[#FF4500] transition-all duration-200 mb-1 mt-0.5"
+        className="nuclear-btn w-9 h-9 flex items-center justify-center border border-border/40 text-text/25 hover:border-[#FF4500]/60 hover:text-[#FF4500] transition-all duration-200 active:scale-[0.90] mb-1 mt-0.5"
       >
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4">
           <circle cx="9" cy="9" r="7" />

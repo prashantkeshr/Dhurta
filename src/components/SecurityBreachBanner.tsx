@@ -92,7 +92,7 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
   if (active.length === 0) return null
 
   return (
-    <div className="shrink-0 border-b border-[#FF4500]/25 bg-[#0c0400]">
+    <div className="shrink-0 border-b border-[#FF4500]/25 bg-[#0c0400] animate-[security-slide-down_0.15s_ease-out]">
       {/* ── Collapsed single-line summary ── */}
       <div className="flex items-center gap-2 px-3 h-8">
         {/* Warning dot */}
@@ -113,7 +113,7 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
         <button
           onClick={fixAll}
           disabled={fixing !== null}
-          className="text-[9px] font-mono px-2.5 py-0.5 bg-[#FF4500] text-black hover:bg-[#FF5a1a] disabled:opacity-50 transition-colors shrink-0"
+          className="text-[9px] font-mono px-2.5 py-0.5 bg-[#FF4500] text-black hover:bg-[#FF5a1a] disabled:opacity-50 transition-all duration-100 active:scale-[0.93] shrink-0"
         >
           {fixing === 'all' ? 'Fixing…' : 'Fix All'}
         </button>
@@ -137,7 +137,7 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
 
       {/* ── Expanded detail rows ── */}
       {expanded && (
-        <div className="border-t border-[#FF4500]/10">
+        <div className="border-t border-[#FF4500]/10 animate-[security-slide-down_0.12s_ease-out]">
           {active.map((t, i) => (
             <div key={t.id}
               className={`flex items-center gap-3 px-4 py-1.5 ${i < active.length - 1 ? 'border-b border-[#FF4500]/8' : ''}`}

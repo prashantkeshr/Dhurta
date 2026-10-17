@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import type { Tab, TabGroup } from '../types'
 
 const GROUP_COLOR_MAP: Record<string, string> = {
@@ -65,6 +65,19 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
 
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null)
   const [editGroupName, setEditGroupName]   = useState('')
+
+  // Tab hover preview tooltip
+  const [tooltip, setTooltip] = useState<{ id: number; x: number; y: number } | null>(null)
+  const tooltipTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearTooltip = () => {
+    if (tooltipTimer.current) clearTimeout(tooltipTimer.current)
+    setTooltip(null)
+  }
+  const scheduleTooltip = (id: number, rect: DOMRect) => {
+    clearTooltip()
+    tooltipTimer.current = setTimeout(() => setTooltip({ id, x: rect.left, y: rect.bottom + 4 }), 400)
+  }
+  useEffect(() => () => { if (tooltipTimer.current) clearTimeout(tooltipTimer.current) }, [])
 
   const isActiveLoading = tabs.find(t => t.id === activeTabId)?.loading ?? false
 
@@ -192,6 +205,8 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 key={tab.id}
                 onClick={() => onSwitch(tab.id)}
                 onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
+                onMouseEnter={(e) => scheduleTooltip(tab.id, e.currentTarget.getBoundingClientRect())}
+                onMouseLeave={clearTooltip}
                 style={groupColor ? { borderTop: `2px solid ${groupColor}` } : undefined}
                 className={[
                   'tab-sharp flex items-center gap-1.5 h-full px-3 min-w-[120px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
@@ -227,7 +242,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 )}
                 <button
                   onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
-                  className="shrink-0 w-4 h-4 flex items-center justify-center text-muted opacity-0 group-hover:opacity-100 hover:text-saffron transition-opacity"
+                  className="shrink-0 w-4 h-4 flex items-center justify-center text-muted opacity-0 group-hover:opacity-100 hover:text-saffron transition-all duration-100 active:scale-[0.80]"
                 >
                   <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
                     <line x1="0" y1="0" x2="8" y2="8" /><line x1="8" y1="0" x2="0" y2="8" />
@@ -242,7 +257,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
 
       <button
         onClick={onNew}
-        className="tab-sharp h-full px-3 text-muted hover:text-saffron hover:bg-surface-2 transition-colors shrink-0"
+        className="tab-sharp h-full px-3 text-muted hover:text-saffron hover:bg-surface-2 transition-all duration-100 active:scale-[0.90] shrink-0"
         title="New tab (Ctrl+T)"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -255,7 +270,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
         ref={appsRef}
         onClick={handleAppsClick}
         title="Dhurta Apps"
-        className="tab-sharp h-9 px-3 ml-auto shrink-0 text-muted hover:text-saffron hover:bg-surface-2 transition-colors"
+        className="tab-sharp h-9 px-3 ml-auto shrink-0 text-muted hover:text-saffron hover:bg-surface-2 transition-all duration-100 active:scale-[0.90]"
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
           <circle cx="2.5" cy="2.5" r="1.5" />
@@ -269,6 +284,23 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
           <circle cx="11.5" cy="11.5" r="1.5" />
         </svg>
       </button>
+
+      {/* Tab hover tooltip */}
+      {tooltip && (() => {
+        const t = tabs.find(t => t.id === tooltip.id)
+        if (!t) return null
+        return (
+          <div
+            style={{ position: 'fixed', left: Math.min(tooltip.x, window.innerWidth - 240), top: tooltip.y, zIndex: 9999 }}
+            className="pointer-events-none bg-surface-2 border border-border px-2.5 py-1.5 text-[10px] font-mono shadow-lg max-w-[236px] animate-fade-in"
+          >
+            <p className="text-text truncate font-sans text-[11px]">{t.title || 'New Tab'}</p>
+            {t.url && t.url !== 'about:blank' && (
+              <p className="text-muted truncate mt-0.5">{t.url}</p>
+            )}
+          </div>
+        )
+      })()}
 
       {/* PiP active chip — draggable indicator that floats in the tab bar area */}
       {pipActive && (

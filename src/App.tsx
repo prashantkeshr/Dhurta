@@ -468,7 +468,7 @@ export default function App() {
             />
             {activePanel && activePanelWidth > 0 && (
               <div
-                className="relative flex shrink-0 h-full border-r border-border z-40 overflow-hidden"
+                className="relative flex shrink-0 h-full border-r border-border z-40 overflow-hidden transition-[width] duration-150 ease-out"
                 style={{ width: activePanelWidth }}
               >
                 {activePanel === 'history' && <HistoryPanel onNavigate={handleNavigate} />}

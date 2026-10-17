@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 import type { SecuritySettings, Extension, Download } from '../types'
 
 interface Props {
@@ -72,6 +72,7 @@ export default function URLBar({
   const [bookmarkFlash, setBookmarkFlash] = useState(false)
   const [findMode, setFindMode] = useState(false)
   const [findText, setFindText] = useState('')
+  const [showOverflow, setShowOverflow] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const findRef = useRef<HTMLInputElement>(null)
   const lockBtnRef = useRef<HTMLButtonElement>(null)
@@ -223,7 +224,7 @@ export default function URLBar({
       )}
 
       {/* URL input — lock icon opens the native Site Info popup */}
-      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-surface-3 focus-within:border-saffron transition-colors px-2 h-6 min-w-0 relative">
+      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-2 h-6 min-w-0 relative">
         <button
           ref={lockBtnRef}
           onClick={openSitePopup}
@@ -278,14 +279,6 @@ export default function URLBar({
         </div>
       )}
 
-      {/* Open file */}
-      <NavBtn onClick={onOpenFile} title="Open file (PDF, image, video…)">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square">
-          <path d="M2 1h5l2 2v8H2z" /><polyline points="7,1 7,3 9,3" />
-          <line x1="4" y1="6" x2="7" y2="6" /><line x1="4" y1="8" x2="7" y2="8" />
-        </svg>
-      </NavBtn>
-
       {/* Zoom */}
       <NavBtn onClick={onZoomOut} title="Zoom out (Ctrl+-)">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square">
@@ -295,7 +288,7 @@ export default function URLBar({
       <button
         onClick={onZoomReset}
         title="Reset zoom (Ctrl+0)"
-        className={['h-7 px-1 text-[10px] font-mono transition-colors shrink-0 tabular-nums', zoomedAway ? 'text-saffron hover:text-text' : 'text-muted hover:text-saffron'].join(' ')}
+        className={['h-7 px-1 text-[10px] font-mono transition-all duration-100 active:scale-[0.90] shrink-0 tabular-nums', zoomedAway ? 'text-saffron hover:text-text' : 'text-muted hover:text-saffron'].join(' ')}
       >
         {zoomPct}%
       </button>
@@ -321,7 +314,7 @@ export default function URLBar({
           onClick={handleBookmarkClick}
           title={bookmarked ? 'Bookmarked' : 'Bookmark this page'}
           className={[
-            'w-7 h-7 flex items-center justify-center transition-all shrink-0',
+            'w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.90] shrink-0',
             bookmarkFlash ? 'scale-125' : 'scale-100',
             bookmarked ? 'text-saffron' : 'text-muted hover:text-saffron',
           ].join(' ')}
@@ -342,53 +335,69 @@ export default function URLBar({
       {/* Download tray */}
       <DownloadTray downloads={downloads} onOpenPanel={onOpenDownloads} />
 
-      {/* Screen warmth / eye-protection slider */}
-      <WarmthButton warmthLevel={warmthLevel} onWarmthChange={onWarmthChange} />
+      {/* Overflow — rarely-used tools behind ⋯ */}
+      <div className="flex items-center shrink-0">
+        {/* Overflow expanded buttons — slide in within the bar */}
+        <div className={[
+          'flex items-center overflow-hidden transition-all duration-150',
+          showOverflow ? 'max-w-[148px] opacity-100' : 'max-w-0 opacity-0',
+        ].join(' ')}>
+          <WarmthButton warmthLevel={warmthLevel} onWarmthChange={onWarmthChange} />
+          <NavBtn onClick={() => onThemeToggle?.()} title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}>
+            {theme === 'dark' ? (
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+                <circle cx="6.5" cy="6.5" r="2.5" />
+                <line x1="6.5" y1="0.5" x2="6.5" y2="2" /><line x1="6.5" y1="11" x2="6.5" y2="12.5" />
+                <line x1="0.5" y1="6.5" x2="2" y2="6.5" /><line x1="11" y1="6.5" x2="12.5" y2="6.5" />
+                <line x1="2.2" y1="2.2" x2="3.2" y2="3.2" /><line x1="9.8" y1="9.8" x2="10.8" y2="10.8" />
+                <line x1="10.8" y1="2.2" x2="9.8" y2="3.2" /><line x1="3.2" y1="9.8" x2="2.2" y2="10.8" />
+              </svg>
+            ) : (
+              <svg width="12" height="13" viewBox="0 0 12 13" fill="currentColor">
+                <path d="M10.5 8.5A6 6 0 0 1 3.5 2a5.5 5.5 0 1 0 7 6.5z" opacity="0.9" />
+              </svg>
+            )}
+          </NavBtn>
+          <NavBtn onClick={() => onToggleReader?.()} title={readerMode ? 'Exit reader mode' : 'Enter reader mode'} active={readerMode}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="1" y="1" width="11" height="11" rx="1.5" />
+              <line x1="3.5" y1="4.5" x2="9.5" y2="4.5" />
+              <line x1="3.5" y1="6.5" x2="9.5" y2="6.5" />
+              <line x1="3.5" y1="8.5" x2="7" y2="8.5" />
+            </svg>
+          </NavBtn>
+          <NavBtn onClick={() => onToggleBookmarksBar?.()} title={showBookmarksBar ? 'Hide bookmarks bar' : 'Show bookmarks bar'} active={showBookmarksBar}>
+            <svg width="13" height="11" viewBox="0 0 13 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+              <line x1="1" y1="2" x2="12" y2="2" />
+              <circle cx="3" cy="2" r="1" fill="currentColor" stroke="none" />
+              <circle cx="7" cy="2" r="1" fill="currentColor" stroke="none" />
+              <circle cx="11" cy="2" r="1" fill="currentColor" stroke="none" />
+              <line x1="1" y1="6" x2="12" y2="6" strokeOpacity="0.4" />
+              <line x1="1" y1="9.5" x2="12" y2="9.5" strokeOpacity="0.4" />
+            </svg>
+          </NavBtn>
+          <NavBtn onClick={onOpenFile} title="Open file (PDF, image, video…)">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square">
+              <path d="M2 1h5l2 2v8H2z" /><polyline points="7,1 7,3 9,3" />
+              <line x1="4" y1="6" x2="7" y2="6" /><line x1="4" y1="8" x2="7" y2="8" />
+            </svg>
+          </NavBtn>
+        </div>
 
-      {/* Theme toggle — UI only, never affects webpages */}
-      <NavBtn onClick={() => onThemeToggle?.()} title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}>
-        {theme === 'dark' ? (
-          /* Sun icon for light mode */
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
-            <circle cx="6.5" cy="6.5" r="2.5" />
-            <line x1="6.5" y1="0.5" x2="6.5" y2="2" />
-            <line x1="6.5" y1="11" x2="6.5" y2="12.5" />
-            <line x1="0.5" y1="6.5" x2="2" y2="6.5" />
-            <line x1="11" y1="6.5" x2="12.5" y2="6.5" />
-            <line x1="2.2" y1="2.2" x2="3.2" y2="3.2" />
-            <line x1="9.8" y1="9.8" x2="10.8" y2="10.8" />
-            <line x1="10.8" y1="2.2" x2="9.8" y2="3.2" />
-            <line x1="3.2" y1="9.8" x2="2.2" y2="10.8" />
+        {/* ⋯ overflow toggle */}
+        <button
+          onClick={() => setShowOverflow(v => !v)}
+          title={showOverflow ? 'Hide extra tools' : 'More tools'}
+          className={[
+            'w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.90] shrink-0',
+            showOverflow ? 'text-saffron' : 'text-muted hover:text-saffron',
+          ].join(' ')}
+        >
+          <svg width="14" height="4" viewBox="0 0 14 4" fill="currentColor">
+            <circle cx="2" cy="2" r="1.3" /><circle cx="7" cy="2" r="1.3" /><circle cx="12" cy="2" r="1.3" />
           </svg>
-        ) : (
-          /* Moon icon for dark mode */
-          <svg width="12" height="13" viewBox="0 0 12 13" fill="currentColor">
-            <path d="M10.5 8.5A6 6 0 0 1 3.5 2a5.5 5.5 0 1 0 7 6.5z" opacity="0.9" />
-          </svg>
-        )}
-      </NavBtn>
-
-      {/* Reader mode toggle */}
-      <NavBtn onClick={() => onToggleReader?.()} title={readerMode ? 'Exit reader mode' : 'Enter reader mode'} active={readerMode}>
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="1" y="1" width="11" height="11" rx="1.5" />
-          <line x1="3.5" y1="4.5" x2="9.5" y2="4.5" />
-          <line x1="3.5" y1="6.5" x2="9.5" y2="6.5" />
-          <line x1="3.5" y1="8.5" x2="7" y2="8.5" />
-        </svg>
-      </NavBtn>
-
-      {/* Bookmarks bar toggle */}
-      <NavBtn onClick={() => onToggleBookmarksBar?.()} title={showBookmarksBar ? 'Hide bookmarks bar' : 'Show bookmarks bar'} active={showBookmarksBar}>
-        <svg width="13" height="11" viewBox="0 0 13 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-          <line x1="1" y1="2" x2="12" y2="2" />
-          <circle cx="3" cy="2" r="1" fill="currentColor" stroke="none" />
-          <circle cx="7" cy="2" r="1" fill="currentColor" stroke="none" />
-          <circle cx="11" cy="2" r="1" fill="currentColor" stroke="none" />
-          <line x1="1" y1="6" x2="12" y2="6" strokeOpacity="0.4" />
-          <line x1="1" y1="9.5" x2="12" y2="9.5" strokeOpacity="0.4" />
-        </svg>
-      </NavBtn>
+        </button>
+      </div>
 
       {/* Three-dot — native OS popup so it shows above BrowserViews on real pages */}
       <NavBtn onClick={() => isElectron && window.dhurta.showThreeDotMenu({ url })} title="More options">
@@ -407,7 +416,7 @@ function NavBtn({ children, onClick, title, active }: {
 }) {
   return (
     <button onClick={onClick} title={title}
-      className={['w-7 h-7 flex items-center justify-center transition-colors shrink-0',
+      className={['w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.85] shrink-0',
         active ? 'text-saffron' : 'text-muted hover:text-saffron'].join(' ')}>
       {children}
     </button>
@@ -460,7 +469,7 @@ function ExtensionTray({ extensions }: { extensions: Extension[] }) {
         ? `${extensions.length} extension${extensions.length !== 1 ? 's' : ''} — click to open`
         : 'Extensions — click to install'}
       className={[
-        'w-7 h-7 flex items-center justify-center transition-colors relative shrink-0',
+        'w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.85] relative shrink-0',
         hasExt ? 'text-muted hover:text-saffron' : 'text-muted/40 hover:text-muted',
       ].join(' ')}
     >
@@ -508,7 +517,7 @@ function DownloadTray({ downloads, onOpenPanel }: { downloads: Download[]; onOpe
       onClick={openPopup}
       title={hasActive ? `${active.length} download${active.length !== 1 ? 's' : ''} in progress` : 'Downloads'}
       className={[
-        'w-7 h-7 flex items-center justify-center transition-colors relative shrink-0',
+        'w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.85] relative shrink-0',
         hasActive ? 'text-saffron' : 'text-muted hover:text-saffron',
       ].join(' ')}
     >
@@ -559,7 +568,7 @@ function WarmthButton({ warmthLevel, onWarmthChange: _onWarmthChange }: { warmth
       onClick={openPopup}
       title={active ? `Eye protection ${warmthLevel}% — click to adjust` : 'Eye protection / screen warmth'}
       className={[
-        'w-7 h-7 flex items-center justify-center transition-colors relative shrink-0',
+        'w-7 h-7 flex items-center justify-center transition-all duration-100 active:scale-[0.85] relative shrink-0',
         active ? 'text-saffron' : 'text-muted hover:text-saffron',
       ].join(' ')}
     >
@@ -592,7 +601,7 @@ function PipButton({ url }: { url: string }) {
 
   return (
     <button onClick={handlePip} disabled={busy} title="Picture-in-Picture (video) or Pop Out Page"
-      className="w-7 h-7 flex items-center justify-center text-muted hover:text-saffron transition-colors shrink-0 disabled:opacity-40">
+      className="w-7 h-7 flex items-center justify-center text-muted hover:text-saffron transition-all duration-100 active:scale-[0.85] shrink-0 disabled:opacity-40">
       <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="square">
         <rect x="1" y="1" width="12" height="10" />
         <rect x="7" y="5" width="5" height="4" fill="currentColor" stroke="none" opacity="0.5" />
