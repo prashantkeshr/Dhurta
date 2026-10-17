@@ -24,6 +24,7 @@ import LockScreen from './components/LockScreen'
 import NotificationPermissionBanner from './components/NotificationPermissionBanner'
 import CaptchaBanner from './components/CaptchaBanner'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
+import OnboardingModal from './components/OnboardingModal'
 import UpdateBanner from './components/UpdateBanner'
 import GhostBootstrapBanner from './components/GhostBootstrapBanner'
 import ConnectionTroubleBanner from './components/ConnectionTroubleBanner'
@@ -665,6 +666,9 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* First-run onboarding — renders above everything as a fixed overlay */}
+      <OnboardingModal />
     </div>
   )
 }

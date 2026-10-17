@@ -52,6 +52,7 @@ const GROUPS: ShortcutGroup[] = [
       { keys: ['Ctrl', 'H'],        label: 'History panel' },
       { keys: ['Ctrl', 'B'],        label: 'Bookmarks panel' },
       { keys: ['Ctrl', 'J'],        label: 'Downloads panel' },
+      { keys: ['Ctrl', 'Shift', 'A'], label: 'AI Assistant panel' },
       { keys: ['Escape'],           label: 'Close open panel' },
       { keys: ['?'],                label: 'This shortcuts panel' },
     ],
