@@ -106,6 +106,13 @@
           ]
         },
         {
+          "target": "appx",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
           "target": "portable",
           "arch": [
             "x64"
@@ -124,6 +131,17 @@
       "shortcutName": "Dhurta Browser",
       "uninstallDisplayName": "Dhurta",
       "license": "LICENSE"
+    },
+    "appx": {
+      "applicationId": "DhurtaBrowser",
+      "backgroundColor": "#111111",
+      "displayName": "Dhurta Browser",
+      "publisherDisplayName": "Dhurta.inc",
+      "description": "A sovereign, privacy-native desktop browser. Ghost Mode with Tor, Chakra Shield ad-blocker, and zero telemetry.",
+      "identityName": "DhurtaInc.DhurtaBrowser",
+      "publisher": "CN=DhurtaInc",
+      "languages": ["en-US"],
+      "showNameOnTiles": false
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable.${ext}"

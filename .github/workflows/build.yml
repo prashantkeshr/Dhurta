@@ -186,7 +186,7 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           shopt -s nullglob
           for f in release/*arm64* release/*ARM64* release/*universal*; do
-            case "$f" in *.exe|*.dmg|*.zip|*.AppImage|*.deb|*.blockmap)
+            case "$f" in *.exe|*.dmg|*.zip|*.AppImage|*.deb|*.appx|*.blockmap)
               echo "Uploading $f"
               gh release upload "v${VERSION}" "$f" \
                 --clobber --repo "${{ github.repository }}" || true
@@ -203,6 +203,7 @@ jobs:
           name: dhurta-${{ matrix.name }}
           path: |
             release/*.exe
+            release/*.appx
             release/*.dmg
             release/*.zip
             release/*.AppImage
