@@ -116,7 +116,6 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Dhurta Browser",
       "uninstallDisplayName": "Dhurta",
-
       "license": "LICENSE"
     },
     "mac": {

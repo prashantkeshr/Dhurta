@@ -344,6 +344,76 @@ function QuickBtn({ label, icon, onClick, disabled }: { label: string; icon: Rea
   )
 }
 
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split('\n')
+  const nodes: React.ReactNode[] = []
+  let inCode = false
+  let codeLines: string[] = []
+  let codeLang = ''
+  let key = 0
+
+  const inlineFormat = (s: string): React.ReactNode => {
+    const parts: React.ReactNode[] = []
+    let rem = s
+    let k = 0
+    while (rem.length > 0) {
+      const boldIdx = rem.indexOf('**')
+      const codeIdx = rem.indexOf('`')
+      const italIdx = rem.indexOf('*')
+      const candidates = [
+        boldIdx >= 0 ? { idx: boldIdx, type: 'bold' as const } : null,
+        codeIdx >= 0 ? { idx: codeIdx, type: 'code' as const } : null,
+        italIdx >= 0 && italIdx !== boldIdx ? { idx: italIdx, type: 'italic' as const } : null,
+      ].filter(Boolean) as { idx: number; type: 'bold' | 'code' | 'italic' }[]
+      candidates.sort((a, b) => a.idx - b.idx)
+      const first = candidates[0]
+      if (!first) { parts.push(rem); break }
+      if (first.idx > 0) parts.push(rem.slice(0, first.idx))
+      if (first.type === 'bold') {
+        const end = rem.indexOf('**', first.idx + 2)
+        if (end < 0) { parts.push(rem); break }
+        parts.push(<strong key={k++} className="font-semibold text-text">{rem.slice(first.idx + 2, end)}</strong>)
+        rem = rem.slice(end + 2)
+      } else if (first.type === 'code') {
+        const end = rem.indexOf('`', first.idx + 1)
+        if (end < 0) { parts.push(rem); break }
+        parts.push(<code key={k++} className="font-mono text-[11px] bg-obsidian/60 text-saffron px-1 rounded">{rem.slice(first.idx + 1, end)}</code>)
+        rem = rem.slice(end + 1)
+      } else {
+        const end = rem.indexOf('*', first.idx + 1)
+        if (end < 0) { parts.push(rem); break }
+        parts.push(<em key={k++} className="italic text-text/80">{rem.slice(first.idx + 1, end)}</em>)
+        rem = rem.slice(end + 1)
+      }
+    }
+    return parts.length === 1 && typeof parts[0] === 'string' ? parts[0] : <>{parts}</>
+  }
+
+  for (const line of lines) {
+    if (line.startsWith('```')) {
+      if (!inCode) { inCode = true; codeLang = line.slice(3).trim(); codeLines = [] }
+      else {
+        nodes.push(
+          <pre key={key++} className="bg-obsidian border border-border rounded p-2 text-[10px] font-mono text-saffron/90 overflow-x-auto my-1 leading-relaxed">
+            <code>{codeLines.join('\n')}</code>
+          </pre>
+        )
+        inCode = false
+      }
+      continue
+    }
+    if (inCode) { codeLines.push(line); continue }
+    if (line.startsWith('### ')) { nodes.push(<h3 key={key++} className="text-[12px] font-semibold text-text mt-2 mb-0.5">{inlineFormat(line.slice(4))}</h3>); continue }
+    if (line.startsWith('## '))  { nodes.push(<h2 key={key++} className="text-[13px] font-semibold text-text mt-2 mb-1">{inlineFormat(line.slice(3))}</h2>); continue }
+    if (line.startsWith('# '))   { nodes.push(<h1 key={key++} className="text-[14px] font-bold text-saffron mt-2 mb-1">{inlineFormat(line.slice(2))}</h1>); continue }
+    if (line.match(/^[-*] /))    { nodes.push(<div key={key++} className="flex gap-1.5 leading-snug"><span className="text-saffron/60 shrink-0 mt-0.5">•</span><span>{inlineFormat(line.slice(2))}</span></div>); continue }
+    if (line.match(/^\d+\. /))   { const m = line.match(/^(\d+)\. (.*)/)!; nodes.push(<div key={key++} className="flex gap-1.5 leading-snug"><span className="text-saffron/60 shrink-0 tabular-nums min-w-[1rem]">{m[1]}.</span><span>{inlineFormat(m[2])}</span></div>); continue }
+    if (line.trim() === '') { nodes.push(<div key={key++} className="h-1.5" />); continue }
+    nodes.push(<p key={key++} className="leading-relaxed">{inlineFormat(line)}</p>)
+  }
+  return nodes
+}
+
 function MessageBubble({ message, streaming }: { message: Message; streaming?: boolean }) {
   const isUser = message.role === 'user'
   return (
@@ -351,13 +421,13 @@ function MessageBubble({ message, streaming }: { message: Message; streaming?: b
       <span className="text-[9px] text-muted/60 px-1">{isUser ? 'you' : 'assistant'}</span>
       <div
         className={[
-          'max-w-[92%] px-2.5 py-2 rounded text-[12px] leading-relaxed whitespace-pre-wrap break-words',
+          'max-w-[92%] px-2.5 py-2 rounded text-[12px] break-words',
           isUser
-            ? 'bg-saffron/10 border border-saffron/25 text-text'
-            : 'bg-surface border border-border text-text/90',
+            ? 'bg-saffron/10 border border-saffron/25 text-text whitespace-pre-wrap'
+            : 'bg-surface border border-border text-text/90 space-y-0.5',
         ].join(' ')}
       >
-        {message.content}
+        {isUser ? message.content : renderMarkdown(message.content)}
         {streaming && <span className="inline-block w-1.5 h-3 bg-saffron/70 ml-0.5 align-text-bottom animate-pulse" />}
       </div>
     </div>

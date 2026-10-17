@@ -67,7 +67,15 @@ export default function HistoryPanel({ onNavigate }: Props) {
 
       <div className="flex-1 overflow-y-auto">
         {entries.length === 0 ? (
-          <p className="text-muted text-xs text-center mt-8 font-mono">No history</p>
+          <div className="flex flex-col items-center justify-center mt-12 gap-3 px-4">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="opacity-20">
+              <circle cx="18" cy="18" r="15" stroke="currentColor" strokeWidth="1.5" />
+              <polyline points="18,10 18,18 24,18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="text-muted text-[11px] text-center font-mono leading-relaxed">
+              {query ? 'No results for that search' : 'Your browsing history will appear here'}
+            </p>
+          </div>
         ) : grouped ? (
           // Date-grouped view (no active search)
           grouped.map(({ label, items }) => (

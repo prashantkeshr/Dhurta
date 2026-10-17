@@ -168,7 +168,16 @@ export default function BookmarksPanel({ onNavigate, currentUrl, currentTitle }:
       {/* Bookmark list */}
       <div className="flex-1 overflow-y-auto">
         {visibleBookmarks.length === 0 ? (
-          <p className="text-muted text-xs text-center mt-8 font-mono">No bookmarks here</p>
+          <div className="flex flex-col items-center justify-center mt-12 gap-3 px-4">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="opacity-20">
+              <path d="M8 4h20a2 2 0 012 2v26l-12-7-12 7V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            <p className="text-muted text-[11px] text-center font-mono leading-relaxed">
+              {selectedFolder === ALL_ID
+                ? 'Bookmark a page with the + button above'
+                : 'No bookmarks in this folder yet'}
+            </p>
+          </div>
         ) : (
           visibleBookmarks.map((b) => (
             <div

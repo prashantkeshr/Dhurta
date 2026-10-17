@@ -96,8 +96,16 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
     })
   }
 
+  const ghostTabs = tabs.filter(t => t.ghost)
+  const hasGhostActive = ghostTabs.some(t => t.id === activeTabId)
+
   return (
-    <div className="tab-bar flex items-end h-9 bg-obsidian border-b border-border overflow-x-auto shrink-0 no-drag relative">
+    <div className={[
+      'tab-bar flex items-end h-9 overflow-x-auto shrink-0 no-drag relative border-b',
+      hasGhostActive
+        ? 'bg-[#0d0018] border-[#FF003344]'
+        : 'bg-obsidian border-border',
+    ].join(' ')}>
       {/* Loading progress bar — thin animated stripe at very top of the tab strip */}
       {isActiveLoading && (
         <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden pointer-events-none z-50">
