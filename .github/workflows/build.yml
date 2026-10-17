@@ -65,12 +65,21 @@ jobs:
           # windows-2022 is the stable LTS runner; windows-latest now maps to
           # windows-2025 which has changed default toolchain configuration and
           # can cause "Set up job" failures for native Node module builds.
+          # arm64_cc/cxx: cross-compiler overrides passed to @electron/rebuild
+          # when building the arm64 native module. Empty on Windows/macOS because
+          # those toolchains (MSVC ARM64, Xcode) are discovered automatically.
           - os: windows-2022
             name: windows
+            arm64_cc: ""
+            arm64_cxx: ""
           - os: macos-latest
             name: macos
+            arm64_cc: ""
+            arm64_cxx: ""
           - os: ubuntu-latest
             name: linux
+            arm64_cc: aarch64-linux-gnu-gcc
+            arm64_cxx: aarch64-linux-gnu-g++
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -87,10 +96,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Linux ARM cross-compile toolchain — builds arm64 AppImage + deb in one
-      # runner (ubuntu-latest is x86_64; dpkg multi-arch + cross-gcc lets
-      # electron-builder rebuild better-sqlite3 for aarch64).
-      - name: Enable ARM cross-build deps (Linux)
+      # Linux: rpm builder + arm64 cross-compiler (aarch64 AppImage/deb).
+      # Note: libstdc++ arm64 headers are NOT needed — electron-builder bundles
+      # its own Electron binary for arm64; only better-sqlite3 needs cross-gcc.
+      - name: Install build tools (Linux)
         if: matrix.name == 'linux'
         run: |
           sudo apt-get update
@@ -98,20 +107,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             rpm \
             gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu \
-            libstdc++-12-dev-arm64-cross
-
-      # Windows arm64 cross-compile toolchain.
-      # LLVM/Clang lets node-gyp rebuild better-sqlite3 for arm64 on a
-      # Windows x64 runner. Without this the nsis-arm64 installer still
-      # builds but bundles an x64 native module (functionally broken on
-      # Arm devices). choco is pre-installed on windows-2022 runners.
-      - name: Install LLVM for Windows arm64 cross-compile
-        if: matrix.name == 'windows'
-        shell: pwsh
-        run: |
-          choco install llvm --version=17.0.6 -y --no-progress
-          echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            g++-aarch64-linux-gnu
 
       - name: Install dependencies
         # The workspace has a known React peer-version mismatch; legacy resolution
@@ -124,35 +120,10 @@ jobs:
           npm_config_msvs_version: "2022"
           npm_config_python: python
 
-      # Rebuild native modules for Electron — x64 first (always), then arm64
-      # where the cross-compile toolchain is present. electron-builder's own
-      # install-app-deps only targets the host arch; the arm64 pass uses
-      # electron-rebuild directly so it can pick up the cross-compiler env vars.
-      - name: Rebuild native modules for Electron (x64)
+      # Rebuild native modules for the HOST arch. electron-builder's install-app-deps
+      # calls @electron/rebuild internally — no separate electron-rebuild package needed.
+      - name: Rebuild native modules for Electron (host arch)
         run: npx electron-builder install-app-deps
-        continue-on-error: true
-
-      - name: Rebuild native modules for Electron (arm64 — Linux)
-        if: matrix.name == 'linux'
-        run: |
-          npx electron-rebuild --arch arm64 \
-            --module-dir node_modules/better-sqlite3 \
-            --version $(node -e "console.log(require('electron/package.json').version)")
-        env:
-          CC: aarch64-linux-gnu-gcc
-          CXX: aarch64-linux-gnu-g++
-        continue-on-error: true
-
-      - name: Rebuild native modules for Electron (arm64 — Windows)
-        if: matrix.name == 'windows'
-        shell: pwsh
-        run: |
-          $ev = node -e "process.stdout.write(require('electron/package.json').version)"
-          npx electron-rebuild --arch arm64 `
-            --module-dir node_modules/better-sqlite3 `
-            --version $ev
-        env:
-          npm_config_clang: "1"
         continue-on-error: true
 
       - name: Typecheck
@@ -165,22 +136,68 @@ jobs:
           npm run build:renderer
           npm run build:electron
 
-      - name: Package + upload to GitHub Release (draft)
-        # On a tag push → upload installers to a DRAFT GitHub Release.
-        # The separate 'publish' job below promotes it to a real release
-        # only after all three OS builds succeed.
-        run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
+      # ── x64 packages (REQUIRED) ──────────────────────────────────────────────
+      # This step MUST succeed. It publishes the x64 installers to the draft
+      # release and writes latest.yml / latest-mac.yml / latest-linux.yml —
+      # the files electron-updater reads to deliver auto-updates to all users.
+      # Running this before the arm64 step guarantees the auto-update channel
+      # always has valid x64 packages even if arm64 cross-compile later fails.
+      - name: Package x64 → GitHub Release (draft)
+        run: npx electron-builder --x64 --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
         env:
-          # GITHUB_TOKEN is provided automatically; contents:write (set above)
-          # lets electron-builder create/upload the release.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Unsigned builds. Do NOT pass empty CSC_* vars — electron-builder reads an
-          # empty CSC_LINK as a bad file path and fails (Windows/macOS). Disabling
-          # signing-identity discovery keeps macOS from attempting to sign.
+          # Unsigned builds. Do NOT pass empty CSC_* vars — electron-builder reads
+          # an empty CSC_LINK as a bad file path and fails on Windows/macOS.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      # Keep raw installers as workflow artifacts for testing / manual distribution.
-      # Patterns cover every format across all OS + arch combinations.
+      # ── arm64 packages (BEST-EFFORT) ─────────────────────────────────────────
+      # Built locally with --publish never so latest*.yml (written above) is NOT
+      # overwritten. arm64 artifacts are uploaded manually to the release below.
+      # On Linux: CC/CXX point electron-builder's internal @electron/rebuild at the
+      # cross-compiler. On Windows: VS2022 ARM64 toolchain is auto-discovered via
+      # npm_config_arch=arm64. On macOS: macos-latest is M1 — arm64 is native.
+      - name: Package arm64 (local build only)
+        run: npx electron-builder --arm64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          npm_config_arch: arm64
+          CC: ${{ matrix.arm64_cc }}
+          CXX: ${{ matrix.arm64_cxx }}
+        continue-on-error: true
+
+      # ── macOS universal fat binary (BEST-EFFORT) ─────────────────────────────
+      # lipo-merges arm64 + x64 into one DMG. Requires both arch builds above to
+      # have produced their outputs — continue-on-error so a partial failure
+      # (e.g. x64 Rosetta rebuild issue) doesn't block the whole macOS job.
+      - name: Package universal DMG + ZIP (macOS)
+        if: matrix.name == 'macos'
+        run: npx electron-builder --universal --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        continue-on-error: true
+
+      # ── Upload arm64 + universal artifacts to the draft release ──────────────
+      # gh release upload appends files without touching latest*.yml, so the
+      # auto-update channel (pointing to x64) stays stable.
+      - name: Upload arm64 + universal artifacts to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          shopt -s nullglob
+          for f in release/*arm64* release/*ARM64* release/*universal*; do
+            case "$f" in *.exe|*.dmg|*.zip|*.AppImage|*.deb|*.blockmap)
+              echo "Uploading $f"
+              gh release upload "v${VERSION}" "$f" \
+                --clobber --repo "${{ github.repository }}" || true
+              ;;
+            esac
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      # Keep all installers as workflow artifacts for testing / manual distribution.
       - uses: actions/upload-artifact@v4
         with:
           name: dhurta-${{ matrix.name }}
