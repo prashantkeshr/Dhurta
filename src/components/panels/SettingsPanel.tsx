@@ -496,6 +496,7 @@ export default function SettingsPanel() {
               >
                 <Toggle value={httpsOnly} onChange={v => { setHttpsOnly(v); saveAndNotify('security_httpsOnly', String(v)) }} />
               </SettingRow>
+              <DohSetting />
             </SettingGroup>
 
             <SettingGroup title="Ghost Mode">
@@ -835,6 +836,54 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     >
       <span className={['block w-3 h-3 bg-white transition-transform mx-0.5', value ? 'translate-x-4' : 'translate-x-0'].join(' ')} />
     </button>
+  )
+}
+
+const DOH_PROVIDERS = [
+  { value: 'off',        label: 'System DNS (off)',  url: '' },
+  { value: 'cloudflare', label: 'Cloudflare 1.1.1.1', url: 'https://cloudflare-dns.com/dns-query' },
+  { value: 'google',     label: 'Google 8.8.8.8',     url: 'https://dns.google/dns-query' },
+  { value: 'quad9',      label: 'Quad9',              url: 'https://dns.quad9.net/dns-query' },
+  { value: 'nextdns',    label: 'NextDNS',            url: 'https://dns.nextdns.io/dns-query' },
+]
+
+function DohSetting() {
+  const [provider, setProvider] = useState(() => {
+    try { return localStorage.getItem('dhurta_doh_provider') ?? 'off' } catch { return 'off' }
+  })
+  const [saved, setSaved] = useState(false)
+
+  const handleChange = async (val: string) => {
+    setProvider(val)
+    try { localStorage.setItem('dhurta_doh_provider', val) } catch {}
+    const found = DOH_PROVIDERS.find(p => p.value === val)
+    if (isElectron) {
+      await api().setSetting('doh_provider', val)
+      await api().setSetting('doh_url', found?.url ?? '')
+    }
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex-1">
+        <p className="text-xs text-text font-mono">DNS-over-HTTPS</p>
+        <p className="text-[10px] text-muted font-mono mt-0.5 leading-relaxed">
+          Encrypts DNS queries to prevent ISP snooping. Takes effect on next launch.
+        </p>
+        {saved && <p className="text-[10px] text-saffron font-mono mt-1">✓ Saved — restart to apply</p>}
+      </div>
+      <select
+        value={provider}
+        onChange={e => handleChange(e.target.value)}
+        className="shrink-0 mt-0.5 bg-obsidian border border-border text-text text-[11px] font-mono px-2 py-1 outline-none focus:border-saffron/60 hover:border-border/80 cursor-pointer"
+      >
+        {DOH_PROVIDERS.map(p => (
+          <option key={p.value} value={p.value}>{p.label}</option>
+        ))}
+      </select>
+    </div>
   )
 }
 

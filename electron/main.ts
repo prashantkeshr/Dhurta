@@ -54,6 +54,17 @@ app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'disable_non_pro
 // Disable WebRTC multiple routes to prevent enumeration of network interfaces
 app.commandLine.appendSwitch('enforce-webrtc-ip-permission-check', 'true')
 
+// DNS-over-HTTPS — apply stored provider before app.ready so Chromium picks it up
+// The renderer saves doh_url to the settings table; we read it synchronously here.
+try {
+  const { getSettingSync } = require('./db') as typeof import('./db')
+  const dohUrl = typeof getSettingSync === 'function' ? getSettingSync('doh_url') : ''
+  if (dohUrl && typeof dohUrl === 'string' && dohUrl.startsWith('https://')) {
+    app.commandLine.appendSwitch('enable-features', 'DnsOverHttps')
+    app.commandLine.appendSwitch('dns-over-https-servers', dohUrl)
+  }
+} catch (_) {}
+
 // Catch any main-process crash and log it before the process dies
 function appendCrashLog(type: string, detail: string) {
   try {

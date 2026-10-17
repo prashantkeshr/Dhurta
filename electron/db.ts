@@ -135,6 +135,13 @@ export function getDb() {
   return db
 }
 
+export function getSettingSync(key: string): string {
+  try {
+    const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined
+    return row?.value ?? ''
+  } catch { return '' }
+}
+
 export function runIncinerate() {
   const row = db
     .prepare('SELECT value FROM settings WHERE key = ?')
