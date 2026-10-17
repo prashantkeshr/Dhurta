@@ -87,13 +87,31 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Linux ARM cross-compile toolchain (Raspberry Pi / ChromeOS arm64).
+      # Linux ARM cross-compile toolchain — builds arm64 AppImage + deb in one
+      # runner (ubuntu-latest is x86_64; dpkg multi-arch + cross-gcc lets
+      # electron-builder rebuild better-sqlite3 for aarch64).
       - name: Enable ARM cross-build deps (Linux)
         if: matrix.name == 'linux'
         run: |
           sudo apt-get update
           sudo dpkg --add-architecture arm64 || true
-          sudo apt-get install -y --no-install-recommends rpm
+          sudo apt-get install -y --no-install-recommends \
+            rpm \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            libstdc++-12-dev-arm64-cross
+
+      # Windows arm64 cross-compile toolchain.
+      # LLVM/Clang lets node-gyp rebuild better-sqlite3 for arm64 on a
+      # Windows x64 runner. Without this the nsis-arm64 installer still
+      # builds but bundles an x64 native module (functionally broken on
+      # Arm devices). choco is pre-installed on windows-2022 runners.
+      - name: Install LLVM for Windows arm64 cross-compile
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          choco install llvm --version=17.0.6 -y --no-progress
+          echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install dependencies
         # The workspace has a known React peer-version mismatch; legacy resolution
@@ -106,13 +124,35 @@ jobs:
           npm_config_msvs_version: "2022"
           npm_config_python: python
 
-      # Explicit rebuild of native modules against the packaged Electron ABI.
-      # The postinstall script already attempts this but is non-fatal. Re-running
-      # here guarantees better-sqlite3 is correctly linked before electron-builder
-      # packages the asar — especially important on Windows where the first run
-      # may have used the wrong MSVS version.
-      - name: Rebuild native modules for Electron
+      # Rebuild native modules for Electron — x64 first (always), then arm64
+      # where the cross-compile toolchain is present. electron-builder's own
+      # install-app-deps only targets the host arch; the arm64 pass uses
+      # electron-rebuild directly so it can pick up the cross-compiler env vars.
+      - name: Rebuild native modules for Electron (x64)
         run: npx electron-builder install-app-deps
+        continue-on-error: true
+
+      - name: Rebuild native modules for Electron (arm64 — Linux)
+        if: matrix.name == 'linux'
+        run: |
+          npx electron-rebuild --arch arm64 \
+            --module-dir node_modules/better-sqlite3 \
+            --version $(node -e "console.log(require('electron/package.json').version)")
+        env:
+          CC: aarch64-linux-gnu-gcc
+          CXX: aarch64-linux-gnu-g++
+        continue-on-error: true
+
+      - name: Rebuild native modules for Electron (arm64 — Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          $ev = node -e "process.stdout.write(require('electron/package.json').version)"
+          npx electron-rebuild --arch arm64 `
+            --module-dir node_modules/better-sqlite3 `
+            --version $ev
+        env:
+          npm_config_clang: "1"
         continue-on-error: true
 
       - name: Typecheck
@@ -139,47 +179,54 @@ jobs:
           # signing-identity discovery keeps macOS from attempting to sign.
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      # Also keep raw artifacts on the workflow run itself (handy for testing).
+      # Keep raw installers as workflow artifacts for testing / manual distribution.
+      # Patterns cover every format across all OS + arch combinations.
       - uses: actions/upload-artifact@v4
         with:
           name: dhurta-${{ matrix.name }}
           path: |
             release/*.exe
             release/*.dmg
+            release/*.zip
             release/*.AppImage
             release/*.deb
             release/*.rpm
           if-no-files-found: ignore
 
-  # ── Promote draft → published release (runs only when all 3 OS builds pass) ──
+  # ── Promote draft → published release (runs when all 3 desktop OS builds pass) ──
+  # Desktop builds must all succeed before the release goes live so users never
+  # auto-update to a release that is missing a platform's installer.
+  # Android is attached if it passed, but its success is NOT required — a flaky
+  # emulator or Gradle issue will not block the desktop auto-update channel.
   publish:
-    # Wait for BOTH desktop installers and the Android APK so the published
-    # release contains every platform in one place.
-    needs: [desktop, android]
+    needs: [desktop]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v4
 
-      # Pull the APK the android job built (uploaded as the dhurta-android-debug
-      # artifact) so it can be attached to the release below.
-      - name: Download Android APK
+      # Try to attach the Android APK. If the android job never ran or failed,
+      # the download step will fail — we continue anyway so the desktop release
+      # still publishes.
+      - name: Download Android APK (optional)
         uses: actions/download-artifact@v4
         with:
           name: dhurta-android-debug
           path: android-apk
+        continue-on-error: true
 
-      - name: Publish GitHub Release (all platforms)
-        # electron-builder created the DRAFT release (named after package.json
-        # version) during the desktop job and uploaded the installers to it. Here
-        # we (1) rename + attach the Android APK to that same release, then
-        # (2) promote the draft to a real published release.
+      - name: Publish GitHub Release (desktop + optional Android)
+        # electron-builder already uploaded every installer + latest*.yml files
+        # to the DRAFT release during the desktop job. Here we:
+        #   1. Attach the Android APK if it was built.
+        #   2. Promote the draft → published so electron-updater can see it.
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          # Attach the arm64-v8a APK — the architecture every modern phone uses.
-          APK=$(find android-apk -name '*arm64*.apk' | head -n1)
-          cp "$APK" "Dhurta-${VERSION}-android-arm64.apk"
-          gh release upload "v${VERSION}" "Dhurta-${VERSION}-android-arm64.apk" --clobber --repo "${{ github.repository }}"
+          APK=$(find android-apk -name '*arm64*.apk' 2>/dev/null | head -n1)
+          if [ -n "$APK" ]; then
+            cp "$APK" "Dhurta-${VERSION}-android-arm64.apk"
+            gh release upload "v${VERSION}" "Dhurta-${VERSION}-android-arm64.apk" --clobber --repo "${{ github.repository }}"
+          fi
           gh release edit "v${VERSION}" --draft=false --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
