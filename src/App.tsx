@@ -371,23 +371,62 @@ export default function App() {
           setActivePanel(p => p === 'shortcuts' ? null : 'shortcuts')
         }
       }
+
+      // Alt+Left / Alt+Right — back / forward (works when chrome has focus)
+      if (e.altKey && !e.ctrlKey && e.key === 'ArrowLeft')  { e.preventDefault(); window.dhurta.goBack(activeTabId) }
+      if (e.altKey && !e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); window.dhurta.goForward(activeTabId) }
+
       if (e.ctrlKey && e.key === 'f') { e.preventDefault(); window.dispatchEvent(new CustomEvent('dhurta:findInPage')) }
       if (e.ctrlKey) {
-        if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn() }
-        else if (e.key === '-') { e.preventDefault(); zoomOut() }
-        else if (e.key === '0') { e.preventDefault(); zoomReset() }
-        else if (e.key === 't') { e.preventDefault(); newTab() }
-        else if (e.key === 'p') { e.preventDefault(); window.dhurta.printPage() }
-        else if (e.key === 'h') { e.preventDefault(); setActivePanel(p => p === 'history' ? null : 'history') }
-        else if (e.key === 'b') { e.preventDefault(); setActivePanel(p => p === 'bookmarks' ? null : 'bookmarks') }
+        // ── Zoom ─────────────────────────────────────────────────────────────
+        if      (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn() }
+        else if (e.key === '-')                  { e.preventDefault(); zoomOut() }
+        else if (e.key === '0')                  { e.preventDefault(); zoomReset() }
+        // ── Navigation ───────────────────────────────────────────────────────
+        else if (e.key === 'r' && !e.shiftKey)  { e.preventDefault(); window.dhurta.reload(activeTabId) }
+        else if (e.shiftKey && (e.key === 'R' || e.key === 'r')) { e.preventDefault(); window.dhurta.reload(activeTabId) }
+        // ── Address bar ──────────────────────────────────────────────────────
+        else if (e.key === 'l') { e.preventDefault(); window.dispatchEvent(new CustomEvent('dhurta:focusUrlBar')) }
+        // ── Tabs ─────────────────────────────────────────────────────────────
+        else if (e.key === 't' && !e.shiftKey) { e.preventDefault(); newTab() }
+        else if (e.key === 'w')                { e.preventDefault(); closeTab(activeTabId) }
+        else if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault()
+          const idx = tabs.findIndex(t => t.id === activeTabId)
+          const next = tabs[(idx + 1) % tabs.length]
+          if (next) switchTab(next.id)
+        }
+        else if (e.key === 'Tab' && e.shiftKey) {
+          e.preventDefault()
+          const idx = tabs.findIndex(t => t.id === activeTabId)
+          const prev = tabs[(idx - 1 + tabs.length) % tabs.length]
+          if (prev) switchTab(prev.id)
+        }
+        else if (!e.shiftKey && !e.altKey && e.key >= '1' && e.key <= '9') {
+          e.preventDefault()
+          if (e.key === '9') {
+            switchTab(tabs[tabs.length - 1].id)
+          } else {
+            const t = tabs[parseInt(e.key) - 1]
+            if (t) switchTab(t.id)
+          }
+        }
+        // ── Panels ───────────────────────────────────────────────────────────
+        else if (e.key === 'p')                { e.preventDefault(); window.dhurta.printPage() }
+        else if (e.key === 'h')                { e.preventDefault(); setActivePanel(p => p === 'history' ? null : 'history') }
+        else if (e.key === 'b')                { e.preventDefault(); setActivePanel(p => p === 'bookmarks' ? null : 'bookmarks') }
+        else if (e.key === 'j')                { e.preventDefault(); setActivePanel(p => p === 'downloads' ? null : 'downloads') }
+        // ── Ctrl+Shift combos ────────────────────────────────────────────────
         else if (e.shiftKey && (e.key === 'A' || e.key === 'a')) { e.preventDefault(); setActivePanel(p => p === 'ai' ? null : 'ai') }
         else if (e.shiftKey && (e.key === 'T' || e.key === 't')) { e.preventDefault(); reopenTab() }
         else if (e.shiftKey && (e.key === 'K' || e.key === 'k')) { e.preventDefault(); setTabSearchOpen(v => !v) }
+        else if (e.shiftKey && (e.key === 'N' || e.key === 'n')) { e.preventDefault(); newTab('', true) }
+        else if (e.shiftKey && e.key === 'Delete') { e.preventDefault(); window.dhurta.clearCookies() }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [zoomIn, zoomOut, zoomReset, newTab])
+  }, [zoomIn, zoomOut, zoomReset, newTab, closeTab, switchTab, tabs, activeTabId, reopenTab, tabSearchOpen, activePanel])
 
   // Ctrl+Scroll zoom in the React chrome area (not inside BrowserView)
   useEffect(() => {

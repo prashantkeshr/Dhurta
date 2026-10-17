@@ -114,6 +114,17 @@ export default function URLBar({
     return () => window.removeEventListener('dhurta:findInPage', handler)
   }, [])
 
+  // Ctrl+L: focus address bar + select all (dispatched from App.tsx keyboard handler)
+  useEffect(() => {
+    const handler = () => {
+      setEditing(true)
+      setInput(url)
+      setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0)
+    }
+    window.addEventListener('dhurta:focusUrlBar', handler)
+    return () => window.removeEventListener('dhurta:focusUrlBar', handler)
+  }, [url])
+
   useEffect(() => {
     if (findMode) setTimeout(() => findRef.current?.focus(), 50)
   }, [findMode])
