@@ -23,6 +23,8 @@ const VALID_CHANNELS = new Set([
   'tab:muteChanged', 'tab:playingChanged',
   'tabGroup:changed',
   'tab:readerChanged',
+  'permission:notify',
+  'captcha:detected',
 ])
 
 contextBridge.exposeInMainWorld('dhurta', {
@@ -225,6 +227,14 @@ contextBridge.exposeInMainWorld('dhurta', {
 
   // AI assistant — extract page text for local LLM
   getPageTextForAI: (tabId: number) => ipcRenderer.invoke('ai:getPageText', tabId),
+
+  // Notification permission — respond to a pending request
+  respondPermission: (tabId: number, origin: string, allow: boolean, remember: boolean) =>
+    ipcRenderer.invoke('permission:respond', tabId, origin, allow, remember),
+  forgetPermission: (origin: string) => ipcRenderer.invoke('permission:forget', origin),
+
+  // Tor new circuit (shortcut exposed for CAPTCHA helper)
+  torNewCircuit: () => ipcRenderer.invoke('tor:newnym'),
 
   // Tab groups
   getTabGroups: () => ipcRenderer.invoke('tabGroup:getAll'),

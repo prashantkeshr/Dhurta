@@ -21,6 +21,8 @@ import ShortcutsPanel from './components/panels/ShortcutsPanel'
 import AIPanel from './components/panels/AIPanel'
 import BookmarksBar from './components/BookmarksBar'
 import LockScreen from './components/LockScreen'
+import NotificationPermissionBanner from './components/NotificationPermissionBanner'
+import CaptchaBanner from './components/CaptchaBanner'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import UpdateBanner from './components/UpdateBanner'
 import GhostBootstrapBanner from './components/GhostBootstrapBanner'
@@ -570,6 +572,20 @@ export default function App() {
                 />
               )}
             </>
+          )}
+
+          {/* Notification permission prompt — slides in when a site requests notifications */}
+          {!isVideoFullscreen && (
+            <NotificationPermissionBanner activeTabId={activeTabId} />
+          )}
+
+          {/* CAPTCHA helper — appears when a challenge page is detected */}
+          {!isVideoFullscreen && (
+            <CaptchaBanner
+              activeTabId={activeTabId}
+              ghostMode={ghostMode}
+              onNavigate={handleNavigate}
+            />
           )}
 
           {/* Security breach warnings — shown when VPN / WebRTC block / anti-fingerprint are off */}

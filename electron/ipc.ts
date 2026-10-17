@@ -1259,6 +1259,52 @@ function attachViewEvents(tab: Tab) {
     safeSend(win, 'tab:playingChanged', { id: tab.id, playing: false })
   })
 
+  // ── Notification permission prompt ──────────────────────────────────────────
+  // Store pending callbacks keyed by origin so the renderer can respond async.
+  const pendingPermissions = new Map<string, (allow: boolean) => void>()
+
+  wc.session.setPermissionRequestHandler((reqWc, permission, callback, details) => {
+    if (permission !== 'notifications') { callback(true); return }
+    const origin = details?.requestingUrl
+      ? new URL(details.requestingUrl).origin
+      : reqWc.getURL() ? new URL(reqWc.getURL()).origin : ''
+    if (!origin) { callback(false); return }
+
+    // Check stored decision first
+    const db = getDb()
+    const stored = db.prepare("SELECT value FROM settings WHERE key = ?").get(`perm_notify_${origin}`) as { value: string } | undefined
+    if (stored?.value === 'allow') { callback(true); return }
+    if (stored?.value === 'deny')  { callback(false); return }
+
+    // Queue and ask renderer
+    pendingPermissions.set(origin, (allow: boolean) => callback(allow))
+    safeSend(win, 'permission:notify', { tabId: tab.id, origin })
+  })
+
+  // ── CAPTCHA detection ───────────────────────────────────────────────────────
+  // Fires after did-stop-loading checks for common CAPTCHA challenge signatures.
+  wc.on('did-stop-loading', () => {
+    const url = wc.getURL()
+    if (!url || url.startsWith('dhurta://')) return
+    const isCaptcha =
+      url.includes('challenge') ||
+      url.includes('/cdn-cgi/challenge') ||
+      url.includes('/cdn-cgi/l/chk_jschl') ||
+      url.includes('captcha') ||
+      wc.getTitle().toLowerCase().includes('attention required') ||
+      wc.getTitle().toLowerCase().includes('just a moment') ||
+      wc.getTitle().toLowerCase().includes('are you human') ||
+      wc.getTitle().toLowerCase().includes('checking your browser')
+    if (isCaptcha) {
+      safeSend(win, 'captcha:detected', { tabId: tab.id, url, title: wc.getTitle() })
+    }
+  })
+
+  // ── Answer renderer permission response ────────────────────────────────────
+  // Handled below in the main ipcMain.handle block as 'permission:respond'.
+  // We expose the pending map via a closure captured on the tab object.
+  ;(tab as any)._pendingPermissions = pendingPermissions
+
   // Right-click context menu — native OS menu that renders above the BrowserView
   wc.on('context-menu', (_e, params) => {
     const win = getMainWindow()
@@ -2185,6 +2231,25 @@ export function registerIpcHandlers() {
     const win = getMainWindow()
     if (win) win.webContents.send('tab:readerChanged', { id: tabId, readerMode: tab.readerMode })
     return result
+  })
+
+  // Notification permission response from renderer (Allow / Deny + optionally remember)
+  ipcMain.handle('permission:respond', (_e, tabId: number, origin: string, allow: boolean, remember: boolean) => {
+    const tab = tabs.get(tabId)
+    const cb = (tab as any)?._pendingPermissions?.get(origin)
+    if (cb) {
+      cb(allow)
+      ;(tab as any)._pendingPermissions.delete(origin)
+    }
+    if (remember) {
+      getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").run(`perm_notify_${origin}`, allow ? 'allow' : 'deny')
+    }
+    return allow
+  })
+
+  // Forget a stored notification permission for an origin
+  ipcMain.handle('permission:forget', (_e, origin: string) => {
+    getDb().prepare("DELETE FROM settings WHERE key = ?").run(`perm_notify_${origin}`)
   })
 
   // AI assistant — extract readable page text for local LLM

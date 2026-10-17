@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import type { Bookmark } from '../types'
 import SmartFavicon from './SmartFavicon'
-import { SEARCH_ENGINES } from './panels/SettingsPanel'
+import { SEARCH_ENGINES } from '../constants/searchEngines'
 
 const isElectron = typeof window !== 'undefined' && typeof window.dhurta !== 'undefined'
 

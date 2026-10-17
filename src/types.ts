@@ -277,6 +277,9 @@ export interface DhurtaAPI {
   exportMyData(): Promise<string>
   sendCrashReport(): Promise<{ success: boolean; url?: string; error?: string }>
   getPageTextForAI(tabId: number): Promise<string>
+  respondPermission(tabId: number, origin: string, allow: boolean, remember: boolean): Promise<boolean>
+  forgetPermission(origin: string): Promise<void>
+  torNewCircuit(): Promise<{ success: boolean; count?: number; error?: string }>
   on(channel: string, cb: (...args: unknown[]) => void): void
   off(channel: string, cb: (...args: unknown[]) => void): void
 }
