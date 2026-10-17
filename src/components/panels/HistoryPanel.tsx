@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import type { HistoryEntry } from '../../types'
+import type { ClosedTab } from '../../store/useBrowser'
 
 const api = () => window.dhurta
 
 interface Props {
   onNavigate: (url: string) => void
+  closedTabs?: ClosedTab[]
+  onReopenTab?: () => void
 }
 
-export default function HistoryPanel({ onNavigate }: Props) {
+export default function HistoryPanel({ onNavigate, closedTabs = [], onReopenTab }: Props) {
   const [entries, setEntries] = useState<HistoryEntry[]>([])
   const [query, setQuery] = useState('')
   const [incinerateDays, setIncinerateDays] = useState(30)
@@ -66,6 +69,38 @@ export default function HistoryPanel({ onNavigate }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {/* Recently closed tabs — shown only when no search is active */}
+        {closedTabs.length > 0 && !query && (
+          <div className="border-b border-border">
+            <div className="sticky top-0 z-10 px-3 py-1.5 bg-obsidian/90 border-b border-border/50 flex items-center justify-between">
+              <span className="text-[9px] font-mono text-saffron uppercase tracking-widest">Recently Closed</span>
+              <button
+                onClick={onReopenTab}
+                title="Reopen last closed tab (Ctrl+Shift+T)"
+                className="text-[9px] font-mono text-muted/60 hover:text-saffron transition-colors"
+              >↩ reopen</button>
+            </div>
+            {closedTabs.map((t, i) => (
+              <div
+                key={i}
+                onClick={() => onNavigate(t.url)}
+                className="flex items-center gap-2 px-3 py-2 hover:bg-surface-2 cursor-pointer border-b border-border/40"
+              >
+                {t.favicon ? (
+                  <img src={t.favicon} className="w-3 h-3 shrink-0 opacity-60" alt="" />
+                ) : (
+                  <div className="w-3 h-3 border border-border/40 shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-text/60 truncate">{t.title}</p>
+                  <p className="text-[10px] text-muted/70 font-mono truncate">{formatUrl(t.url)}</p>
+                </div>
+                <span className="text-[9px] text-muted/30 shrink-0 font-mono">↩</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-12 gap-3 px-4">
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="opacity-20">

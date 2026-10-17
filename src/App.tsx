@@ -25,6 +25,7 @@ import NotificationPermissionBanner from './components/NotificationPermissionBan
 import CaptchaBanner from './components/CaptchaBanner'
 import SecurityBreachBanner from './components/SecurityBreachBanner'
 import OnboardingModal from './components/OnboardingModal'
+import TabSearchOverlay from './components/TabSearchOverlay'
 import UpdateBanner from './components/UpdateBanner'
 import GhostBootstrapBanner from './components/GhostBootstrapBanner'
 import ConnectionTroubleBanner from './components/ConnectionTroubleBanner'
@@ -99,6 +100,8 @@ export default function App() {
     pinTab,
     muteTab,
     groups,
+    closedTabs,
+    reopenTab,
     toggleReader,
     toggleTabGroup,
     renameTabGroup,
@@ -114,6 +117,7 @@ export default function App() {
   const [lockStatus, setLockStatus] = useState<LockStatus>({ locked: false, hasPin: false })
   const [downloads, setDownloads] = useState<Download[]>([])
   const [warmthLevel, setWarmthLevel] = useState(0)
+  const [tabSearchOpen, setTabSearchOpen] = useState(false)
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
   const [showBookmarksBar, setShowBookmarksBar] = useState(() => {
     try { return localStorage.getItem('dhurta_bookmarks_bar') === 'true' } catch { return false }
@@ -358,7 +362,8 @@ export default function App() {
       if (!isElectron) return
       if (e.key === 'F11') { e.preventDefault(); window.dhurta.toggleFullscreen() }
       if (e.key === 'F12') { e.preventDefault(); window.dhurta.devToolsToggle('detach') }
-      if (e.key === 'Escape' && activePanel) { e.preventDefault(); setActivePanel(null) }
+      if (e.key === 'Escape' && tabSearchOpen) { e.preventDefault(); setTabSearchOpen(false) }
+      else if (e.key === 'Escape' && activePanel) { e.preventDefault(); setActivePanel(null) }
       if (e.key === '?' && !e.ctrlKey && !e.altKey) {
         const tag = (e.target as HTMLElement).tagName
         if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
@@ -366,7 +371,7 @@ export default function App() {
           setActivePanel(p => p === 'shortcuts' ? null : 'shortcuts')
         }
       }
-      if (e.ctrlKey && e.key === 'f') { e.preventDefault() } // handled by ThreeDotMenu
+      if (e.ctrlKey && e.key === 'f') { e.preventDefault(); window.dispatchEvent(new CustomEvent('dhurta:findInPage')) }
       if (e.ctrlKey) {
         if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomIn() }
         else if (e.key === '-') { e.preventDefault(); zoomOut() }
@@ -376,6 +381,8 @@ export default function App() {
         else if (e.key === 'h') { e.preventDefault(); setActivePanel(p => p === 'history' ? null : 'history') }
         else if (e.key === 'b') { e.preventDefault(); setActivePanel(p => p === 'bookmarks' ? null : 'bookmarks') }
         else if (e.shiftKey && (e.key === 'A' || e.key === 'a')) { e.preventDefault(); setActivePanel(p => p === 'ai' ? null : 'ai') }
+        else if (e.shiftKey && (e.key === 'T' || e.key === 't')) { e.preventDefault(); reopenTab() }
+        else if (e.shiftKey && (e.key === 'K' || e.key === 'k')) { e.preventDefault(); setTabSearchOpen(v => !v) }
       }
     }
     window.addEventListener('keydown', onKey)
@@ -472,7 +479,7 @@ export default function App() {
                 className="relative flex shrink-0 h-full border-r border-border z-40 overflow-hidden transition-[width] duration-150 ease-out"
                 style={{ width: activePanelWidth }}
               >
-                {activePanel === 'history' && <HistoryPanel onNavigate={handleNavigate} />}
+                {activePanel === 'history' && <HistoryPanel onNavigate={handleNavigate} closedTabs={closedTabs} onReopenTab={reopenTab} />}
                 {activePanel === 'bookmarks' && (
                   <BookmarksPanel
                     onNavigate={handleNavigate}
@@ -666,6 +673,18 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Tab search overlay — Ctrl+Shift+K */}
+      {tabSearchOpen && (
+        <TabSearchOverlay
+          tabs={tabs}
+          activeTabId={activeTabId}
+          closedTabs={closedTabs}
+          onSwitch={switchTab}
+          onOpenClosed={handleNavigate}
+          onClose={() => setTabSearchOpen(false)}
+        />
+      )}
 
       {/* First-run onboarding — renders above everything as a fixed overlay */}
       <OnboardingModal />

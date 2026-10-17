@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Tab, TabGroup, Panel } from '../types'
+
+export interface ClosedTab { url: string; title: string; favicon: string }
 
 const api = () => window.dhurta
 
@@ -45,6 +47,11 @@ export function useBrowser() {
   const [pipActive,    setPipActive]     = useState(false)
   const [pipTitle,     setPipTitle]      = useState('')
   const [groups,       setGroups]        = useState<TabGroup[]>([])
+  const [closedTabs,   setClosedTabs]    = useState<ClosedTab[]>([])
+
+  // Mirror tabs into a ref so stable IPC handlers can access current state
+  const tabsRef = useRef<Tab[]>([])
+  useEffect(() => { tabsRef.current = tabs }, [tabs])
 
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
 
@@ -215,6 +222,10 @@ export function useBrowser() {
           setTabs(all); const last = all[all.length - 1]; setActiveTabId(last.id); setUrlInput(last.url)
         })
       } else if (payload.action === 'closeTab' && payload.tabId != null) {
+        const closingTab = tabsRef.current.find(t => t.id === payload.tabId)
+        if (closingTab?.url && !closingTab.url.startsWith('dhurta://') && closingTab.url !== '' && closingTab.url !== 'about:blank') {
+          setClosedTabs(prev => [{ url: closingTab.url, title: closingTab.title || 'Untitled', favicon: closingTab.favicon }, ...prev].slice(0, 15))
+        }
         api().closeTab(payload.tabId).then(() => api().getTabs()).then(all => {
           setTabs(all)
           if (all.length > 0) { const last = all[all.length - 1]; setActiveTabId(last.id); setUrlInput(last.url) }
@@ -365,6 +376,10 @@ export function useBrowser() {
   )
 
   const closeTab = useCallback(async (id: number) => {
+    const tab = tabs.find(t => t.id === id)
+    if (tab?.url && !tab.url.startsWith('dhurta://') && tab.url !== '' && tab.url !== 'about:blank') {
+      setClosedTabs(prev => [{ url: tab.url, title: tab.title || 'Untitled', favicon: tab.favicon }, ...prev].slice(0, 15))
+    }
     await api().closeTab(id)
     const remaining = await api().getTabs()
     setTabs(remaining)
@@ -375,7 +390,7 @@ export function useBrowser() {
     } else {
       await newTab()
     }
-  }, [newTab])
+  }, [newTab, tabs])
 
   const switchTab = useCallback(async (id: number) => {
     await api().switchTab(id)
@@ -565,6 +580,13 @@ export function useBrowser() {
     setTabs(prev => prev.map(t => t.id === id ? { ...t, muted } : t))
   }, [])
 
+  const reopenTab = useCallback(async () => {
+    if (closedTabs.length === 0) return
+    const url = closedTabs[0].url
+    setClosedTabs(prev => prev.slice(1))
+    await newTab(url)
+  }, [closedTabs, newTab])
+
   const toggleReader = useCallback(async (tabId: number) => {
     if (typeof api().toggleReaderMode !== 'function') return
     const result = await api().toggleReaderMode(tabId)
@@ -622,6 +644,8 @@ export function useBrowser() {
     pinTab,
     muteTab,
     groups,
+    closedTabs,
+    reopenTab,
     toggleReader,
     toggleTabGroup,
     renameTabGroup,
