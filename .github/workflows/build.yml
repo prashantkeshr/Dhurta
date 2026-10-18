@@ -176,16 +176,19 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         continue-on-error: true
 
-      # ── Upload arm64 + universal artifacts to the draft release ──────────────
+      # ── Upload arm64 + universal + any APPX artifacts to the release ────────
       # gh release upload appends files without touching latest*.yml, so the
       # auto-update channel (pointing to x64) stays stable.
+      # APPX files are included unconditionally because electron-builder skips
+      # uploading them when the release already exists as a published (non-draft)
+      # release — the gh CLI works regardless of draft/published status.
       - name: Upload arm64 + universal artifacts to Release
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
           shopt -s nullglob
-          for f in release/*arm64* release/*ARM64* release/*universal*; do
+          for f in release/*arm64* release/*ARM64* release/*universal* release/*.appx; do
             case "$f" in *.exe|*.dmg|*.zip|*.AppImage|*.deb|*.appx|*.blockmap)
               echo "Uploading $f"
               gh release upload "v${VERSION}" "$f" \
