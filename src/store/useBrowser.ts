@@ -206,7 +206,7 @@ export function useBrowser() {
       })
     }
 
-    const onMenuAction = (payload: { action: string; panel?: string; url?: string; tabId?: number; ghost?: boolean }) => {
+    const onMenuAction = (payload: { action: string; panel?: string; url?: string; tabId?: number; ghost?: boolean; pinned?: boolean; muted?: boolean }) => {
       if (payload.action === 'panel' && payload.panel) {
         setActivePanel(payload.panel as Panel)
       } else if (payload.action === 'newTab') {

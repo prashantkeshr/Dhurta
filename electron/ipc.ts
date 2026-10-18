@@ -2757,6 +2757,10 @@ export function registerIpcHandlers() {
       ghost: tab.ghost,
       jsDisabled: false,
       pinned: false,
+      muted: false,
+      playing: false,
+      groupId: null,
+      readerMode: false,
       requests: [],
     }
     tabs.set(id, newTab)

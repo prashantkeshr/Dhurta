@@ -6,6 +6,7 @@ import { SEARCH_ENGINES } from '../../constants/searchEngines'
 export { SEARCH_ENGINES }
 
 const api = () => window.dhurta
+const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
 
 const MAX_WALLPAPERS = 5
 
