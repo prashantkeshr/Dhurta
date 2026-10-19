@@ -55,8 +55,8 @@ export function initDatabase() {
     downloadAskWhere: 'false',
     gesturePinchZoom: 'true',
     gestureSwipe: 'true',
-    security_antiFingerprint: 'false',
-    security_blockWebRTC: 'false',
+    security_antiFingerprint: 'true',
+    security_blockWebRTC: 'true',
     security_autoClean: 'false',
     security_ipRotation: 'false',
     security_cookieGuard: 'false',
@@ -107,6 +107,17 @@ export function initDatabase() {
     seedBm.run('dhurta-tool://setu', 'Dhurta Setu', '')
     seedBm.run('https://www.youtube.com', 'YouTube', 'https://www.youtube.com/favicon.ico')
     seedBm.run('https://aistudio.google.com', 'Google AI Studio', 'https://www.gstatic.com/aistudio/ai_studio_favicon.png')
+  }
+
+  // v5 migration: enable WebRTC block + anti-fingerprint by default for all installs.
+  // These are browser-level protections that don't require VPN/Tor and should always
+  // be on. Only runs once; any explicit user choice made afterwards is preserved.
+  const migratedV5 = db.prepare("SELECT value FROM settings WHERE key = '_migration_v5_privacy_defaults'").get()
+  if (!migratedV5) {
+    const setOn = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+    setOn.run('security_blockWebRTC', 'true')
+    setOn.run('security_antiFingerprint', 'true')
+    setOn.run('_migration_v5_privacy_defaults', '1')
   }
 
   // v4 migration: add folder_id column to bookmarks for existing installs

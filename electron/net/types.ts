@@ -32,7 +32,7 @@ export const KILLSWITCH_RULES = 'socks5://127.0.0.1:1'
 
 /** Plain Chrome UA — strips "Electron/x.x" which makes sites render broken. */
 export const CHROME_UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
 
 // ── Persisted settings keys (sqlite `settings` table; written by the UI) ──
 export const SETTINGS = {

@@ -1286,17 +1286,29 @@ function attachViewEvents(tab: Tab) {
   wc.on('did-stop-loading', () => {
     const url = wc.getURL()
     if (!url || url.startsWith('dhurta://')) return
+    const title = wc.getTitle().toLowerCase()
     const isCaptcha =
-      url.includes('challenge') ||
       url.includes('/cdn-cgi/challenge') ||
       url.includes('/cdn-cgi/l/chk_jschl') ||
       url.includes('captcha') ||
-      wc.getTitle().toLowerCase().includes('attention required') ||
-      wc.getTitle().toLowerCase().includes('just a moment') ||
-      wc.getTitle().toLowerCase().includes('are you human') ||
-      wc.getTitle().toLowerCase().includes('checking your browser')
+      url.includes('google.com/sorry') ||
+      title.includes('attention required') ||
+      title.includes('just a moment') ||
+      title.includes('are you human') ||
+      title.includes('checking your browser') ||
+      title.includes("i'm not a robot") ||
+      title.includes('recaptcha') ||
+      title.includes('verify you are human')
     if (isCaptcha) {
-      safeSend(win, 'captcha:detected', { tabId: tab.id, url, title: wc.getTitle() })
+      // For Google's sorry page, extract the original blocked URL from the
+      // `continue` query param so the renderer can offer alternative actions.
+      let blockedUrl: string | undefined
+      try {
+        const parsed = new URL(url)
+        const cont = parsed.searchParams.get('continue')
+        if (cont) blockedUrl = decodeURIComponent(cont)
+      } catch (_) {}
+      safeSend(win, 'captcha:detected', { tabId: tab.id, url, title: wc.getTitle(), blockedUrl })
     }
   })
 
@@ -3137,11 +3149,11 @@ export function registerIpcHandlers() {
         const https = require('https')
         const chunks: Buffer[] = []
         const req = https.get(crxUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' }
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36' }
         }, (res: any) => {
           if (res.statusCode === 302 || res.statusCode === 301) {
             const redirect = res.headers.location
-            https.get(redirect, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' } }, (res2: any) => {
+            https.get(redirect, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36' } }, (res2: any) => {
               res2.on('data', (c: Buffer) => chunks.push(c))
               res2.on('end', () => resolve(Buffer.concat(chunks)))
               res2.on('error', reject)

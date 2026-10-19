@@ -27,7 +27,7 @@ app.commandLine.appendSwitch('enable-features', 'OverscrollHistoryNavigation')
 
 // Strip "Electron/x.x" from the UA for all requests that happen before a session
 // is fully initialized (extension requests, initial resource loads, etc.).
-app.userAgentFallback = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+app.userAgentFallback = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36'
 
 // ── Privacy hardening at the Chromium engine level ────────────────────────────
 // These switches enforce privacy constraints that JS-level spoofing cannot cover
