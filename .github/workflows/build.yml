@@ -137,13 +137,14 @@ jobs:
           npm run build:electron
 
       # ── x64 packages (REQUIRED) ──────────────────────────────────────────────
-      # This step MUST succeed. It publishes the x64 installers to the draft
-      # release and writes latest.yml / latest-mac.yml / latest-linux.yml —
-      # the files electron-updater reads to deliver auto-updates to all users.
-      # Running this before the arm64 step guarantees the auto-update channel
-      # always has valid x64 packages even if arm64 cross-compile later fails.
-      - name: Package x64 → GitHub Release (draft)
-        run: npx electron-builder --x64 --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
+      # Packages x64 and writes latest.yml / latest-mac.yml / latest-linux.yml
+      # to the release/ folder. We use --publish never here: three parallel OS
+      # jobs all calling --publish always race to create/overwrite the same draft
+      # release, which causes electron-builder to silently skip uploading files
+      # it thinks are already there. All uploads happen in the "Upload ALL
+      # artifacts" step below via gh CLI, which is race-safe with --clobber.
+      - name: Package x64
+        run: npx electron-builder --x64 --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Unsigned builds. Do NOT pass empty CSC_* vars — electron-builder reads
@@ -278,10 +279,15 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # ubuntu-latest ships the Android SDK, but pin/accept it explicitly so the
-      # build never depends on a specific runner image's preinstalled versions.
+      # Accept SDK licenses and install the exact components the Gradle build
+      # needs. android-actions/setup-android@v3 fails on ubuntu-24.04 runners,
+      # so we call sdkmanager directly. ANDROID_HOME is set by the runner image.
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
+            --licenses > /dev/null 2>&1 || true
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       # Debug build → app-debug.apk is signed with the auto-generated debug key,
       # so it installs directly on any device (sideload) with no manual signing.
