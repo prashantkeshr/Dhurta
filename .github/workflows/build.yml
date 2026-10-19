@@ -176,25 +176,32 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         continue-on-error: true
 
-      # ── Upload arm64 + universal + any APPX artifacts to the release ────────
-      # gh release upload appends files without touching latest*.yml, so the
-      # auto-update channel (pointing to x64) stays stable.
-      # APPX files are included unconditionally because electron-builder skips
-      # uploading them when the release already exists as a published (non-draft)
-      # release — the gh CLI works regardless of draft/published status.
-      - name: Upload arm64 + universal artifacts to Release
+      # ── Upload ALL release artifacts to GitHub Release ───────────────────────
+      # electron-builder --publish always can silently skip files when a draft
+      # release already exists (e.g. created by a parallel OS job). Using gh CLI
+      # for every file is reliable regardless of draft/published state.
+      # latest*.yml files are written locally by the x64 step even with --publish
+      # never, and uploaded here so the auto-update channel always works.
+      - name: Upload ALL artifacts to Release
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          # Safety net: create the draft release if electron-builder didn't.
+          gh release create "v${VERSION}" --draft --title "Dhurta v${VERSION}" \
+            --notes "" --repo "${{ github.repository }}" 2>/dev/null || true
           shopt -s nullglob
-          for f in release/*arm64* release/*ARM64* release/*universal* release/*.appx; do
-            case "$f" in *.exe|*.dmg|*.zip|*.AppImage|*.deb|*.appx|*.blockmap)
-              echo "Uploading $f"
-              gh release upload "v${VERSION}" "$f" \
-                --clobber --repo "${{ github.repository }}" || true
-              ;;
-            esac
+          for f in release/*.exe release/*.exe.blockmap \
+                    release/*.dmg release/*.dmg.blockmap \
+                    release/*.zip release/*.zip.blockmap \
+                    release/*.AppImage release/*.AppImage.blockmap \
+                    release/*.deb release/*.rpm \
+                    release/*.appx \
+                    release/latest*.yml; do
+            [ -f "$f" ] || continue
+            echo "Uploading $f"
+            gh release upload "v${VERSION}" "$f" \
+              --clobber --repo "${{ github.repository }}" || true
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
