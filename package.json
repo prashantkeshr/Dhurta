@@ -1,6 +1,6 @@
 {
   "name": "dhurta",
-  "version": "1.4.16",
+  "version": "1.4.17",
   "description": "Dhurta 🔱 — a sovereign, privacy-native desktop browser by Dhurta.inc.",
   "main": "dist-electron/main.js",
   "author": {
@@ -189,12 +189,6 @@
           "arch": [
             "x64",
             "arm64"
-          ]
-        },
-        {
-          "target": "rpm",
-          "arch": [
-            "x64"
           ]
         }
       ],
