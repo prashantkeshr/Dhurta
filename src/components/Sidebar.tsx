@@ -290,6 +290,14 @@ export default function Sidebar({
       <Divider />
 
       {/* ━━━ TIER 3 — Settings (utility) ━━━ */}
+      <UtilBtn label="Privacy Policy" onClick={() => onNavigate?.('dhurta://privacy')}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+          <circle cx="8" cy="8" r="6.5"/>
+          <line x1="8" y1="5" x2="8" y2="9" strokeLinecap="round"/>
+          <circle cx="8" cy="11" r="0.8" fill="currentColor" stroke="none"/>
+        </svg>
+      </UtilBtn>
+
       <UtilBtn label="Settings" active={activePanel === 'settings'} onClick={() => toggle('settings')}>
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
           <circle cx="8" cy="8" r="2.5" />

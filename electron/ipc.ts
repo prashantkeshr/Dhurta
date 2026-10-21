@@ -598,7 +598,7 @@ function getTabBounds(win: BrowserWindow) {
 
 // Internal dhurta:// pages that render as React components — BrowserView is hidden for these.
 const DHURTA_INTERNAL_PAGES = new Set([
-  'dhurta://newtab', 'dhurta://history', 'dhurta://downloads', 'dhurta://bookmarks', 'dhurta://omni',
+  'dhurta://newtab', 'dhurta://history', 'dhurta://downloads', 'dhurta://bookmarks', 'dhurta://omni', 'dhurta://privacy',
 ])
 
 function isNewTabUrl(url: string) {
@@ -2332,7 +2332,8 @@ export function registerIpcHandlers() {
       const isDownloads = resolved === 'dhurta://downloads'
       const isBookmarks = resolved === 'dhurta://bookmarks'
       const isOmni      = resolved === 'dhurta://omni'
-      tab.title = isHistory ? 'History' : isDownloads ? 'Downloads' : isBookmarks ? 'Bookmarks' : isOmni ? 'Dhurta Omni — Privacy' : 'New Tab'
+      const isPrivacy   = resolved === 'dhurta://privacy'
+      tab.title = isHistory ? 'History' : isDownloads ? 'Downloads' : isBookmarks ? 'Bookmarks' : isOmni ? 'Dhurta Omni — Privacy' : isPrivacy ? 'Privacy Policy' : 'New Tab'
       // SVG favicons for internal pages so tabs show a recognizable icon
       const svgFavicon = (svg: string) =>
         `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
@@ -2344,6 +2345,8 @@ export function registerIpcHandlers() {
         ? svgFavicon('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3 2h10v12l-5-3-5 3V2z" fill="none" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/></svg>')
         : isOmni
         ? svgFavicon('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M8 1.5L2 4v4c0 3 2.5 5.5 6 6.5 3.5-1 6-3.5 6-6.5V4L8 1.5z" fill="none" stroke="#FF4500" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="7.5" r="1.6" fill="#FF4500"/></svg>')
+        : isPrivacy
+        ? svgFavicon('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="#c9a227" stroke-width="1.5"/><line x1="8" y1="5" x2="8" y2="9" stroke="#c9a227" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11" r="0.8" fill="#c9a227"/></svg>')
         : ''
       tab.loading = false
       const win = getMainWindow()

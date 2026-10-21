@@ -5,7 +5,7 @@ export interface ClosedTab { url: string; title: string; favicon: string }
 
 const api = () => window.dhurta
 
-const INTERNAL_PAGES = ['dhurta://newtab', 'dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni']
+const INTERNAL_PAGES = ['dhurta://newtab', 'dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni', 'dhurta://privacy']
 
 // Only the New Tab / home page and the Omni dashboard default to 200% zoom —
 // History/Bookmarks/Downloads stay at the normal 100% default. These pages

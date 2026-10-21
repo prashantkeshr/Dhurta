@@ -34,6 +34,7 @@ import BookmarksPage from './pages/BookmarksPage'
 import DownloadsPage from './pages/DownloadsPage'
 import OmniPage from './pages/OmniPage'
 import UpdatePage from './pages/UpdatePage'
+import PrivacyPage from './pages/PrivacyPage'
 import type { SecuritySettings, Extension, LockStatus, Download, Bookmark } from './types'
 
 const isElectron = typeof window !== 'undefined' && typeof (window as any).dhurta !== 'undefined'
@@ -270,7 +271,7 @@ export default function App() {
   }, [loadWallpapers])
 
   // Internal dhurta:// pages rendered as React full-page components (no BrowserView)
-  const DHURTA_PAGES = ['dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni', 'dhurta://update'] as const
+  const DHURTA_PAGES = ['dhurta://history', 'dhurta://bookmarks', 'dhurta://downloads', 'dhurta://omni', 'dhurta://update', 'dhurta://privacy'] as const
   const activeDhurtaPage = activeTab?.url && (DHURTA_PAGES as readonly string[]).includes(activeTab.url)
     ? activeTab.url as typeof DHURTA_PAGES[number]
     : null
@@ -706,6 +707,9 @@ export default function App() {
               )}
               {activeDhurtaPage === 'dhurta://update' && (
                 <UpdatePage />
+              )}
+              {activeDhurtaPage === 'dhurta://privacy' && (
+                <PrivacyPage />
               )}
             </div>
             {/* BrowserView overlays this area for real pages */}
