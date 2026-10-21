@@ -200,6 +200,7 @@
       ],
       "icon": "build/icon.png",
       "category": "Network",
+      "description": "Dhurta — a sovereign, privacy-native desktop browser by Dhurta.inc.",
       "desktop": {
         "entry": {
           "MimeType": "x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/dhurta-connect;",

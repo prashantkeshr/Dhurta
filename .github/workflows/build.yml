@@ -72,7 +72,10 @@ jobs:
             name: windows
             arm64_cc: ""
             arm64_cxx: ""
-          - os: macos-latest
+          # macos-latest now maps to macos-15 (arm64 M-series) where electron-builder's
+          # hdiutil detach call fails for x64 DMG builds (volume path quoting bug).
+          # macos-13 is the last Intel x64 runner — stable for x64 + universal DMGs.
+          - os: macos-13
             name: macos
             arm64_cc: ""
             arm64_cxx: ""
