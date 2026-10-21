@@ -1,6 +1,6 @@
 {
   "name": "dhurta",
-  "version": "1.4.15",
+  "version": "1.4.16",
   "description": "Dhurta 🔱 — a sovereign, privacy-native desktop browser by Dhurta.inc.",
   "main": "dist-electron/main.js",
   "author": {
@@ -200,7 +200,7 @@
       ],
       "icon": "build/icon.png",
       "category": "Network",
-      "description": "Dhurta — a sovereign, privacy-native desktop browser by Dhurta.inc.",
+      "description": "Dhurta - a sovereign, privacy-native desktop browser by Dhurta.inc.",
       "desktop": {
         "entry": {
           "MimeType": "x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/dhurta-connect;",
