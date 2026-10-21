@@ -52,31 +52,18 @@ jobs:
           name: dhurta-core-dist
           path: packages/core/dist
 
-  # ── Desktop: Windows, macOS, Linux ──
+  # ── Desktop: Windows + Linux (REQUIRED for publish) ──
+  # macOS is a separate optional job below so a slow/queued runner never
+  # blocks the Windows/Linux release from publishing.
   desktop:
     needs: core
-    # Desktop installers are expensive (3-OS matrix, macOS minutes bill at 10x) —
-    # skip them on plain main pushes; those only need the Android build+test.
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
       matrix:
         include:
-          # windows-2022 is the stable LTS runner; windows-latest now maps to
-          # windows-2025 which has changed default toolchain configuration and
-          # can cause "Set up job" failures for native Node module builds.
-          # arm64_cc/cxx: cross-compiler overrides passed to @electron/rebuild
-          # when building the arm64 native module. Empty on Windows/macOS because
-          # those toolchains (MSVC ARM64, Xcode) are discovered automatically.
           - os: windows-2022
             name: windows
-            arm64_cc: ""
-            arm64_cxx: ""
-          # macos-latest now maps to macos-15 (arm64 M-series) where electron-builder's
-          # hdiutil detach call fails for x64 DMG builds (volume path quoting bug).
-          # macos-13 is the last Intel x64 runner — stable for x64 + universal DMGs.
-          - os: macos-13
-            name: macos
             arm64_cc: ""
             arm64_cxx: ""
           - os: ubuntu-latest
@@ -169,17 +156,6 @@ jobs:
           CXX: ${{ matrix.arm64_cxx }}
         continue-on-error: true
 
-      # ── macOS universal fat binary (BEST-EFFORT) ─────────────────────────────
-      # lipo-merges arm64 + x64 into one DMG. Requires both arch builds above to
-      # have produced their outputs — continue-on-error so a partial failure
-      # (e.g. x64 Rosetta rebuild issue) doesn't block the whole macOS job.
-      - name: Package universal DMG + ZIP (macOS)
-        if: matrix.name == 'macos'
-        run: npx electron-builder --universal --publish never
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        continue-on-error: true
-
       # ── Upload ALL release artifacts to GitHub Release ───────────────────────
       # electron-builder --publish always can silently skip files when a draft
       # release already exists (e.g. created by a parallel OS job). Using gh CLI
@@ -225,11 +201,76 @@ jobs:
             release/*.rpm
           if-no-files-found: ignore
 
-  # ── Promote draft → published release (runs when all 3 desktop OS builds pass) ──
-  # Desktop builds must all succeed before the release goes live so users never
-  # auto-update to a release that is missing a platform's installer.
-  # Android is attached if it passed, but its success is NOT required — a flaky
-  # emulator or Gradle issue will not block the desktop auto-update channel.
+  # ── macOS (OPTIONAL — does NOT block publish) ────────────────────────────────
+  # macos-13 runners are sometimes slow to assign. This job runs in parallel
+  # with the required desktop matrix; publish does NOT wait for it. If macOS
+  # completes it uploads its DMGs to the release via gh CLI.
+  desktop-mac:
+    needs: core
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: macos-13
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Rebuild native modules for Electron (host arch)
+        run: npx electron-builder install-app-deps
+        continue-on-error: true
+      - name: Typecheck
+        run: |
+          node ./node_modules/typescript/bin/tsc --noEmit
+          node ./node_modules/typescript/bin/tsc -p tsconfig.electron.json --noEmit
+      - name: Build renderer + main (no packaging)
+        run: |
+          npm run build:renderer
+          npm run build:electron
+      - name: Package x64
+        run: npx electron-builder --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Package arm64 (local build only)
+        run: npx electron-builder --arm64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          npm_config_arch: arm64
+        continue-on-error: true
+      - name: Package universal DMG + ZIP
+        run: npx electron-builder --universal --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        continue-on-error: true
+      - name: Upload macOS artifacts to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh release create "v${VERSION}" --draft --title "Dhurta v${VERSION}" \
+            --notes "" --repo "${{ github.repository }}" 2>/dev/null || true
+          shopt -s nullglob
+          for f in release/*.dmg release/*.dmg.blockmap \
+                    release/*.zip release/*.zip.blockmap \
+                    release/latest-mac.yml; do
+            [ -f "$f" ] || continue
+            echo "Uploading $f"
+            gh release upload "v${VERSION}" "$f" \
+              --clobber --repo "${{ github.repository }}" || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dhurta-macos
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: ignore
+
+  # ── Promote draft → published release (Windows + Linux required; macOS optional) ──
   publish:
     needs: [desktop]
     runs-on: ubuntu-latest
