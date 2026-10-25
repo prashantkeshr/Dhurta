@@ -380,7 +380,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           <p className={`text-5xl font-mono font-light tracking-[0.15em] tabular-nums ${isLight ? '' : 'drop-shadow-lg'} ${tt.text}`}>
             {timeStr}
           </p>
-          <span className={`text-[8px] font-mono px-1.5 py-0.5 border ${tt.borderGlass} ${tt.textDim} tracking-widest`}>UTC</span>
+          <span className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.borderGlass} ${tt.textDim} tracking-widest`}>UTC</span>
         </div>
         <p className={`text-[11px] font-mono mt-1 tracking-widest uppercase ${tt.textDim}`}>
           {dateStr}
@@ -429,7 +429,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                 }}
               />
               <span
-                className="w-[22px] h-[22px] hidden absolute inset-0 items-center justify-center text-[9px] font-mono font-bold border leading-none"
+                className="w-[22px] h-[22px] hidden absolute inset-0 items-center justify-center text-[10px] font-mono font-bold border leading-none"
                 style={{ color: eng.letterColor, borderColor: eng.letterColor + '55', background: eng.letterColor + '18' }}
               >{eng.letter}</span>
             </span>
@@ -492,10 +492,10 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     favourites: !ghost ? (
       <div className="w-full max-w-lg">
         <div className="flex items-center justify-between mb-2">
-          <p className={`text-[9px] font-mono uppercase tracking-widest ${tt.textMuted}`}>Favourites</p>
+          <p className={`text-[10px] font-mono uppercase tracking-widest ${tt.textMuted}`}>Favourites</p>
           <div className="flex gap-1">
             <button onClick={() => setShowToolPicker(true)} title="Add Dhurta Tool"
-              className={`text-[8px] font-mono px-1.5 py-0.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF4500] hover:text-[#FF4500] transition-colors`}>
+              className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF4500] hover:text-[#FF4500] transition-colors`}>
               + Tool
             </button>
           </div>
@@ -532,7 +532,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
               className={`flex flex-col items-center justify-center gap-1 h-[84px] border ${tt.borderTile} ${tt.bgTile} backdrop-blur-sm hover:border-[#FF4500] transition-colors`}
             >
               <span className={`text-xl leading-none ${tt.textFaint}`}>+</span>
-              <span className={`text-[8px] font-mono ${tt.textFaint}`}>Add</span>
+              <span className={`text-[11px] font-mono ${tt.textFaint}`}>Add</span>
             </button>
           )}
         </div>
@@ -542,7 +542,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
             <div className={`${isLight ? 'bg-white border-gray-200 shadow-xl' : 'bg-[#111] border-[#2a2a2a]'} border p-4 w-72 shadow-2xl`}
               onClick={e => e.stopPropagation()}>
               <h3 className="text-[10px] font-mono text-[#FF4500] uppercase tracking-widest mb-3">Add Dhurta Tool</h3>
-              <p className={`text-[8px] font-mono uppercase tracking-wider mb-1 ${tt.textMuted}`}>Ecosystem</p>
+              <p className={`text-[11px] font-mono uppercase tracking-wider mb-1 ${tt.textMuted}`}>Ecosystem</p>
               {[
                 { id: 'setu', name: 'Dhurta Setu', desc: 'Bridge & web index', url: 'dhurta-tool://setu' },
                 { id: 'connect', name: 'Dhurta Connect', desc: 'P2P chat & file share', url: 'dhurta-tool://connect' },
@@ -564,12 +564,12 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                     <SmartFavicon url={`dhurta-tool://${t.id}`} name={t.name} size={16} />
                     <div className="text-left">
                       <p className="text-[10px] font-mono">{t.name}</p>
-                      <p className={`text-[8px] font-mono ${tt.textMuted}`}>{exists ? 'Already added' : t.desc}</p>
+                      <p className={`text-[11px] font-mono ${tt.textMuted}`}>{exists ? 'Already added' : t.desc}</p>
                     </div>
                   </button>
                 )
               })}
-              <p className={`text-[8px] font-mono uppercase tracking-wider mt-2 mb-1 ${tt.textMuted}`}>Built-in</p>
+              <p className={`text-[11px] font-mono uppercase tracking-wider mt-2 mb-1 ${tt.textMuted}`}>Built-in</p>
               {[
                 { id: 'omni', name: 'Dhurta Omni', desc: 'Privacy dashboard', url: 'dhurta://omni' },
                 { id: 'developer', name: 'Developer Tools', desc: 'Inspect & debug pages', url: 'dhurta-tool://developer' },
@@ -592,13 +592,13 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                     <SmartFavicon url={`dhurta-tool://${t.id}`} name={t.name} size={16} />
                     <div className="text-left">
                       <p className="text-[10px] font-mono">{t.name}</p>
-                      <p className={`text-[8px] font-mono ${tt.textMuted}`}>{exists ? 'Already added' : t.desc}</p>
+                      <p className={`text-[11px] font-mono ${tt.textMuted}`}>{exists ? 'Already added' : t.desc}</p>
                     </div>
                   </button>
                 )
               })}
               <button onClick={() => setShowToolPicker(false)}
-                className={`mt-2 w-full text-[9px] font-mono py-1.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF4500] hover:text-[#FF4500] transition-colors`}>
+                className={`mt-2 w-full text-[10px] font-mono py-1.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF4500] hover:text-[#FF4500] transition-colors`}>
                 Close
               </button>
             </div>
@@ -609,7 +609,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
 
     status: ghost ? (
       <div className="flex flex-col items-center gap-3">
-        <p className="text-[9px] font-mono tracking-widest text-white/25">
+        <p className="text-[10px] font-mono tracking-widest text-white/25">
           🔒 In-memory session · wiped on close
         </p>
 
@@ -640,12 +640,12 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           </svg>
         </button>
 
-        <p className="text-[8px] font-mono text-white/15 tracking-wide">
+        <p className="text-[11px] font-mono text-white/15 tracking-wide">
           via check.torproject.org
         </p>
       </div>
     ) : (
-      <p className={`text-[9px] font-mono tracking-widest ${tt.textFaint}`}>
+      <p className={`text-[10px] font-mono tracking-widest ${tt.textFaint}`}>
         Sovereign Browser · Zero telemetry
       </p>
     ),
@@ -725,7 +725,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
               )}
 
               <div className={`flex-1 flex ${justifyClass}`}>
-                {node ?? <span className={`text-[9px] font-mono italic ${tt.textFaint}`}>{w.id}</span>}
+                {node ?? <span className={`text-[10px] font-mono italic ${tt.textFaint}`}>{w.id}</span>}
               </div>
 
               {/* Alignment cycle + show/hide toggle */}
@@ -760,7 +760,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
         <button
           onClick={() => setCustomizing(c => !c)}
           className={[
-            'absolute bottom-3 right-3 z-20 text-[9px] font-mono px-2.5 py-1 border transition-colors',
+            'absolute bottom-3 right-3 z-20 text-[10px] font-mono px-2.5 py-1 border transition-colors',
             customizing
               ? 'border-[#FF4500] text-[#FF4500] ' + (isLight ? 'bg-white/80' : 'bg-black/60')
               : isLight
@@ -784,7 +784,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
             </div>
             <div className="space-y-3">
               <label className="block">
-                <span className={`text-[9px] font-mono uppercase tracking-wider ${isLight ? 'text-gray-400' : 'text-[#555]'}`}>Name</span>
+                <span className={`text-[10px] font-mono uppercase tracking-wider ${isLight ? 'text-gray-400' : 'text-[#555]'}`}>Name</span>
                 <input
                   value={editTitle}
                   onChange={e => setEditTitle(e.target.value)}
@@ -793,7 +793,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                 />
               </label>
               <label className="block">
-                <span className={`text-[9px] font-mono uppercase tracking-wider ${isLight ? 'text-gray-400' : 'text-[#555]'}`}>URL</span>
+                <span className={`text-[10px] font-mono uppercase tracking-wider ${isLight ? 'text-gray-400' : 'text-[#555]'}`}>URL</span>
                 <input
                   value={editUrl}
                   onChange={e => setEditUrl(e.target.value)}
@@ -877,7 +877,7 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
           className="w-5 h-5 object-contain shrink-0"
           letterClassName="w-5 h-5 flex items-center justify-center text-[10px] font-mono text-[#FF4500] border border-[#FF4500]/50 shrink-0"
         />
-        <span className={`text-[8px] font-mono w-full text-center leading-tight transition-colors line-clamp-2 px-1 ${tileLabel}`}>
+        <span className={`text-[11px] font-mono w-full text-center leading-tight transition-colors line-clamp-2 px-1 ${tileLabel}`}>
           {bookmark.title || domain}
         </span>
       </button>
@@ -887,12 +887,12 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
         <button
           onClick={e => { e.stopPropagation(); onEdit(bookmark) }}
           title="Edit"
-          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-[#FF4500] text-gray-500 hover:text-white text-[9px] transition-colors`}
+          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-[#FF4500] text-gray-500 hover:text-white text-[10px] transition-colors`}
         >✎</button>
         <button
           onClick={e => { e.stopPropagation(); onDelete(bookmark.id) }}
           title="Remove"
-          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-red-600 text-gray-500 hover:text-white text-[9px] transition-colors`}
+          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-red-600 text-gray-500 hover:text-white text-[10px] transition-colors`}
         >✕</button>
       </div>
     </div>

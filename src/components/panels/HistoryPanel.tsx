@@ -73,11 +73,11 @@ export default function HistoryPanel({ onNavigate, closedTabs = [], onReopenTab 
         {closedTabs.length > 0 && !query && (
           <div className="border-b border-border">
             <div className="sticky top-0 z-10 px-3 py-1.5 bg-obsidian/90 border-b border-border/50 flex items-center justify-between">
-              <span className="text-[9px] font-mono text-saffron uppercase tracking-widest">Recently Closed</span>
+              <span className="text-[10px] font-mono text-saffron uppercase tracking-widest">Recently Closed</span>
               <button
                 onClick={onReopenTab}
                 title="Reopen last closed tab (Ctrl+Shift+T)"
-                className="text-[9px] font-mono text-muted/60 hover:text-saffron transition-colors"
+                className="text-[10px] font-mono text-muted/60 hover:text-saffron transition-colors"
               >↩ reopen</button>
             </div>
             {closedTabs.map((t, i) => (
@@ -95,7 +95,7 @@ export default function HistoryPanel({ onNavigate, closedTabs = [], onReopenTab 
                   <p className="text-xs text-text/60 truncate">{t.title}</p>
                   <p className="text-[10px] text-muted/70 font-mono truncate">{formatUrl(t.url)}</p>
                 </div>
-                <span className="text-[9px] text-muted/30 shrink-0 font-mono">↩</span>
+                <span className="text-[10px] text-muted/30 shrink-0 font-mono">↩</span>
               </div>
             ))}
           </div>

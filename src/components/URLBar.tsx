@@ -204,7 +204,7 @@ export default function URLBar({
 
       {/* Ghost badge */}
       {ghost && (
-        <span className="text-[9px] text-saffron font-mono border border-saffron px-1 shrink-0 leading-tight py-0.5">
+        <span className="text-[10px] text-saffron font-mono border border-saffron px-1 shrink-0 leading-tight py-0.5">
           GHOST
         </span>
       )}
@@ -222,7 +222,7 @@ export default function URLBar({
       {/* Protected / Exposed — quick, glanceable status for the current tab */}
       {isRealPage && (
         <span
-          className="text-[9px] font-mono border px-1 shrink-0 leading-tight py-0.5"
+          className="text-[10px] font-mono border px-1 shrink-0 leading-tight py-0.5"
           style={isProtected
             ? { color: '#4CAF50', borderColor: '#4CAF50' }
             : { color: '#ef4444', borderColor: '#ef4444' }}
@@ -436,7 +436,7 @@ function NavBtn({ children, onClick, title, active }: {
 
 function Chip({ label, title }: { label: string; title: string }) {
   return (
-    <span title={title} className="text-[8px] font-mono text-saffron border border-saffron px-0.5 leading-tight py-px shrink-0">
+    <span title={title} className="text-[10px] font-mono text-saffron border border-saffron px-0.5 leading-tight py-px shrink-0">
       {label}
     </span>
   )

@@ -109,7 +109,7 @@ export default function InterceptorPanel({ activeTabId }: Props) {
                   {new Date(r.timestamp).toLocaleTimeString('en', { hour12: false })}
                 </span>
               </div>
-              <p className="text-[9px] text-muted truncate mt-0.5 pl-14">{r.url}</p>
+              <p className="text-[10px] text-muted truncate mt-0.5 pl-14">{r.url}</p>
             </div>
           ))
         )}

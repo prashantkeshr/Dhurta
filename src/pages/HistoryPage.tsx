@@ -74,7 +74,7 @@ export default function HistoryPage({ onNavigate }: Props) {
             </svg>
             <h1 className="text-sm font-mono text-text tracking-widest uppercase">History</h1>
           </div>
-          <p className="text-[9px] text-muted font-mono mt-0.5 ml-6">{entries.length} items</p>
+          <p className="text-[10px] text-muted font-mono mt-0.5 ml-6">{entries.length} items</p>
         </div>
 
         <div className="flex-1 max-w-lg">
@@ -117,7 +117,7 @@ export default function HistoryPage({ onNavigate }: Props) {
         <div className="px-4 md:px-8 py-4 max-w-4xl mx-auto w-full">
           {groups.map(({ label, items }) => (
             <section key={label} className="mb-6">
-              <p className="text-[9px] font-mono text-muted/70 uppercase tracking-widest mb-1.5 pb-1 border-b border-border/30">
+              <p className="text-[10px] font-mono text-muted/70 uppercase tracking-widest mb-1.5 pb-1 border-b border-border/30">
                 {label} · {items.length}
               </p>
               <div className="flex flex-col">
@@ -153,10 +153,10 @@ export default function HistoryPage({ onNavigate }: Props) {
                     {/* Title + URL */}
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-mono text-text leading-tight truncate">{e.title || e.url}</p>
-                      <p className="text-[9px] font-mono text-muted/60 truncate">{e.url}</p>
+                      <p className="text-[10px] font-mono text-muted/60 truncate">{e.url}</p>
                     </div>
 
-                    <span className="shrink-0 text-[9px] font-mono text-muted/50 tabular-nums">{fmtTime(e.visited_at)}</span>
+                    <span className="shrink-0 text-[10px] font-mono text-muted/50 tabular-nums">{fmtTime(e.visited_at)}</span>
 
                     <button
                       onClick={ev => deleteEntry(e.id, ev)}

@@ -19,6 +19,9 @@
   --color-muted:    102 102 102;
   --color-text:     232 232 232;
   --color-text-dim: 153 153 153;
+  /* Ghost mode tab bar — deep purple, overridden for light mode */
+  --color-ghost-tab: 13 0 24;
+  --color-ghost-border: 255 0 51;
 }
 
 /* ── Theme: Light ──────────────────────────────────────────────────────────── */
@@ -33,6 +36,9 @@
   --color-muted:    130 142 164;    /* #828EA4 — muted icons / secondary text     */
   --color-text:     13 18 38;       /* #0D1226 — deep navy-black                  */
   --color-text-dim: 64 78 108;      /* #404E6C — secondary text                   */
+  /* Ghost mode tab bar — light lavender tint for light theme */
+  --color-ghost-tab: 238 232 255;
+  --color-ghost-border: 180 80 220;
 }
 
 body {
@@ -188,6 +194,90 @@ input, textarea {
 @keyframes fade-in {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Chrome/Opera-style panel slide-in from left ──────────────────────────── */
+@keyframes panel-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.panel-overlay {
+  animation: panel-slide-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Tab smooth-appear on new tab ─────────────────────────────────────────── */
+@keyframes tab-appear {
+  from { opacity: 0; transform: scaleX(0.85); transform-origin: left; }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+.tab-new-appear {
+  animation: tab-appear 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Smooth tab background transition ─────────────────────────────────────── */
+.tab-sharp {
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+/* ── Close button always visible on active tab ────────────────────────────── */
+.tab-close-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.1s ease, transform 0.08s ease;
+}
+.group:hover .tab-close-btn,
+.tab-is-active .tab-close-btn {
+  opacity: 0.55;
+}
+.tab-close-btn:hover {
+  opacity: 1 !important;
+  color: #FF4500;
+}
+
+/* ── Tooltip slide-down ────────────────────────────────────────────────────── */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tab-tooltip {
+  animation: tooltip-in 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Toggle switch — smooth thumb slide ──────────────────────────────────── */
+.toggle-thumb {
+  transition: left 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.15s ease;
+}
+.toggle-track {
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+/* ── Button press ripple ──────────────────────────────────────────────────── */
+@keyframes btn-press {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+/* ── Sidebar panel item hover ─────────────────────────────────────────────── */
+.sidebar-btn {
+  transition: color 0.12s ease, background 0.12s ease, transform 0.08s ease;
+}
+.sidebar-btn:active {
+  transform: scale(0.9);
+}
+
+/* ── URL bar focus ring (Chrome-style) ───────────────────────────────────── */
+.url-bar-focus-ring {
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+/* ── Inline confirm row (extension removal) ──────────────────────────────── */
+@keyframes confirm-slide-in {
+  from { opacity: 0; max-height: 0; }
+  to   { opacity: 1; max-height: 48px; }
+}
+.confirm-row {
+  animation: confirm-slide-in 0.14s ease-out;
+  overflow: hidden;
 }
 
 @keyframes security-slide-down {

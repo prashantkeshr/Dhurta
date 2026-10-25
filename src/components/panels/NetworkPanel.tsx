@@ -90,7 +90,7 @@ export default function NetworkPanel({ activeTabId }: Props) {
         <div className="flex items-center justify-between mb-2">
           <div>
             <h2 className="text-xs font-mono text-saffron uppercase tracking-widest">Network Monitor</h2>
-            <p className="text-[9px] text-muted font-mono mt-0.5">
+            <p className="text-[10px] text-muted font-mono mt-0.5">
               {total} req · <span className="text-red-400">{errors} err</span>
               {pending > 0 && <> · <span className="text-yellow-400">{pending} pending</span></>}
             </p>
@@ -127,7 +127,7 @@ export default function NetworkPanel({ activeTabId }: Props) {
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`text-[8px] font-mono px-1.5 py-0.5 border transition-colors ${
+              className={`text-[10px] font-mono px-1.5 py-0.5 border transition-colors ${
                 typeFilter === t
                   ? 'border-saffron text-saffron bg-saffron/10'
                   : 'border-border text-muted hover:border-saffron/50'
@@ -160,27 +160,27 @@ export default function NetworkPanel({ activeTabId }: Props) {
             >
               <div className="flex items-center gap-1.5">
                 {/* Method */}
-                <span className={`text-[9px] font-bold shrink-0 w-10 ${METHOD_COLORS[r.method] ?? 'text-text-dim'}`}>
+                <span className={`text-[10px] font-bold shrink-0 w-10 ${METHOD_COLORS[r.method] ?? 'text-text-dim'}`}>
                   {r.method}
                 </span>
                 {/* Status */}
-                <span className={`text-[9px] font-mono shrink-0 w-8 ${statusColor(r.status)}`}>
+                <span className={`text-[10px] font-mono shrink-0 w-8 ${statusColor(r.status)}`}>
                   {r.status ?? '…'}
                 </span>
                 {/* Domain */}
-                <span className="text-[9px] text-muted shrink-0 truncate max-w-[70px]" title={r.url}>
+                <span className="text-[10px] text-muted shrink-0 truncate max-w-[70px]" title={r.url}>
                   {formatDomain(r.url)}
                 </span>
                 {/* Type chip */}
-                <span className="text-[8px] font-mono border border-border/40 text-muted/60 px-1 shrink-0">
+                <span className="text-[10px] font-mono border border-border/40 text-muted/60 px-1 shrink-0">
                   {r.type.slice(0, 6)}
                 </span>
                 {/* Time */}
-                <span className="text-[8px] text-muted/50 ml-auto shrink-0">
+                <span className="text-[10px] text-muted/50 ml-auto shrink-0">
                   {new Date(r.timestamp).toLocaleTimeString('en', { hour12: false })}
                 </span>
               </div>
-              <p className="text-[8px] text-muted/70 truncate mt-0.5 pl-[4.5rem]">{formatPath(r.url)}</p>
+              <p className="text-[10px] text-muted/70 truncate mt-0.5 pl-[4.5rem]">{formatPath(r.url)}</p>
             </button>
           ))
         )}
@@ -196,14 +196,14 @@ export default function NetworkPanel({ activeTabId }: Props) {
             <span className={`text-[10px] font-mono ${statusColor(selected.status)}`}>
               {selected.status ? `HTTP ${selected.status}` : 'Pending'}
             </span>
-            <button onClick={() => setSelected(null)} className="text-[9px] text-muted hover:text-saffron">✕</button>
+            <button onClick={() => setSelected(null)} className="text-[10px] text-muted hover:text-saffron">✕</button>
           </div>
-          <p className="text-[9px] font-mono text-text break-all leading-relaxed">{selected.url}</p>
+          <p className="text-[10px] font-mono text-text break-all leading-relaxed">{selected.url}</p>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
-            <span className="text-[8px] text-muted font-mono">Type</span>
-            <span className="text-[8px] text-text font-mono">{selected.type}</span>
-            <span className="text-[8px] text-muted font-mono">Time</span>
-            <span className="text-[8px] text-text font-mono">
+            <span className="text-[10px] text-muted font-mono">Type</span>
+            <span className="text-[10px] text-text font-mono">{selected.type}</span>
+            <span className="text-[10px] text-muted font-mono">Time</span>
+            <span className="text-[10px] text-text font-mono">
               {new Date(selected.timestamp).toLocaleTimeString('en', { hour12: false })}
             </span>
           </div>

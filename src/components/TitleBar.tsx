@@ -86,7 +86,7 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
         ].join(' ')}
       >
         <span className={['w-1.5 h-1.5 rounded-full shrink-0', online ? 'bg-green-500' : 'bg-red-500 animate-pulse'].join(' ')} />
-        <span className="text-[9px] font-mono uppercase tracking-widest">{online ? 'Online' : 'Offline'}</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest">{online ? 'Online' : 'Offline'}</span>
       </div>
 
       {/* Dhurta Omni shortcut — privacy control dashboard */}
@@ -100,14 +100,14 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
             <path d="M8 1.5L2.5 4v3.8c0 3.2 2.4 5.9 5.5 6.7 3.1-.8 5.5-3.5 5.5-6.7V4L8 1.5z" />
             <circle cx="8" cy="7.6" r="1.6" fill="currentColor" stroke="none" />
           </svg>
-          <span className="text-[9px] font-mono uppercase tracking-widest">Omni</span>
+          <span className="text-[10px] font-mono uppercase tracking-widest">Omni</span>
         </button>
       )}
 
       {/* Live clock + date — top-right corner */}
       <div className="no-drag flex flex-col items-end justify-center px-3 shrink-0 leading-none gap-px">
         <span className="text-[11px] font-mono text-text/80 tabular-nums tracking-wider">{timeStr}</span>
-        <span className="text-[9px] font-mono text-muted tracking-wider">{dateStr}</span>
+        <span className="text-[10px] font-mono text-muted tracking-wider">{dateStr}</span>
       </div>
 
       {/* Windows-style controls */}

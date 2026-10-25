@@ -158,7 +158,7 @@ export default function SecurityPanel() {
                 Routes your traffic through a free public server, hiding your real IP. No sign-up needed.
               </p>
             </div>
-            <span className={['text-[9px] font-mono px-1.5 py-px border shrink-0', settings.ipRotation ? 'text-saffron border-saffron' : 'text-muted border-border'].join(' ')}>
+            <span className={['text-[10px] font-mono px-1.5 py-px border shrink-0', settings.ipRotation ? 'text-saffron border-saffron' : 'text-muted border-border'].join(' ')}>
               {settings.ipRotation ? 'ON' : 'OFF'}
             </span>
           </div>
@@ -212,7 +212,7 @@ export default function SecurityPanel() {
               </button>
             )}
           </div>
-          <p className="text-[9px] text-muted font-mono italic">Free servers may be slower than paid VPNs. Takes effect on new requests.</p>
+          <p className="text-[10px] text-muted font-mono italic">Free servers may be slower than paid VPNs. Takes effect on new requests.</p>
         </div>
 
         {/* Anti-Fingerprint */}

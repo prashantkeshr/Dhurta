@@ -135,7 +135,7 @@ export default function ConnectPanel({
                 <div className="bg-obsidian border border-border p-2">
                   <p className="text-[10px] text-muted font-mono">Their current page:</p>
                   <p className="text-xs text-text font-mono mt-1 truncate">{peerState.title || 'Untitled'}</p>
-                  <p className="text-[9px] text-muted font-mono truncate mt-0.5">{peerState.url}</p>
+                  <p className="text-[10px] text-muted font-mono truncate mt-0.5">{peerState.url}</p>
                   {peerState.url && !peerState.url.startsWith('dhurta://') && (
                     <button
                       onClick={() => onNavigate(peerState.url)}

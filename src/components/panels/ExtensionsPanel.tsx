@@ -23,6 +23,9 @@ export default function ExtensionsPanel() {
   const [loading, setLoading]       = useState(false)
   const [msg, setMsg]               = useState('')
   const [toast, setToast]           = useState<{ text: string; ok: boolean } | null>(null)
+  const [slugInput, setSlugInput]   = useState('')
+  const [showSlugInput, setShowSlugInput] = useState(false)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     if (typeof window.dhurta === 'undefined') return
@@ -64,16 +67,21 @@ export default function ExtensionsPanel() {
     else if (r.id) { showToast(`Installed: ${r.name} v${r.version}`); await refresh() }
   })
 
-  const handleInstallBySlug = () => withLoading(async () => {
-    const slug = prompt('Enter Firefox add-on slug (e.g. "ublock-origin"):')
+  const handleInstallBySlug = async () => {
+    const slug = slugInput.trim()
     if (!slug) return
-    const r = await api().installExtensionFromAMO(slug.trim())
-    if (r.error) setMsg(`Error: ${r.error}`)
-    else if (r.id) showToast(`Installed: ${r.name}`)
-  })
+    setShowSlugInput(false)
+    setSlugInput('')
+    await withLoading(async () => {
+      const r = await api().installExtensionFromAMO(slug)
+      if (r.error) setMsg(`Error: ${r.error}`)
+      else if (r.id) showToast(`Installed: ${r.name}`)
+    })
+  }
 
   const handleRemove = async (ext: Extension) => {
-    if (!confirm(`Remove "${ext.name || ext.id}"?\nThe extension files will be deleted from disk.`)) return
+    if (confirmRemoveId !== ext.id) { setConfirmRemoveId(ext.id); return }
+    setConfirmRemoveId(null)
     const ok = await api().removeExtension(ext.id)
     if (ok) { showToast(`Removed: ${ext.name || ext.id}`); await refresh() }
     else showToast('Remove failed', false)
@@ -134,7 +142,7 @@ export default function ExtensionsPanel() {
               <rect x="2" y="10" width="22" height="22" /><path d="M24 16h8l6 6v10H24" /><circle cx="13" cy="21" r="4" />
             </svg>
             <p className="text-xs font-mono text-center">No extensions installed</p>
-            <p className="text-[9px] text-muted/70 font-mono text-center leading-relaxed">
+            <p className="text-[10px] text-muted/70 font-mono text-center leading-relaxed">
               Install an extension below — it will be remembered across browser restarts
             </p>
           </div>
@@ -143,8 +151,10 @@ export default function ExtensionsPanel() {
             <ExtensionCard
               key={ext.id}
               ext={ext}
+              confirming={confirmRemoveId === ext.id}
               onLaunch={() => handleLaunch(ext)}
               onRemove={() => handleRemove(ext)}
+              onCancelRemove={() => setConfirmRemoveId(null)}
               onToggle={() => handleToggle(ext)}
             />
           ))
@@ -153,7 +163,7 @@ export default function ExtensionsPanel() {
 
       {/* ── Install section ── */}
       <div className="border-t border-border p-3 space-y-2.5">
-        <p className="text-[9px] text-muted/70 font-mono uppercase tracking-wider">Install Extensions</p>
+        <p className="text-[10px] text-muted/70 font-mono uppercase tracking-wider">Install Extensions</p>
 
         {/* Firefox AMO — primary */}
         <button
@@ -162,10 +172,35 @@ export default function ExtensionsPanel() {
         >
           🦊  Firefox Add-ons (AMO)
         </button>
-        <button onClick={handleInstallBySlug} disabled={loading}
-          className="w-full text-[10px] font-mono text-text/80 border border-border hover:border-saffron hover:text-saffron py-1.5 transition-colors disabled:opacity-50">
-          {loading ? '…installing' : '⬇  Install by slug / name'}
-        </button>
+        {showSlugInput ? (
+          <div className="flex flex-col gap-1.5">
+            <input
+              type="text"
+              value={slugInput}
+              onChange={e => setSlugInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleInstallBySlug(); if (e.key === 'Escape') { setShowSlugInput(false); setSlugInput('') } }}
+              placeholder="e.g. ublock-origin"
+              autoFocus
+              className="w-full bg-obsidian border border-saffron text-xs font-mono text-text px-2.5 py-1.5 outline-none placeholder:text-muted/50"
+            />
+            <div className="flex gap-1.5">
+              <button onClick={handleInstallBySlug} disabled={!slugInput.trim() || loading}
+                className="flex-1 text-xs font-mono bg-saffron text-black py-1.5 font-semibold hover:bg-saffron/90 transition-colors disabled:opacity-40">
+                Install
+              </button>
+              <button onClick={() => { setShowSlugInput(false); setSlugInput('') }}
+                className="px-3 text-xs font-mono text-muted border border-border hover:border-saffron hover:text-saffron py-1.5 transition-colors">
+                Cancel
+              </button>
+            </div>
+            <p className="text-[10px] text-muted/60 font-mono">Firefox AMO slug — the part after /firefox/addon/ in the URL</p>
+          </div>
+        ) : (
+          <button onClick={() => setShowSlugInput(true)} disabled={loading}
+            className="w-full text-[10px] font-mono text-text/80 border border-border hover:border-saffron hover:text-saffron py-1.5 transition-colors disabled:opacity-50">
+            {loading ? '…installing' : '⬇  Install by slug / name'}
+          </button>
+        )}
 
         {/* Chrome Web Store */}
         <button
@@ -192,7 +227,7 @@ export default function ExtensionsPanel() {
           </p>
         )}
 
-        <p className="text-[9px] text-muted/50 font-mono leading-relaxed">
+        <p className="text-[10px] text-muted/50 font-mono leading-relaxed">
           Content-script extensions run automatically on every page. Ghost tabs are isolated — extensions don't run inside them.
         </p>
       </div>
@@ -201,10 +236,12 @@ export default function ExtensionsPanel() {
 }
 
 // ── Extension card ────────────────────────────────────────────────────────────
-function ExtensionCard({ ext, onLaunch, onRemove, onToggle }: {
+function ExtensionCard({ ext, confirming, onLaunch, onRemove, onCancelRemove, onToggle }: {
   ext: Extension
+  confirming?: boolean
   onLaunch(): void
   onRemove(): void
+  onCancelRemove(): void
   onToggle(): void
 }) {
   const [iconFailed, setIconFailed] = useState(false)
@@ -236,22 +273,22 @@ function ExtensionCard({ ext, onLaunch, onRemove, onToggle }: {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-1.5">
-            <p className="text-[11px] font-mono text-text font-medium truncate">{ext.name || ext.id}</p>
-            {ext.version && <span className="text-[9px] font-mono text-muted/60 shrink-0">v{ext.version}</span>}
+            <p className="text-xs font-mono text-text font-medium truncate">{ext.name || ext.id}</p>
+            {ext.version && <span className="text-[10px] font-mono text-muted/60 shrink-0">v{ext.version}</span>}
           </div>
           {ext.description && (
-            <p className="text-[9px] text-muted/70 font-mono mt-0.5 line-clamp-1 leading-relaxed">
+            <p className="text-[10px] text-muted/70 font-mono mt-0.5 line-clamp-1 leading-relaxed">
               {ext.description}
             </p>
           )}
           {/* Status badge */}
           <div className="flex gap-1 mt-1">
             {!isEnabled ? (
-              <span className="text-[8px] font-mono border border-border text-muted px-1.5 py-px">DISABLED</span>
+              <span className="text-[10px] font-mono border border-border text-muted px-1.5 py-px">DISABLED</span>
             ) : hasPage ? (
-              <span className="text-[8px] font-mono border border-saffron/50 text-saffron px-1.5 py-px">POPUP</span>
+              <span className="text-[10px] font-mono border border-saffron/50 text-saffron px-1.5 py-px">POPUP</span>
             ) : (
-              <span className="text-[8px] font-mono border border-green-700/50 text-green-400/80 px-1.5 py-px">● RUNNING</span>
+              <span className="text-[10px] font-mono border border-green-700/50 text-green-400/80 px-1.5 py-px">● RUNNING</span>
             )}
           </div>
         </div>
@@ -279,38 +316,57 @@ function ExtensionCard({ ext, onLaunch, onRemove, onToggle }: {
 
       {/* Action bar */}
       <div className="flex gap-0 border-t border-border/20">
-        {/* Launch — disabled when extension is off */}
-        <button
-          onClick={isEnabled ? onLaunch : undefined}
-          title={!isEnabled ? 'Enable extension first' : isContentOnly ? 'No popup page — will try to open extension UI' : 'Open extension'}
-          disabled={!isEnabled}
-          className={[
-            'flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono border-r border-border/30 transition-colors',
-            isEnabled && hasPage
-              ? 'text-saffron bg-saffron/5 hover:bg-saffron hover:text-black'
-              : isEnabled
-              ? 'text-muted/60 hover:text-saffron hover:bg-saffron/5'
-              : 'text-muted/30 cursor-not-allowed',
-          ].join(' ')}
-        >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-            <path d="M2 1l7 4-7 4V1z" />
-          </svg>
-          {hasPage ? 'Launch' : 'Open'}
-        </button>
+        {confirming ? (
+          /* Inline confirm row — replaces action bar while confirming removal */
+          <div className="confirm-row flex-1 flex items-center justify-between px-3 py-1.5 bg-red-950/30">
+            <span className="text-[10px] font-mono text-red-400">Remove &ldquo;{ext.name || ext.id}&rdquo;?</span>
+            <div className="flex gap-1.5">
+              <button onClick={onRemove}
+                className="text-[10px] font-mono px-2 py-0.5 bg-red-700/60 hover:bg-red-600 text-white transition-colors">
+                Remove
+              </button>
+              <button onClick={onCancelRemove}
+                className="text-[10px] font-mono px-2 py-0.5 border border-border/60 text-muted hover:text-text transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Launch — disabled when extension is off */}
+            <button
+              onClick={isEnabled ? onLaunch : undefined}
+              title={!isEnabled ? 'Enable extension first' : isContentOnly ? 'No popup page — will try to open extension UI' : 'Open extension'}
+              disabled={!isEnabled}
+              className={[
+                'flex-1 flex items-center justify-center gap-1.5 py-2 text-[10px] font-mono border-r border-border/30 transition-colors',
+                isEnabled && hasPage
+                  ? 'text-saffron bg-saffron/5 hover:bg-saffron hover:text-black'
+                  : isEnabled
+                  ? 'text-muted/60 hover:text-saffron hover:bg-saffron/5'
+                  : 'text-muted/30 cursor-not-allowed',
+              ].join(' ')}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path d="M2 1l7 4-7 4V1z" />
+              </svg>
+              {hasPage ? 'Launch' : 'Open'}
+            </button>
 
-        {/* Remove */}
-        <button
-          onClick={onRemove}
-          title="Remove extension"
-          className="w-8 flex items-center justify-center py-2 text-muted/50 hover:text-red-400 hover:bg-red-900/10 transition-colors"
-        >
-          <svg width="10" height="11" viewBox="0 0 10 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
-            <polyline points="1,2.5 9,2.5" />
-            <path d="M2.5 2.5V9.5h5V2.5" />
-            <line x1="4" y1="0.5" x2="6" y2="0.5" />
-          </svg>
-        </button>
+            {/* Remove — first click shows inline confirm */}
+            <button
+              onClick={onRemove}
+              title="Remove extension"
+              className="w-8 flex items-center justify-center py-2 text-muted/50 hover:text-red-400 hover:bg-red-900/10 transition-colors"
+            >
+              <svg width="10" height="11" viewBox="0 0 10 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
+                <polyline points="1,2.5 9,2.5" />
+                <path d="M2.5 2.5V9.5h5V2.5" />
+                <line x1="4" y1="0.5" x2="6" y2="0.5" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

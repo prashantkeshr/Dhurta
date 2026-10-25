@@ -27,19 +27,55 @@ interface Props {
   activeTabTitle?: string
 }
 
+function friendlyError(err: string): string {
+  if (err.includes('ECONNREFUSED') || err.includes('Failed to fetch') || err.includes('NetworkError')) {
+    return 'Cannot connect — is Ollama running? Start it with: ollama serve'
+  }
+  if (err.includes('503') || err.includes('Service Unavailable')) {
+    return 'Model server unavailable — check that your local AI is running'
+  }
+  if (err.includes('404') || err.includes('Not Found')) {
+    return 'Model not found — check the model name in settings'
+  }
+  if (err.includes('401') || err.includes('Unauthorized')) {
+    return 'Authentication failed — check your API key in settings'
+  }
+  if (err.includes('timeout') || err.includes('Timeout')) {
+    return 'Request timed out — the model may be loading, try again'
+  }
+  return err
+}
+
 export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: Props) {
   const stored = loadSettings()
   const [endpoint, setEndpoint] = useState<string>(stored.endpoint ?? 'http://localhost:11434')
   const [model, setModel] = useState<string>(stored.model ?? 'llama3')
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [loadingModels, setLoadingModels] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [streamBuffer, setStreamBuffer] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pageLoading, setPageLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const fetchModels = useCallback(async (ep: string) => {
+    setLoadingModels(true)
+    try {
+      const base = ep.replace(/\/$/, '')
+      const res = await fetch(`${base}/api/tags`, { signal: AbortSignal.timeout(4000) })
+      if (res.ok) {
+        const data = await res.json()
+        const names: string[] = (data.models ?? []).map((m: { name: string }) => m.name)
+        setAvailableModels(names)
+      }
+    } catch {}
+    setLoadingModels(false)
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -48,6 +84,8 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
   const persistSettings = useCallback((ep: string, mod: string) => {
     saveSettings({ endpoint: ep, model: mod })
   }, [])
+
+  const SYSTEM_PROMPT = `You are an AI assistant embedded in Dhurta Browser, a privacy-focused desktop browser. Help the user browse the web, understand page content, and answer questions. Be concise and helpful. When analyzing web page content, focus on the most useful information.`
 
   const send = useCallback(async (userText: string, contextPrefix?: string) => {
     if (!userText.trim() || streaming) return
@@ -65,6 +103,11 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
     const base = endpoint.replace(/\/$/, '')
     const url = `${base}/v1/chat/completions`
 
+    const apiMessages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...history.map(m => ({ role: m.role, content: m.content })),
+    ]
+
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -72,14 +115,14 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
         signal: abortRef.current.signal,
         body: JSON.stringify({
           model,
-          messages: history.map(m => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
           stream: true,
         }),
       })
 
       if (!res.ok) {
         const txt = await res.text().catch(() => res.statusText)
-        throw new Error(`${res.status}: ${txt}`)
+        throw new Error(friendlyError(`${res.status}: ${txt}`))
       }
 
       const reader = res.body!.getReader()
@@ -109,7 +152,7 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
       setMessages(prev => [...prev, { role: 'assistant', content: assistant }])
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        setError(err.message ?? 'Request failed')
+        setError(friendlyError(err.message ?? 'Request failed'))
       }
     } finally {
       setStreaming(false)
@@ -120,6 +163,7 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
 
   const handleSummarizePage = useCallback(async () => {
     if (!isElectron || !activeTabId) return
+    setPageLoading(true)
     try {
       const text = await window.dhurta.getPageTextForAI(activeTabId)
       if (!text) { setError('Could not extract page content.'); return }
@@ -129,7 +173,9 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
         `Page: "${title}"\n\nContent:\n${text}`
       )
     } catch (e: any) {
-      setError(e.message ?? 'Failed to get page content')
+      setError(friendlyError(e.message ?? 'Failed to get page content'))
+    } finally {
+      setPageLoading(false)
     }
   }, [activeTabId, activeTabTitle, activeTabUrl, send])
 
@@ -160,7 +206,7 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
             <path d="M2 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" />
           </svg>
           <span className="font-medium text-[12px] tracking-wide">AI Assistant</span>
-          <span className="text-[9px] text-muted bg-surface/60 border border-border px-1 py-0.5 rounded">local</span>
+          <span className="text-[10px] text-muted bg-surface/60 border border-border px-1 py-0.5 rounded">local</span>
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
@@ -193,24 +239,51 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
           <input
             value={endpoint}
             onChange={e => { setEndpoint(e.target.value); persistSettings(e.target.value, model) }}
+            onBlur={e => fetchModels(e.target.value)}
             placeholder="http://localhost:11434"
             className="w-full bg-surface border border-border text-text text-[11px] px-2 py-1 rounded outline-none focus:border-saffron/60 font-mono"
           />
-          <label className="block text-[11px] text-muted mb-0.5 mt-1.5">Model</label>
-          <input
-            value={model}
-            onChange={e => { setModel(e.target.value); persistSettings(endpoint, e.target.value) }}
-            placeholder="llama3"
-            className="w-full bg-surface border border-border text-text text-[11px] px-2 py-1 rounded outline-none focus:border-saffron/60 font-mono"
-          />
-          <p className="text-[9px] text-muted/60 mt-1">
-            Ollama default: <span className="font-mono">localhost:11434</span> · LM Studio: <span className="font-mono">localhost:1234</span>
+          <div className="flex items-center justify-between mt-1.5">
+            <label className="block text-[11px] text-muted">Model</label>
+            <button onClick={() => fetchModels(endpoint)} disabled={loadingModels}
+              className="text-[10px] text-saffron hover:text-saffron/70 transition-colors disabled:opacity-40 font-mono">
+              {loadingModels ? '…' : '↺ detect'}
+            </button>
+          </div>
+          {availableModels.length > 0 ? (
+            <select
+              value={model}
+              onChange={e => { setModel(e.target.value); persistSettings(endpoint, e.target.value) }}
+              className="w-full bg-surface border border-border text-text text-[11px] px-2 py-1 rounded outline-none focus:border-saffron/60 font-mono"
+            >
+              {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          ) : (
+            <input
+              value={model}
+              onChange={e => { setModel(e.target.value); persistSettings(endpoint, e.target.value) }}
+              placeholder="llama3"
+              className="w-full bg-surface border border-border text-text text-[11px] px-2 py-1 rounded outline-none focus:border-saffron/60 font-mono"
+            />
+          )}
+          <p className="text-[10px] text-muted/60 mt-1">
+            Ollama: <span className="font-mono">localhost:11434</span> · LM Studio: <span className="font-mono">localhost:1234</span>
           </p>
         </div>
       )}
 
+      {/* Page-content loading indicator */}
+      {pageLoading && (
+        <div className="px-3 py-2 shrink-0 border-b border-border bg-obsidian/40">
+          <div className="flex items-center gap-2 text-[11px] text-muted">
+            <span className="inline-block w-3 h-3 border border-saffron border-t-transparent rounded-full animate-spin" />
+            Reading page content…
+          </div>
+        </div>
+      )}
+
       {/* Quick actions */}
-      {messages.length === 0 && !streaming && (
+      {messages.length === 0 && !streaming && !pageLoading && (
         <div className="px-3 pt-4 pb-2 shrink-0">
           <p className="text-[11px] text-muted mb-2">Quick actions</p>
           <div className="flex flex-col gap-1.5">
@@ -325,7 +398,7 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
             </button>
           )}
         </div>
-        <p className="text-[9px] text-muted/40 mt-1">All processing is local — no data leaves your machine.</p>
+        <p className="text-[10px] text-muted/40 mt-1">All processing is local — no data leaves your machine.</p>
       </div>
     </div>
   )
@@ -418,7 +491,7 @@ function MessageBubble({ message, streaming }: { message: Message; streaming?: b
   const isUser = message.role === 'user'
   return (
     <div className={['flex flex-col gap-0.5', isUser ? 'items-end' : 'items-start'].join(' ')}>
-      <span className="text-[9px] text-muted/60 px-1">{isUser ? 'you' : 'assistant'}</span>
+      <span className="text-[10px] text-muted/60 px-1">{isUser ? 'you' : 'assistant'}</span>
       <div
         className={[
           'max-w-[92%] px-2.5 py-2 rounded text-[12px] break-words',

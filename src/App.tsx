@@ -256,8 +256,8 @@ export default function App() {
     }).catch(() => {})
   }, [])
 
-  // Load wallpapers on mount and whenever the settings panel closes
-  useEffect(() => { loadWallpapers() }, [activePanel, loadWallpapers])
+  // Load wallpapers once on mount — real-time updates come via dhurta:settingChanged
+  useEffect(() => { loadWallpapers() }, [loadWallpapers])
 
   // Real-time reload when SettingsPanel saves wallpapers
   useEffect(() => {
@@ -284,11 +284,11 @@ export default function App() {
 
   const isInternalPage = isNewTab || activeDhurtaPage !== null
 
-  // Load security status on mount / panel close, and keep in sync via real-time events
+  // Load security status once on mount — real-time sync via dhurta:settingChanged below
   useEffect(() => {
     if (!isElectron) return
     window.dhurta.getSecuritySettings().then(setSecurityStatus).catch(() => {})
-  }, [activePanel])
+  }, [])
 
   useEffect(() => {
     if (!isElectron) return
@@ -554,7 +554,7 @@ export default function App() {
                 <button
                   onClick={() => setActivePanel(null)}
                   title="Close panel (Esc)"
-                  className="absolute top-2 right-2 z-50 w-5 h-5 flex items-center justify-center text-muted hover:text-saffron bg-surface/80 border border-border/50 hover:border-saffron transition-colors text-[10px]"
+                  className="absolute top-2 right-2 z-50 w-7 h-7 flex items-center justify-center text-muted hover:text-saffron bg-surface/80 border border-border/50 hover:border-saffron transition-colors text-xs"
                 >✕</button>
               </div>
             )}

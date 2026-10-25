@@ -67,7 +67,7 @@ function HistoryTab({ onNavigate }: { onNavigate: (url: string) => void }) {
             }
             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onNavigate(e.url)}>
               <p className="text-[11px] font-mono text-text truncate">{e.title || e.url}</p>
-              <p className="text-[9px] font-mono text-muted truncate">{fmt(e.visited_at)}</p>
+              <p className="text-[10px] font-mono text-muted truncate">{fmt(e.visited_at)}</p>
             </div>
             <button onClick={() => del(e.id)} className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger text-[10px] shrink-0">✕</button>
           </div>
@@ -119,7 +119,7 @@ function BookmarksTab({ onNavigate }: { onNavigate: (url: string) => void }) {
             }
             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onNavigate(b.url)}>
               <p className="text-[11px] font-mono text-text truncate">{b.title || b.url}</p>
-              <p className="text-[9px] font-mono text-muted truncate">{b.url}</p>
+              <p className="text-[10px] font-mono text-muted truncate">{b.url}</p>
             </div>
             <button onClick={() => del(b.id)} className="opacity-0 group-hover:opacity-100 text-muted hover:text-danger text-[10px] shrink-0">✕</button>
           </div>
@@ -187,7 +187,7 @@ function DownloadsTab() {
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-[13px]">{done ? '✓' : d.state === 'progressing' ? '⬇' : '✕'}</span>
                 <span className="flex-1 text-[11px] font-mono text-text truncate">{d.filename}</span>
-                <span className="text-[9px] font-mono text-muted shrink-0">{fmtBytes(d.totalBytes)}</span>
+                <span className="text-[10px] font-mono text-muted shrink-0">{fmtBytes(d.totalBytes)}</span>
               </div>
               {d.state === 'progressing' && (
                 <div className="h-0.5 bg-border rounded-full overflow-hidden">
@@ -196,8 +196,8 @@ function DownloadsTab() {
               )}
               {done && (
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 mt-1">
-                  <button onClick={() => api().openDownloadItem(d.id)} className="text-[9px] font-mono text-accent hover:underline">Open</button>
-                  <button onClick={() => api().showDownloadInFolder(d.id)} className="text-[9px] font-mono text-muted hover:text-accent">Show in folder</button>
+                  <button onClick={() => api().openDownloadItem(d.id)} className="text-[10px] font-mono text-accent hover:underline">Open</button>
+                  <button onClick={() => api().showDownloadInFolder(d.id)} className="text-[10px] font-mono text-muted hover:text-accent">Show in folder</button>
                 </div>
               )}
             </div>

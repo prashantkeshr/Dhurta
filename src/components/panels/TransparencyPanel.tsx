@@ -8,7 +8,7 @@ type Status = 'idle' | 'loading' | 'done' | 'error'
 function Card({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="border border-border p-3 space-y-1.5">
-      <p className="text-[9px] font-mono text-saffron uppercase tracking-widest">{label}</p>
+      <p className="text-[10px] font-mono text-saffron uppercase tracking-widest">{label}</p>
       {children}
     </div>
   )
@@ -136,10 +136,10 @@ export default function TransparencyPanel() {
             <Card label="Extensions">
               <Row k="Loaded" v={data.extensions.count} />
               {data.extensions.names.map((n) => (
-                <p key={n} className="text-[9px] font-mono text-muted pl-2">· {n}</p>
+                <p key={n} className="text-[10px] font-mono text-muted pl-2">· {n}</p>
               ))}
               {data.extensions.count === 0 && (
-                <p className="text-[9px] font-mono text-muted">None installed</p>
+                <p className="text-[10px] font-mono text-muted">None installed</p>
               )}
             </Card>
 
@@ -154,11 +154,11 @@ export default function TransparencyPanel() {
 
             {/* Telemetry toggle */}
             <div className="border border-border p-3 space-y-2">
-              <p className="text-[9px] font-mono text-saffron uppercase tracking-widest">Opt-in Telemetry</p>
+              <p className="text-[10px] font-mono text-saffron uppercase tracking-widest">Opt-in Telemetry</p>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-mono text-text/80">Send anonymous crash reports</p>
-                  <p className="text-[9px] font-mono text-muted mt-0.5">No URLs, no history, no identity — only crash stack traces and Dhurta version.</p>
+                  <p className="text-[10px] font-mono text-muted mt-0.5">No URLs, no history, no identity — only crash stack traces and Dhurta version.</p>
                 </div>
                 <button
                   onClick={() => toggleTelemetry(!telemetry)}
@@ -177,33 +177,33 @@ export default function TransparencyPanel() {
               {/* Manual send crash report */}
               {data.crashLogs > 0 && (
                 <div className="pt-1 border-t border-border/50 space-y-1">
-                  <p className="text-[9px] font-mono text-muted">{data.crashLogs} crash log(s) queued.</p>
+                  <p className="text-[10px] font-mono text-muted">{data.crashLogs} crash log(s) queued.</p>
                   <button
                     onClick={handleReport}
                     disabled={reportStatus === 'loading'}
-                    className="w-full text-[9px] font-mono border border-border hover:border-saffron text-muted hover:text-saffron py-1 transition-colors disabled:opacity-50"
+                    className="w-full text-[10px] font-mono border border-border hover:border-saffron text-muted hover:text-saffron py-1 transition-colors disabled:opacity-50"
                   >
                     {reportStatus === 'loading' ? 'Sending…' :
                      reportStatus === 'done'    ? 'Sent ✓' :
                      reportStatus === 'error'   ? 'Failed — retry' :
                      'Send Crash Report Now'}
                   </button>
-                  {reportUrl  && <p className="text-[9px] font-mono text-green-400 break-all">Sent: {reportUrl}</p>}
-                  {reportErr  && <p className="text-[9px] font-mono text-red-400 break-all">{reportErr}</p>}
+                  {reportUrl  && <p className="text-[10px] font-mono text-green-400 break-all">Sent: {reportUrl}</p>}
+                  {reportErr  && <p className="text-[10px] font-mono text-red-400 break-all">{reportErr}</p>}
                 </div>
               )}
             </div>
 
             {/* What is NOT stored */}
             <div className="border border-border/40 p-3 space-y-1">
-              <p className="text-[9px] font-mono text-saffron uppercase tracking-widest">What Dhurta does NOT store</p>
+              <p className="text-[10px] font-mono text-saffron uppercase tracking-widest">What Dhurta does NOT store</p>
               {[
                 'Your real IP address (Ghost Mode uses Tor)',
                 'Passwords or payment data',
                 'Device hardware identifiers',
                 'Any data on remote servers (everything stays local)',
               ].map((line) => (
-                <p key={line} className="text-[9px] font-mono text-muted">✓ {line}</p>
+                <p key={line} className="text-[10px] font-mono text-muted">✓ {line}</p>
               ))}
             </div>
           </>
@@ -223,7 +223,7 @@ export default function TransparencyPanel() {
         </button>
         <button
           onClick={load}
-          className="w-full text-[9px] font-mono text-muted/50 hover:text-muted py-1 transition-colors"
+          className="w-full text-[10px] font-mono text-muted/50 hover:text-muted py-1 transition-colors"
         >
           Refresh
         </button>

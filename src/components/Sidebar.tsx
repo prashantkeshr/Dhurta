@@ -54,7 +54,7 @@ function SecBtn({ children, label, active, danger, onClick }: {
       className={[
         'w-9 h-9 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
         active  ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]'
-        : danger ? 'text-text/35 hover:text-[#FF4500] hover:bg-white/5'
+        : danger ? 'text-text/45 hover:text-[#FF4500] hover:bg-white/5'
         : 'text-text/40 hover:text-saffron hover:bg-white/5',
       ].join(' ')}
     >
@@ -73,7 +73,7 @@ function UtilBtn({ children, label, active, onClick }: {
       onClick={onClick}
       className={[
         'w-8 h-8 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
-        active ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]' : 'text-text/30 hover:text-text/70 hover:bg-white/5',
+        active ? 'text-saffron bg-saffron/10 shadow-[inset_2px_0_0_#FF4500]' : 'text-text/50 hover:text-text/80 hover:bg-white/5',
       ].join(' ')}
     >
       {children}

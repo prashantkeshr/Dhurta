@@ -78,7 +78,7 @@ const GROUPS: ShortcutGroup[] = [
 
 function Key({ label }: { label: string }) {
   return (
-    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-5 px-1.5 border border-border bg-obsidian text-[9px] font-mono text-muted rounded-none">
+    <kbd className="inline-flex items-center justify-center min-w-[1.5rem] h-5 px-1.5 border border-border bg-obsidian text-[10px] font-mono text-muted rounded-none">
       {label}
     </kbd>
   )
@@ -98,7 +98,7 @@ export default function ShortcutsPanel() {
       <div className="flex-1 overflow-y-auto">
         {GROUPS.map(group => (
           <section key={group.title} className="border-b border-border">
-            <p className="text-[9px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
+            <p className="text-[10px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
               {group.title}
             </p>
             {group.items.map(item => (
@@ -107,7 +107,7 @@ export default function ShortcutsPanel() {
                 <div className="flex items-center gap-0.5 shrink-0">
                   {item.keys.map((k, i) => (
                     <React.Fragment key={i}>
-                      {i > 0 && <span className="text-[8px] text-muted/50 font-mono mx-0.5">+</span>}
+                      {i > 0 && <span className="text-[10px] text-muted/50 font-mono mx-0.5">+</span>}
                       <Key label={k} />
                     </React.Fragment>
                   ))}
@@ -120,7 +120,7 @@ export default function ShortcutsPanel() {
 
       {/* Footer */}
       <div className="px-3 py-2 border-t border-border shrink-0">
-        <p className="text-[9px] font-mono text-muted/60">
+        <p className="text-[10px] font-mono text-muted/60">
           Shortcuts apply when focus is in the browser chrome, not inside a web page.
         </p>
       </div>

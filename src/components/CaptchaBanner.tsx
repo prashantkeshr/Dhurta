@@ -141,11 +141,11 @@ export default function CaptchaBanner({ activeTabId, ghostMode, onNavigate }: Pr
         {isGoogle && !ghostMode && query && (
           <>
             <button onClick={switchToBrave}
-              className="px-2.5 py-0.5 bg-[#FF4500] text-black text-[9px] font-mono hover:bg-[#FF5a1a] transition-colors shrink-0">
+              className="px-2.5 py-0.5 bg-[#FF4500] text-black text-[10px] font-mono hover:bg-[#FF5a1a] transition-colors shrink-0">
               → Brave Search
             </button>
             <button onClick={switchToDDG}
-              className="px-2 py-0.5 border border-[#f8a000]/40 text-[#f8a000] text-[9px] font-mono hover:bg-[#f8a000]/10 transition-colors shrink-0">
+              className="px-2 py-0.5 border border-[#f8a000]/40 text-[#f8a000] text-[10px] font-mono hover:bg-[#f8a000]/10 transition-colors shrink-0">
               DuckDuckGo
             </button>
           </>
@@ -154,13 +154,13 @@ export default function CaptchaBanner({ activeTabId, ghostMode, onNavigate }: Pr
         {/* Non-Google CAPTCHA: new circuit if in Ghost Mode */}
         {!isGoogle && ghostMode && (
           <button onClick={newCircuit} disabled={busy}
-            className="px-2 py-0.5 border border-[#f8a000]/40 text-[#f8a000] text-[9px] font-mono hover:bg-[#f8a000]/10 disabled:opacity-40 transition-colors shrink-0">
+            className="px-2 py-0.5 border border-[#f8a000]/40 text-[#f8a000] text-[10px] font-mono hover:bg-[#f8a000]/10 disabled:opacity-40 transition-colors shrink-0">
             New circuit
           </button>
         )}
 
         <button onClick={bypass}
-          className="px-2 py-0.5 border border-border text-muted text-[9px] font-mono hover:text-text transition-colors shrink-0">
+          className="px-2 py-0.5 border border-border text-muted text-[10px] font-mono hover:text-text transition-colors shrink-0">
           Open normally
         </button>
 
@@ -170,7 +170,7 @@ export default function CaptchaBanner({ activeTabId, ghostMode, onNavigate }: Pr
 
       {/* Tip for non-ghost Google CAPTCHA */}
       {isGoogle && !ghostMode && (
-        <div className="px-3 pb-1.5 text-[9px] font-mono text-[#f8a000]/40 border-t border-[#f8a000]/8">
+        <div className="px-3 pb-1.5 text-[10px] font-mono text-[#f8a000]/40 border-t border-[#f8a000]/8">
           Google flagged your IP. Switch to Brave Search or DuckDuckGo — they work without CAPTCHA.
         </div>
       )}

@@ -144,7 +144,7 @@ export default function DownloadsPanel() {
 
         {active.length > 0 && (
           <section className="border-b border-border">
-            <p className="text-[9px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
+            <p className="text-[10px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
               Active
             </p>
             {active.map(d => (
@@ -161,7 +161,7 @@ export default function DownloadsPanel() {
 
         {completed.length > 0 && (
           <section className="border-b border-border">
-            <p className="text-[9px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
+            <p className="text-[10px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
               Completed
             </p>
             {completed.map(d => (
@@ -175,7 +175,7 @@ export default function DownloadsPanel() {
 
         {failed.length > 0 && (
           <section>
-            <p className="text-[9px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
+            <p className="text-[10px] font-mono text-muted uppercase tracking-widest px-3 pt-2.5 pb-1 bg-obsidian/40">
               Failed / Cancelled
             </p>
             {failed.map(d => (
@@ -190,7 +190,7 @@ export default function DownloadsPanel() {
 
       {/* Footer */}
       <div className="px-3 py-2 border-t border-border shrink-0">
-        <p className="text-[9px] font-mono text-muted">
+        <p className="text-[10px] font-mono text-muted">
           Saved to <span className="text-text">~/Downloads</span> automatically
         </p>
       </div>
@@ -248,7 +248,7 @@ function DownloadRow({ d, onRemove, onDeleteFile, onPause, onResume, onCancel }:
 
           {/* Size line */}
           <div className="flex items-center justify-between mt-0.5 gap-2">
-            <span className="text-[9px] font-mono text-muted truncate">
+            <span className="text-[10px] font-mono text-muted truncate">
               {isRunning && d.totalBytes > 0 && `${fmtBytes(d.receivedBytes)} / ${fmtBytes(d.totalBytes)}`}
               {isRunning && d.totalBytes <= 0 && `${fmtBytes(d.receivedBytes)} downloaded`}
               {isDone    && (d.totalBytes > 0 ? fmtBytes(d.totalBytes) : 'Done')}
@@ -269,8 +269,8 @@ function DownloadRow({ d, onRemove, onDeleteFile, onPause, onResume, onCancel }:
           {/* Speed + ETA */}
           {isActive && (speedStr || etaStr) && (
             <div className="flex items-center gap-2 mt-0.5">
-              {speedStr && <span className="text-[9px] font-mono text-saffron/80">{speedStr}</span>}
-              {etaStr   && <span className="text-[9px] font-mono text-muted">{etaStr}</span>}
+              {speedStr && <span className="text-[10px] font-mono text-saffron/80">{speedStr}</span>}
+              {etaStr   && <span className="text-[10px] font-mono text-muted">{etaStr}</span>}
             </div>
           )}
 
@@ -302,7 +302,7 @@ function DownloadRow({ d, onRemove, onDeleteFile, onPause, onResume, onCancel }:
 
           {/* Completed: save path */}
           {isDone && d.savePath && (
-            <p className="text-[9px] font-mono text-muted/70 truncate mt-0.5" title={d.savePath}>
+            <p className="text-[10px] font-mono text-muted/70 truncate mt-0.5" title={d.savePath}>
               {d.savePath}
             </p>
           )}
@@ -385,7 +385,7 @@ function PanelBtn({ children, onClick, title, highlight, danger }: {
       onClick={onClick}
       title={title}
       className={[
-        'flex items-center justify-center gap-1 px-1.5 py-0.5 text-[9px] font-mono border transition-colors shrink-0',
+        'flex items-center justify-center gap-1 px-1.5 py-0.5 text-[10px] font-mono border transition-colors shrink-0',
         highlight ? 'border-saffron/60 text-saffron hover:bg-saffron hover:text-black'
           : danger ? 'border-transparent text-muted/50 hover:border-red-500/50 hover:text-red-400'
           : 'border-transparent text-muted/50 hover:border-border hover:text-muted',

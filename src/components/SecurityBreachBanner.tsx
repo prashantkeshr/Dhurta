@@ -102,7 +102,7 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
         <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
           {active.map(t => (
             <span key={t.id}
-              className="text-[9px] font-mono text-[#FF4500]/90 bg-[#FF4500]/10 border border-[#FF4500]/25 px-1.5 py-0.5 rounded-sm shrink-0 whitespace-nowrap"
+              className="text-[10px] font-mono text-[#FF4500]/90 bg-[#FF4500]/10 border border-[#FF4500]/25 px-1.5 py-0.5 rounded-sm shrink-0 whitespace-nowrap"
             >
               {t.short}
             </span>
@@ -113,7 +113,7 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
         <button
           onClick={fixAll}
           disabled={fixing !== null}
-          className="text-[9px] font-mono px-2.5 py-0.5 bg-[#FF4500] text-black hover:bg-[#FF5a1a] disabled:opacity-50 transition-all duration-100 active:scale-[0.93] shrink-0"
+          className="text-[10px] font-mono px-2.5 py-0.5 bg-[#FF4500] text-black hover:bg-[#FF5a1a] disabled:opacity-50 transition-all duration-100 active:scale-[0.93] shrink-0"
         >
           {fixing === 'all' ? 'Fixing…' : 'Fix All'}
         </button>
@@ -146,13 +146,13 @@ export default function SecurityBreachBanner({ securityStatus, ghostMode, onOpen
               <button
                 onClick={() => applyFix(t)}
                 disabled={fixing !== null}
-                className="text-[9px] font-mono px-2 py-0.5 border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 disabled:opacity-40 transition-colors shrink-0"
+                className="text-[10px] font-mono px-2 py-0.5 border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 disabled:opacity-40 transition-colors shrink-0"
               >
                 {fixing === t.id ? '…' : t.fixLabel}
               </button>
               <button
                 onClick={onOpenSecurity}
-                className="text-[9px] font-mono text-[#FF4500]/40 hover:text-[#FF4500]/70 transition-colors shrink-0"
+                className="text-[10px] font-mono text-[#FF4500]/40 hover:text-[#FF4500]/70 transition-colors shrink-0"
               >
                 details
               </button>

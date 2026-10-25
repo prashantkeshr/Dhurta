@@ -116,7 +116,7 @@ export default function DownloadsPage() {
             </svg>
             <h1 className="text-sm font-mono text-text tracking-widest uppercase">Downloads</h1>
           </div>
-          <p className="text-[9px] text-muted font-mono mt-0.5 ml-[23px]">
+          <p className="text-[10px] text-muted font-mono mt-0.5 ml-[23px]">
             {active.length > 0 ? `${active.length} active · ` : ''}{downloads.length} total
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function DownloadsPage() {
               <line x1="2" y1="44" x2="42" y2="44" />
             </svg>
             <p className="text-xs font-mono">No downloads yet</p>
-            <p className="text-[9px] font-mono text-center opacity-60 leading-relaxed">
+            <p className="text-[10px] font-mono text-center opacity-60 leading-relaxed">
               Files you download appear here with live progress
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function DownloadsPage() {
 
 function SectionHeader({ label, count }: { label: string; count: number }) {
   return (
-    <p className="text-[9px] font-mono text-muted/60 uppercase tracking-widest mb-2 pb-1 border-b border-border/30">
+    <p className="text-[10px] font-mono text-muted/60 uppercase tracking-widest mb-2 pb-1 border-b border-border/30">
       {label} · {count}
     </p>
   )
@@ -299,25 +299,25 @@ function DownloadRow({ d, onRemove, onDeleteFile, onPause, onResume, onCancel }:
         {/* Size / path line */}
         <div className="flex items-center gap-2 mt-0.5">
           {isRunning && (
-            <span className="text-[9px] font-mono text-muted">
+            <span className="text-[10px] font-mono text-muted">
               {fmtBytes(d.receivedBytes)}{d.totalBytes > 0 ? ` / ${fmtBytes(d.totalBytes)}` : ''}
             </span>
           )}
           {isActive && d.speed && d.speed > 0 && (
-            <span className="text-[9px] font-mono text-saffron/80">{fmtBytes(d.speed)}/s</span>
+            <span className="text-[10px] font-mono text-saffron/80">{fmtBytes(d.speed)}/s</span>
           )}
           {isActive && d.speed && d.speed > 0 && d.totalBytes > 0 && (() => {
             const secs = Math.ceil((d.totalBytes - d.receivedBytes) / d.speed)
             const eta = secs < 60 ? `${secs}s` : secs < 3600 ? `${Math.ceil(secs/60)}m` : `${Math.ceil(secs/3600)}h`
-            return <span className="text-[9px] font-mono text-muted/60">{eta} left</span>
+            return <span className="text-[10px] font-mono text-muted/60">{eta} left</span>
           })()}
           {isDone && d.savePath && (
-            <span className="text-[9px] font-mono text-muted/60 truncate flex-1" title={d.savePath}>
+            <span className="text-[10px] font-mono text-muted/60 truncate flex-1" title={d.savePath}>
               {d.savePath}
             </span>
           )}
           {(isDone || isFailed) && (
-            <span className="text-[9px] font-mono text-muted/40 shrink-0">{fmtDate(d.startTime)}</span>
+            <span className="text-[10px] font-mono text-muted/40 shrink-0">{fmtDate(d.startTime)}</span>
           )}
         </div>
 

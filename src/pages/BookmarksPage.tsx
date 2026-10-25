@@ -56,7 +56,7 @@ export default function BookmarksPage({ onNavigate }: Props) {
             </svg>
             <h1 className="text-sm font-mono text-text tracking-widest uppercase">Bookmarks</h1>
           </div>
-          <p className="text-[9px] text-muted font-mono mt-0.5 ml-6">{bookmarks.length} saved</p>
+          <p className="text-[10px] text-muted font-mono mt-0.5 ml-6">{bookmarks.length} saved</p>
         </div>
 
         <div className="flex-1 max-w-lg">
@@ -109,7 +109,7 @@ export default function BookmarksPage({ onNavigate }: Props) {
               <path d="M2 2h32v36l-16-9-16 9V2z" />
             </svg>
             <p className="text-xs font-mono">{query ? 'No bookmarks match' : 'No bookmarks saved yet'}</p>
-            <p className="text-[9px] font-mono text-center leading-relaxed opacity-60">
+            <p className="text-[10px] font-mono text-center leading-relaxed opacity-60">
               Click the bookmark icon in the URL bar to save pages
             </p>
           </div>
@@ -161,10 +161,10 @@ function BookmarkCard({ b, editing, editTitle, editUrl, onNavigate, onEdit, onSa
           <input value={editTitle} onChange={e => onEditTitle(e.target.value)}
             placeholder="Title" className="bg-obsidian border border-saffron text-xs font-mono text-text px-2 py-1 w-full outline-none" />
           <input value={editUrl} onChange={e => onEditUrl(e.target.value)}
-            placeholder="URL" className="bg-obsidian border border-border text-[9px] font-mono text-muted px-2 py-1 w-full outline-none" />
+            placeholder="URL" className="bg-obsidian border border-border text-[10px] font-mono text-muted px-2 py-1 w-full outline-none" />
           <div className="flex gap-1">
-            <button onClick={() => onSave(b.id)} className="flex-1 text-[9px] font-mono bg-saffron text-black py-0.5 hover:bg-orange-400 transition-colors">Save</button>
-            <button onClick={onCancel} className="flex-1 text-[9px] font-mono border border-border text-muted py-0.5 hover:text-text transition-colors">Cancel</button>
+            <button onClick={() => onSave(b.id)} className="flex-1 text-[10px] font-mono bg-saffron text-black py-0.5 hover:bg-orange-400 transition-colors">Save</button>
+            <button onClick={onCancel} className="flex-1 text-[10px] font-mono border border-border text-muted py-0.5 hover:text-text transition-colors">Cancel</button>
           </div>
         </div>
       ) : (
@@ -173,11 +173,11 @@ function BookmarkCard({ b, editing, editTitle, editUrl, onNavigate, onEdit, onSa
             {b.favicon
               ? <img src={b.favicon} alt="" className="w-5 h-5 shrink-0 object-contain"
                   onError={ev => { (ev.currentTarget as HTMLImageElement).style.display = 'none' }} />
-              : <div className="w-5 h-5 shrink-0 bg-border/30 flex items-center justify-center text-[8px] font-mono text-muted uppercase">
+              : <div className="w-5 h-5 shrink-0 bg-border/30 flex items-center justify-center text-[10px] font-mono text-muted uppercase">
                   {getDomain(b.url)[0] ?? '?'}
                 </div>
             }
-            <span className="text-[9px] font-mono text-muted/60 truncate">{getDomain(b.url)}</span>
+            <span className="text-[10px] font-mono text-muted/60 truncate">{getDomain(b.url)}</span>
           </div>
           <p className="text-[11px] font-mono text-text leading-tight line-clamp-2 flex-1">{b.title || getDomain(b.url)}</p>
           {/* Hover actions */}
@@ -218,17 +218,17 @@ function BookmarkRow({ b, editing, editTitle, editUrl, onNavigate, onEdit, onSav
           <input value={editTitle} onChange={e => onEditTitle(e.target.value)} placeholder="Title"
             className="flex-1 bg-surface border border-saffron text-[11px] font-mono text-text px-2 py-0.5 outline-none" />
           <input value={editUrl} onChange={e => onEditUrl(e.target.value)} placeholder="URL"
-            className="flex-1 bg-surface border border-border text-[9px] font-mono text-muted px-2 py-0.5 outline-none" />
-          <button onClick={() => onSave(b.id)} className="text-[9px] font-mono bg-saffron text-black px-2 py-0.5 hover:bg-orange-400">Save</button>
-          <button onClick={onCancel} className="text-[9px] font-mono text-muted hover:text-text">Cancel</button>
+            className="flex-1 bg-surface border border-border text-[10px] font-mono text-muted px-2 py-0.5 outline-none" />
+          <button onClick={() => onSave(b.id)} className="text-[10px] font-mono bg-saffron text-black px-2 py-0.5 hover:bg-orange-400">Save</button>
+          <button onClick={onCancel} className="text-[10px] font-mono text-muted hover:text-text">Cancel</button>
         </div>
       ) : (
         <>
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-mono text-text truncate">{b.title || getDomain(b.url)}</p>
-            <p className="text-[9px] font-mono text-muted/60 truncate">{b.url}</p>
+            <p className="text-[10px] font-mono text-muted/60 truncate">{b.url}</p>
           </div>
-          <span className="shrink-0 text-[9px] font-mono text-muted/40">{getDomain(b.url)}</span>
+          <span className="shrink-0 text-[10px] font-mono text-muted/40">{getDomain(b.url)}</span>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <button onClick={e => onEdit(b, e)} title="Edit"
               className="w-5 h-5 text-muted hover:text-saffron flex items-center justify-center transition-colors">

@@ -51,25 +51,17 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
   const isReady = state === 'ready'
 
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-[7px] text-xs border-b border-[#2a2a2a] shrink-0"
-      style={{
-        background: isReady
-          ? 'linear-gradient(90deg, #0d1f0d 0%, #0a1a0a 100%)'
-          : 'linear-gradient(90deg, #0d1520 0%, #0a1018 100%)',
-        borderBottom: isReady ? '1px solid #1a3a1a' : '1px solid #1a2a3a',
-      }}
-    >
+    <div className="flex items-center gap-3 px-4 py-[7px] text-xs border-b border-border bg-surface shrink-0">
       {/* Icon */}
-      <span className="text-base shrink-0" style={{ color: isReady ? '#4ade80' : '#60a5fa' }}>
+      <span className="text-base shrink-0 text-saffron">
         {isReady ? '🔱' : '⬇'}
       </span>
 
       {/* Message */}
-      <span className="flex-1 text-[#ccc]">
+      <span className="flex-1 text-text">
         {isReady && (
           <>
-            <span className="font-semibold" style={{ color: '#4ade80' }}>
+            <span className="font-semibold text-saffron">
               Dhurta {info?.version} is ready
             </span>
             {' — restart to install the update'}
@@ -77,20 +69,20 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
         )}
         {state === 'downloading' && (
           <>
-            <span className="font-semibold" style={{ color: '#60a5fa' }}>
+            <span className="font-semibold text-saffron">
               Downloading update…
             </span>
             {' '}
-            <span className="text-[#888]">{percent}%</span>
+            <span className="text-muted">{percent}%</span>
             <span
               className="inline-block ml-2 rounded-full overflow-hidden align-middle"
-              style={{ width: 80, height: 4, background: '#1a2a3a' }}
+              style={{ width: 80, height: 4, background: 'var(--color-border)' }}
             >
               <span
                 className="block h-full rounded-full"
                 style={{
                   width: `${percent}%`,
-                  background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+                  background: 'linear-gradient(90deg, #FF4500, #FF6B00)',
                   transition: 'width 0.3s ease',
                 }}
               />
@@ -99,7 +91,7 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
         )}
         {state === 'available' && !isReady && (
           <>
-            <span className="font-semibold" style={{ color: '#60a5fa' }}>
+            <span className="font-semibold text-saffron">
               Dhurta {info?.version} available
             </span>
             {' — downloading in the background…'}
@@ -113,15 +105,13 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
           <>
             <button
               onClick={() => (window as any).dhurta.installUpdate?.()}
-              className="px-3 py-1 rounded text-[11px] font-semibold transition-colors"
-              style={{ background: '#16a34a', color: '#fff' }}
+              className="px-3 py-1 text-[11px] font-semibold bg-saffron hover:bg-saffron/90 text-black transition-colors"
             >
               Restart &amp; Update
             </button>
             <button
               onClick={onOpenUpdatePage}
-              className="px-2 py-1 rounded text-[11px] transition-colors"
-              style={{ color: '#60a5fa' }}
+              className="px-2 py-1 text-[11px] text-saffron hover:text-saffron/80 transition-colors"
             >
               Details
             </button>
@@ -130,8 +120,7 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
         {!isReady && (
           <button
             onClick={onOpenUpdatePage}
-            className="px-2 py-1 rounded text-[11px] transition-colors"
-            style={{ color: '#60a5fa' }}
+            className="px-2 py-1 text-[11px] text-saffron hover:text-saffron/80 transition-colors"
           >
             Details
           </button>

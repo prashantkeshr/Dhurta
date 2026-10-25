@@ -116,7 +116,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
     <div className={[
       'tab-bar flex items-end h-9 overflow-x-auto shrink-0 no-drag relative border-b',
       hasGhostActive
-        ? 'bg-[#0d0018] border-[#FF003344]'
+        ? 'border-[rgb(var(--color-ghost-border)/0.3)] bg-[rgb(var(--color-ghost-tab))]'
         : 'bg-obsidian border-border',
     ].join(' ')}>
       {/* Loading progress bar — thin animated stripe at very top of the tab strip */}
@@ -165,11 +165,12 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                   >
                     <span>{group.collapsed ? '▶' : '▼'}</span>
                     <span>{group.name}</span>
-                    <span
-                      className="ml-0.5 opacity-60 hover:opacity-100"
+                    <button
+                      className="ml-0.5 opacity-60 hover:opacity-100 leading-none"
                       title="Delete group"
+                      aria-label="Delete tab group"
                       onClick={e => { e.stopPropagation(); onDeleteGroup(group.id) }}
-                    >×</span>
+                    >×</button>
                   </button>
                 )}
               </div>
@@ -209,8 +210,8 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 onMouseLeave={clearTooltip}
                 style={groupColor ? { borderTop: `2px solid ${groupColor}` } : undefined}
                 className={[
-                  'tab-sharp flex items-center gap-1.5 h-full px-3 min-w-[120px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
-                  tab.id === activeTabId ? 'tab-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
+                  'tab-sharp flex items-center gap-1.5 h-full px-2.5 min-w-[80px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
+                  tab.id === activeTabId ? 'tab-active tab-is-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
                 ].join(' ')}
               >
                 <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
@@ -241,10 +242,11 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                   </button>
                 )}
                 <button
+                  aria-label="Close tab"
                   onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
-                  className="shrink-0 w-4 h-4 flex items-center justify-center text-muted opacity-0 group-hover:opacity-100 hover:text-saffron transition-all duration-100 active:scale-[0.80]"
+                  className="tab-close-btn shrink-0 w-5 h-5 flex items-center justify-center rounded-sm active:scale-[0.80]"
                 >
-                  <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.2">
+                  <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.4">
                     <line x1="0" y1="0" x2="8" y2="8" /><line x1="8" y1="0" x2="0" y2="8" />
                   </svg>
                 </button>
@@ -309,7 +311,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
           style={pipPos
             ? { position: 'fixed', left: pipPos.x, top: pipPos.y, zIndex: 9999 }
             : { position: 'fixed', right: 56, top: 4, zIndex: 9999 }}
-          className="flex items-center gap-1.5 h-7 px-2 bg-[#1a1a1a] border border-[#FF4500]/60 rounded-full text-[10px] font-mono text-[#FF4500] cursor-grab select-none shadow-lg"
+          className="flex items-center gap-1.5 h-7 px-2 bg-surface border border-saffron/60 rounded-full text-[10px] font-mono text-saffron cursor-grab select-none shadow-lg"
           title="Video PiP active — drag to move"
         >
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.3">

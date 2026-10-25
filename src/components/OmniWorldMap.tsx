@@ -230,7 +230,7 @@ export default function OmniWorldMap({ lat, lon, label, real, masked, width = 46
     <div style={{ width }}>
       <canvas ref={canvasRef} style={{ width, height }} />
       {showLegend && (
-        <div className="flex items-center justify-center gap-4 mt-1.5 text-[9px] font-mono">
+        <div className="flex items-center justify-center gap-4 mt-1.5 text-[10px] font-mono">
           {showRealLegend && (
             <span className="flex items-center gap-1.5" style={{ color: REAL_COLOR }}>
               <span className="inline-block w-2 h-2 rounded-full" style={{ background: REAL_COLOR, boxShadow: `0 0 6px ${REAL_COLOR}` }} />

@@ -133,9 +133,7 @@ export function useBrowser() {
         try {
           const saved: { url: string; title: string }[] = JSON.parse(savedJson)
           if (saved.length > 0) {
-            for (const entry of saved) {
-              await api().createTab(entry.url)
-            }
+            await Promise.all(saved.map(entry => api().createTab(entry.url)))
             const allTabs = await api().getTabs()
             setTabs(allTabs)
             const last = allTabs[allTabs.length - 1]
@@ -222,17 +220,23 @@ export function useBrowser() {
           setTabs(all); const last = all[all.length - 1]; setActiveTabId(last.id); setUrlInput(last.url)
         })
       } else if (payload.action === 'closeTab' && payload.tabId != null) {
-        const closingTab = tabsRef.current.find(t => t.id === payload.tabId)
+        const closingIndex = tabsRef.current.findIndex(t => t.id === payload.tabId)
+        const closingTab = tabsRef.current[closingIndex]
         if (closingTab?.url && !closingTab.url.startsWith('dhurta://') && closingTab.url !== '' && closingTab.url !== 'about:blank') {
-          setClosedTabs(prev => [{ url: closingTab.url, title: closingTab.title || 'Untitled', favicon: closingTab.favicon }, ...prev].slice(0, 15))
+          setClosedTabs(prev => [{ url: closingTab.url, title: closingTab.title || 'Untitled', favicon: closingTab.favicon }, ...prev].slice(0, 25))
         }
         api().closeTab(payload.tabId).then(() => api().getTabs()).then(all => {
           setTabs(all)
-          if (all.length > 0) { const last = all[all.length - 1]; setActiveTabId(last.id); setUrlInput(last.url) }
+          if (all.length > 0) {
+            const targetIndex = Math.min(closingIndex, all.length - 1)
+            const next = all[targetIndex]
+            setActiveTabId(next.id)
+            setUrlInput(next.url)
+          }
         })
       } else if (payload.action === 'closeOtherTabs' && payload.tabId != null) {
         api().getTabs().then(async all => {
-          for (const t of all) if (t.id !== payload.tabId) await api().closeTab(t.id)
+          await Promise.all(all.filter(t => t.id !== payload.tabId).map(t => api().closeTab(t.id)))
           const remaining = await api().getTabs()
           setTabs(remaining)
           if (remaining.length > 0) { setActiveTabId(remaining[0].id); setUrlInput(remaining[0].url) }
@@ -376,15 +380,18 @@ export function useBrowser() {
   )
 
   const closeTab = useCallback(async (id: number) => {
-    const tab = tabs.find(t => t.id === id)
+    const closingIndex = tabs.findIndex(t => t.id === id)
+    const tab = tabs[closingIndex]
     if (tab?.url && !tab.url.startsWith('dhurta://') && tab.url !== '' && tab.url !== 'about:blank') {
-      setClosedTabs(prev => [{ url: tab.url, title: tab.title || 'Untitled', favicon: tab.favicon }, ...prev].slice(0, 15))
+      setClosedTabs(prev => [{ url: tab.url, title: tab.title || 'Untitled', favicon: tab.favicon }, ...prev].slice(0, 25))
     }
     await api().closeTab(id)
     const remaining = await api().getTabs()
     setTabs(remaining)
     if (remaining.length > 0) {
-      const next = remaining[remaining.length - 1]
+      // Activate the tab that was immediately to the right; fall back to the one to the left
+      const targetIndex = Math.min(closingIndex, remaining.length - 1)
+      const next = remaining[targetIndex]
       setActiveTabId(next.id)
       setUrlInput(next.url)
     } else {

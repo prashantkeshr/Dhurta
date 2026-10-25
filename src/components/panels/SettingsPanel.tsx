@@ -184,7 +184,7 @@ export default function SettingsPanel() {
           ))}
         </nav>
         <div className="p-3 border-t border-border">
-          <p className="text-[9px] text-muted font-mono">Dhurta v{__APP_VERSION__}</p>
+          <p className="text-[10px] text-muted font-mono">Dhurta v{__APP_VERSION__}</p>
         </div>
       </div>
 
@@ -197,7 +197,7 @@ export default function SettingsPanel() {
             <PageTitle>General</PageTitle>
 
             <SettingGroup title="Search Engine">
-              <p className="text-[9px] text-muted font-mono mb-3">
+              <p className="text-[10px] text-muted font-mono mb-3">
                 Used when typing a query in the home page or address bar.
               </p>
               <div className="grid grid-cols-1 gap-1">
@@ -242,14 +242,14 @@ export default function SettingsPanel() {
                         <p className="text-xs font-mono text-text group-hover:text-saffron transition-colors">{e.label}</p>
                         {e.badge && (
                           <span
-                            className="text-[8px] font-mono px-1 py-px leading-tight border shrink-0"
+                            className="text-[10px] font-mono px-1 py-px leading-tight border shrink-0"
                             style={{ color: e.badgeColor, borderColor: e.badgeColor + '60', background: e.badgeColor + '15' }}
                           >
                             {e.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-[9px] text-muted font-mono truncate">{e.desc || e.url}</p>
+                      <p className="text-[10px] text-muted font-mono truncate">{e.desc || e.url}</p>
                     </div>
                   </label>
                 ))}
@@ -383,7 +383,7 @@ export default function SettingsPanel() {
                     ].join(' ')}
                   >
                     <div className="w-full h-8 rounded-sm" style={{ background: t.bg }} />
-                    <span className="text-[8px] font-mono text-muted truncate w-full text-center">{t.label}</span>
+                    <span className="text-[11px] font-mono text-muted truncate w-full text-center">{t.label}</span>
                   </button>
                 ))}
               </div>
@@ -420,11 +420,11 @@ export default function SettingsPanel() {
                         <div className="absolute inset-0 border-2 border-saffron rounded-sm pointer-events-none" />
                       )}
                     </div>
-                    <span className="text-[8px] font-mono text-muted truncate w-full text-center">{t.label}</span>
+                    <span className="text-[11px] font-mono text-muted truncate w-full text-center">{t.label}</span>
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-muted font-mono mt-2">
+              <p className="text-[10px] text-muted font-mono mt-2">
                 Built-in wallpapers. Selecting any theme clears custom wallpapers.
               </p>
             </SettingGroup>
@@ -438,7 +438,7 @@ export default function SettingsPanel() {
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors" />
                     <button
                       onClick={() => removeWallpaper(i)}
-                      className="absolute top-0.5 right-0.5 w-4 h-4 text-[9px] bg-black/80 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
+                      className="absolute top-0.5 right-0.5 w-4 h-4 text-[10px] bg-black/80 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center"
                     >✕</button>
                     {i === 0 && wallpapers.length > 1 && (
                       <span className="absolute bottom-0.5 left-0.5 text-[7px] font-mono bg-black/70 text-saffron px-1">1st</span>
@@ -457,7 +457,7 @@ export default function SettingsPanel() {
                   </button>
                 )}
               </div>
-              <p className="text-[9px] text-muted font-mono mt-2">
+              <p className="text-[10px] text-muted font-mono mt-2">
                 Up to 5 images · Multiple wallpapers cycle every 18 s · Overrides theme wallpapers
               </p>
             </SettingGroup>
@@ -529,7 +529,7 @@ export default function SettingsPanel() {
                   <p className="text-xs font-mono text-text">
                     {lockStatus.hasPin ? 'Lock is active' : 'No lock configured'}
                   </p>
-                  <p className="text-[9px] font-mono text-muted mt-0.5">
+                  <p className="text-[10px] font-mono text-muted mt-0.5">
                     {lockStatus.hasPin
                       ? 'Browser requires PIN on startup. Remove it below.'
                       : 'Set up a lock from the sidebar lock icon.'}
@@ -574,7 +574,7 @@ export default function SettingsPanel() {
                         {lockRemoveMode === 'pin' ? 'Enter your PIN' : 'Enter recovery phrase'}
                       </span>
                       <button onClick={() => { setLockRemoveMode('none'); setLockRemoveErr('') }}
-                        className="ml-auto text-[9px] font-mono text-muted hover:text-saffron transition-colors">
+                        className="ml-auto text-[10px] font-mono text-muted hover:text-saffron transition-colors">
                         Cancel
                       </button>
                     </div>
@@ -820,9 +820,9 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <button
       onClick={() => onChange(!value)}
-      className={['w-8 h-4 border transition-colors shrink-0', value ? 'bg-saffron border-saffron' : 'bg-obsidian border-border'].join(' ')}
+      className={['toggle-track w-10 h-5 border transition-colors shrink-0 relative rounded-full', value ? 'bg-saffron border-saffron' : 'bg-obsidian border-border'].join(' ')}
     >
-      <span className={['block w-3 h-3 bg-white transition-transform mx-0.5', value ? 'translate-x-4' : 'translate-x-0'].join(' ')} />
+      <span className={['toggle-thumb block w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition-all', value ? 'left-[calc(100%-1.125rem)]' : 'left-[3px]'].join(' ')} />
     </button>
   )
 }
@@ -907,7 +907,7 @@ function ChangePinForm({ onChanged }: { onChanged: () => void }) {
     <div className="space-y-2">
       {(['Current PIN', 'New PIN (min 4)', 'Confirm new PIN'] as const).map((label, i) => (
         <div key={i}>
-          <p className="text-[9px] font-mono text-muted mb-1">{label}</p>
+          <p className="text-[10px] font-mono text-muted mb-1">{label}</p>
           <input
             type="password"
             value={[oldPin, newPin, newPin2][i]}

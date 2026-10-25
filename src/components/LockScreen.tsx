@@ -122,7 +122,7 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
               Unlock
             </button>
             <button onClick={() => { setMode('recovery'); setError('') }}
-              className="text-[9px] font-mono text-muted hover:text-saffron transition-colors">
+              className="text-[10px] font-mono text-muted hover:text-saffron transition-colors">
               Forgot PIN? Use recovery phrase
             </button>
           </>
@@ -158,7 +158,7 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
             </button>
             {mode === 'confirm-pin' && (
               <button onClick={() => { setMode('setup-pin'); setConfirm(''); setError('') }}
-                className="text-[9px] font-mono text-muted hover:text-saffron transition-colors">
+                className="text-[10px] font-mono text-muted hover:text-saffron transition-colors">
                 ← Back
               </button>
             )}
@@ -169,16 +169,16 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
         {mode === 'show-recovery' && (
           <>
             <div className="w-full border border-saffron/40 bg-obsidian p-4 space-y-3">
-              <p className="text-[9px] font-mono text-saffron uppercase tracking-widest">Your Recovery Phrase</p>
+              <p className="text-[10px] font-mono text-saffron uppercase tracking-widest">Your Recovery Phrase</p>
               <div className="grid grid-cols-3 gap-2">
                 {recovery.split(' ').map((word, i) => (
                   <div key={i} className="border border-border px-2 py-1 text-center">
-                    <span className="text-[8px] font-mono text-muted block">{i + 1}</span>
+                    <span className="text-[10px] font-mono text-muted block">{i + 1}</span>
                     <span className="text-[11px] font-mono text-text">{word}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-muted leading-relaxed">
+              <p className="text-[10px] font-mono text-muted leading-relaxed">
                 Write this down and keep it safe. It is the only way to recover access if you forget your PIN.
                 This phrase will never be shown again.
               </p>
@@ -186,7 +186,7 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)}
                 className="w-3 h-3 accent-saffron" />
-              <span className="text-[9px] font-mono text-muted">I have saved my recovery phrase</span>
+              <span className="text-[10px] font-mono text-muted">I have saved my recovery phrase</span>
             </label>
             <button
               onClick={() => { if (confirmed) onUnlocked() }}
@@ -218,11 +218,11 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
               Recover Access
             </button>
             <button onClick={() => { setMode('enter-pin'); setError('') }}
-              className="text-[9px] font-mono text-muted hover:text-saffron transition-colors">
+              className="text-[10px] font-mono text-muted hover:text-saffron transition-colors">
               ← Back to PIN entry
             </button>
             <div className="border-t border-border/40 pt-3 w-full space-y-1">
-              <p className="text-[9px] font-mono text-muted/60 text-center leading-relaxed">
+              <p className="text-[10px] font-mono text-muted/60 text-center leading-relaxed">
                 Recovery works offline — no internet needed.
                 Your recovery phrase was shown once when you set up the lock.
               </p>

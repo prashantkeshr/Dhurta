@@ -87,7 +87,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
             placeholder="Search tabs…"
             className="flex-1 bg-transparent text-[12px] font-mono text-text outline-none placeholder:text-muted"
           />
-          <span className="text-[9px] font-mono text-muted/50 shrink-0">ESC to close</span>
+          <span className="text-[10px] font-mono text-muted/50 shrink-0">ESC to close</span>
         </div>
 
         {/* Results */}
@@ -100,7 +100,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
           {matchedTabs.length > 0 && (
             <>
               {(matchedClosed.length > 0 || !query) && (
-                <p className="px-3 pt-2 pb-0.5 text-[9px] font-mono text-muted/50 uppercase tracking-widest">Open Tabs</p>
+                <p className="px-3 pt-2 pb-0.5 text-[10px] font-mono text-muted/50 uppercase tracking-widest">Open Tabs</p>
               )}
               {matchedTabs.map((tab, i) => {
                 const isSelected = results[selected]?.kind === 'tab' && results[selected].tab.id === tab.id
@@ -121,7 +121,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
                     )}
                     <div className="flex-1 min-w-0">
                       <p className={['text-[11px] truncate', isActive ? 'text-saffron' : 'text-text'].join(' ')}>
-                        {tab.ghost && <span className="mr-1 text-[9px]">👻</span>}
+                        {tab.ghost && <span className="mr-1 text-[10px]">👻</span>}
                         {tab.title || 'New Tab'}
                       </p>
                       {tab.url && tab.url !== 'about:blank' && (
@@ -142,7 +142,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
                           <line x1="9.5" y1="3" x2="6.5" y2="6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
                         </svg>
                       )}
-                      {isActive && <span className="text-[9px] font-mono text-saffron/70">active</span>}
+                      {isActive && <span className="text-[10px] font-mono text-saffron/70">active</span>}
                     </div>
                   </div>
                 )
@@ -153,7 +153,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
           {/* Recently closed section */}
           {matchedClosed.length > 0 && (
             <>
-              <p className="px-3 pt-2 pb-0.5 text-[9px] font-mono text-muted/50 uppercase tracking-widest">
+              <p className="px-3 pt-2 pb-0.5 text-[10px] font-mono text-muted/50 uppercase tracking-widest">
                 {query ? 'Closed Tabs' : 'Recently Closed'}
               </p>
               {matchedClosed.map((ct, i) => {
@@ -177,7 +177,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
                       <p className="text-[11px] text-text truncate">{ct.title}</p>
                       <p className="text-[10px] text-muted font-mono truncate">{formatHost(ct.url)}</p>
                     </div>
-                    <span className="text-[9px] font-mono text-muted/40 shrink-0">↩</span>
+                    <span className="text-[10px] font-mono text-muted/40 shrink-0">↩</span>
                   </div>
                 )
               })}
@@ -187,10 +187,10 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
 
         {/* Footer hint */}
         <div className="px-3 py-1.5 border-t border-border/50 flex items-center gap-3">
-          <span className="text-[9px] font-mono text-muted/40">↑↓ navigate</span>
-          <span className="text-[9px] font-mono text-muted/40">Enter to switch</span>
+          <span className="text-[10px] font-mono text-muted/40">↑↓ navigate</span>
+          <span className="text-[10px] font-mono text-muted/40">Enter to switch</span>
           <div className="flex-1" />
-          <span className="text-[9px] font-mono text-muted/30">{tabs.length} open · {closedTabs.length} closed</span>
+          <span className="text-[10px] font-mono text-muted/30">{tabs.length} open · {closedTabs.length} closed</span>
         </div>
       </div>
     </div>

@@ -556,13 +556,13 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
               <div className="omni-panel omni-cyan flex flex-col items-center justify-center py-4">
                 <p className="omni-panel-label text-[#00fff2]">◉ Egress Node — Live 3D View</p>
                 <OmniGlobe lat={ipInfo?.lat} lon={ipInfo?.lon} label={ipInfo?.countryCode} size={260} />
-                <p className="text-[9px] font-mono text-muted/60 mt-1">drag / scroll to rotate — shows what sites currently see</p>
+                <p className="text-[10px] font-mono text-muted/60 mt-1">drag / scroll to rotate — shows what sites currently see</p>
               </div>
 
               <div className="omni-panel omni-magenta p-4 flex flex-col">
                 <div className="flex items-center justify-between mb-2">
                   <p className="omni-panel-label text-[#ff2bd6]">🗺 Origin Location — World Map</p>
-                  <span className="text-[9px] font-mono text-muted">
+                  <span className="text-[10px] font-mono text-muted">
                     {realIpStatus === 'done' && realIpInfo
                       ? `${realIpInfo.city ?? '—'}, ${realIpInfo.country ?? '—'}`
                       : realIpStatus === 'loading' ? 'locating…' : '—'}
@@ -575,7 +575,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     width={480} height={260}
                   />
                 </div>
-                <p className="text-[9px] font-mono text-muted/60 mt-1">
+                <p className="text-[10px] font-mono text-muted/60 mt-1">
                   {isMasked
                     ? "Magenta pin is your real, unmasked location — where you're actually connecting from. Green pin is what sites currently see (your VPN/Tor exit)."
                     : "Pin marks your real, unmasked IP's location — where you're actually connecting from, regardless of VPN/Ghost Mode."}
@@ -590,7 +590,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 <button
                   onClick={checkIp}
                   disabled={ipStatus === 'loading'}
-                  className="text-[9px] font-mono border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 px-2 py-1 transition-colors disabled:opacity-40"
+                  className="text-[10px] font-mono border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 px-2 py-1 transition-colors disabled:opacity-40"
                 >
                   {ipStatus === 'loading' ? 'checking…' : '↻ re-check'}
                 </button>
@@ -611,7 +611,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     {isMasked ? '● MASKED — this is what a DNS/IP checker would see (not your real IP)' : '● EXPOSED — this is your REAL IP, visible to every site and checker you visit'}
                   </div>
                   {ghostMode && !isMasked && (
-                    <p className="text-[9px] font-mono text-muted mb-3 -mt-1">
+                    <p className="text-[10px] font-mono text-muted mb-3 -mt-1">
                       This reading is for the tab you're viewing Omni from, which is separate from any Ghost tab you opened —
                       opening Omni doesn't move you into the Ghost tab. Switch to your Ghost tab (👻) to browse anonymously.
                     </p>
@@ -639,31 +639,31 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 <button
                   onClick={() => { checkRealIp(); checkIp() }}
                   disabled={realIpStatus === 'loading' || ipStatus === 'loading'}
-                  className="text-[9px] font-mono border border-[#00fff2]/40 text-[#00fff2] hover:bg-[#00fff2]/10 px-2 py-1 transition-colors disabled:opacity-40"
+                  className="text-[10px] font-mono border border-[#00fff2]/40 text-[#00fff2] hover:bg-[#00fff2]/10 px-2 py-1 transition-colors disabled:opacity-40"
                 >
                   ↻ re-check both
                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="border border-white/10 p-3">
-                  <p className="text-[9px] font-mono text-muted uppercase tracking-widest mb-1.5">Your Real IP (forced direct)</p>
+                  <p className="text-[10px] font-mono text-muted uppercase tracking-widest mb-1.5">Your Real IP (forced direct)</p>
                   {realIpStatus === 'loading' && <p className="text-[10px] font-mono text-muted animate-pulse">checking…</p>}
                   {realIpStatus === 'error' && <p className="text-[10px] font-mono text-[#ff2bd6]">✕ {realIpInfo?.error ?? 'lookup failed'}</p>}
                   {realIpStatus === 'done' && realIpInfo && (
                     <>
                       <p className="text-xs font-mono text-[#FF4500]">{realIpInfo.ip}</p>
-                      <p className="text-[9px] font-mono text-muted mt-0.5">{realIpInfo.country} ({realIpInfo.countryCode}) · {realIpInfo.org}</p>
+                      <p className="text-[10px] font-mono text-muted mt-0.5">{realIpInfo.country} ({realIpInfo.countryCode}) · {realIpInfo.org}</p>
                     </>
                   )}
                 </div>
                 <div className="border border-white/10 p-3">
-                  <p className="text-[9px] font-mono text-muted uppercase tracking-widest mb-1.5">What A Site Sees Right Now</p>
+                  <p className="text-[10px] font-mono text-muted uppercase tracking-widest mb-1.5">What A Site Sees Right Now</p>
                   {ipStatus === 'loading' && <p className="text-[10px] font-mono text-muted animate-pulse">checking…</p>}
                   {ipStatus === 'error' && <p className="text-[10px] font-mono text-[#ff2bd6]">✕ {ipInfo?.error ?? 'lookup failed'}</p>}
                   {ipStatus === 'done' && ipInfo && (
                     <>
                       <p className="text-xs font-mono" style={{ color: isMasked ? '#39ff14' : '#ff2bd6' }}>{ipInfo.ip}</p>
-                      <p className="text-[9px] font-mono text-muted mt-0.5">{ipInfo.country} ({ipInfo.countryCode}) · {ipInfo.org}</p>
+                      <p className="text-[10px] font-mono text-muted mt-0.5">{ipInfo.country} ({ipInfo.countryCode}) · {ipInfo.org}</p>
                     </>
                   )}
                 </div>
@@ -730,7 +730,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
               <div className="flex items-center justify-between">
                 <p className="omni-panel-label text-[#00fff2]">🧅 Tor / Onion Routing Configuration</p>
                 <span className={[
-                  'text-[9px] font-mono px-2 py-1 border',
+                  'text-[10px] font-mono px-2 py-1 border',
                   torReady ? 'text-[#39ff14] border-[#39ff14]/50 bg-[#39ff14]/5' : 'text-[#ff2bd6] border-[#ff2bd6]/50 bg-[#ff2bd6]/5',
                 ].join(' ')}>
                   {torReady === null ? '· CHECKING…' : torReady ? '● TOR CONFIGURED & READY' : '○ TOR NOT RUNNING'}
@@ -781,7 +781,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     </button>
                   )}
                 </div>
-                {vpnMsg && <p className="text-[9px] font-mono text-muted mt-1.5 truncate">{vpnMsg}</p>}
+                {vpnMsg && <p className="text-[10px] font-mono text-muted mt-1.5 truncate">{vpnMsg}</p>}
               </div>
 
               <div className="omni-panel omni-magenta p-4">
@@ -816,9 +816,9 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 {ghostMode && torReady && (
                   <div className="mt-2 border-t border-white/10 pt-2">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[9px] font-mono text-[#ff2bd6]/70 tracking-widest">CIRCUIT #{circuitCount} · AUTO-ROTATES EVERY 5 MIN</span>
+                      <span className="text-[10px] font-mono text-[#ff2bd6]/70 tracking-widest">CIRCUIT #{circuitCount} · AUTO-ROTATES EVERY 5 MIN</span>
                       {lastRotation && (
-                        <span className="text-[9px] font-mono text-muted">last: {lastRotation.toLocaleTimeString()}</span>
+                        <span className="text-[10px] font-mono text-muted">last: {lastRotation.toLocaleTimeString()}</span>
                       )}
                     </div>
                     <button
@@ -830,7 +830,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     </button>
                   </div>
                 )}
-                {torMsg && <p className="text-[9px] font-mono text-muted mt-1.5 truncate">{torMsg}</p>}
+                {torMsg && <p className="text-[10px] font-mono text-muted mt-1.5 truncate">{torMsg}</p>}
               </div>
             </div>
 
@@ -841,7 +841,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 <button
                   onClick={scanFingerprint}
                   disabled={fpStatus === 'loading'}
-                  className="text-[9px] font-mono border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 px-2 py-1 transition-colors disabled:opacity-40"
+                  className="text-[10px] font-mono border border-[#FF4500]/40 text-[#FF4500] hover:bg-[#FF4500]/10 px-2 py-1 transition-colors disabled:opacity-40"
                 >
                   {fpStatus === 'loading' ? 'scanning…' : '↻ rescan'}
                 </button>
@@ -888,7 +888,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     {activeCount}/{layers.length} layers active.{' '}
                     {score === 100 ? 'Maximally hardened.' : `${layers.length - activeCount} suggested below.`}
                   </p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-[9px] font-mono">
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-[10px] font-mono">
                     <span className="text-muted">History:<span className="text-text/80"> {data?.history.count ?? 0}</span></span>
                     <span className="text-muted">Bookmarks:<span className="text-text/80"> {data?.bookmarks.count ?? 0}</span></span>
                     <span className="text-muted">Extensions:<span className="text-text/80"> {data?.extensions.count ?? 0}</span></span>
@@ -901,14 +901,14 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
               <div className="omni-panel omni-orange p-4">
                 <div className="flex items-center justify-between mb-2">
                   <p className="omni-panel-label text-[#FF4500]">▣ Live Request Feed — Active Tab</p>
-                  <span className="text-[9px] font-mono text-muted">{requests.length} captured</span>
+                  <span className="text-[10px] font-mono text-muted">{requests.length} captured</span>
                 </div>
                 <div className="omni-scroll max-h-56 overflow-y-auto space-y-1 pr-1">
                   {requests.length === 0 && (
                     <p className="text-[10px] font-mono text-muted/50">No requests captured yet — navigate in the active tab.</p>
                   )}
                   {[...requests].reverse().slice(0, 60).map(r => (
-                    <div key={r.id} className="flex items-center gap-2 text-[9px] font-mono border-b border-white/5 pb-1">
+                    <div key={r.id} className="flex items-center gap-2 text-[10px] font-mono border-b border-white/5 pb-1">
                       <span className={[
                         'shrink-0 px-1 border w-11 text-center',
                         r.method === 'POST' ? 'text-[#ff2bd6] border-[#ff2bd6]/40'
@@ -927,7 +927,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             <div className="omni-panel omni-cyan mt-4 p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="omni-panel-label text-[#00fff2]">📤 Other Data Leaving This Browser</p>
-                <span className="text-[9px] font-mono text-muted">{dataLeaving.uniqueHosts.length} destination(s)</span>
+                <span className="text-[10px] font-mono text-muted">{dataLeaving.uniqueHosts.length} destination(s)</span>
               </div>
               {dataLeaving.uniqueHosts.length === 0 ? (
                 <p className="text-[10px] font-mono text-muted/50">No outbound destinations captured yet.</p>
@@ -941,7 +941,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   </p>
                   <div className="omni-scroll max-h-32 overflow-y-auto space-y-1 pr-1">
                     {dataLeaving.uniqueHosts.map(({ host, count, isPrimary }) => (
-                      <div key={host} className="flex items-center gap-2 text-[9px] font-mono border-b border-white/5 pb-1">
+                      <div key={host} className="flex items-center gap-2 text-[10px] font-mono border-b border-white/5 pb-1">
                         <span className={[
                           'shrink-0 px-1 border w-16 text-center',
                           isPrimary ? 'text-[#39ff14] border-[#39ff14]/40' : 'text-[#ff2bd6] border-[#ff2bd6]/40',
@@ -991,7 +991,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-xs font-mono text-text">{layer.title}</p>
                           <span className={[
-                            'text-[9px] font-mono px-1.5 py-px border shrink-0',
+                            'text-[10px] font-mono px-1.5 py-px border shrink-0',
                             layer.active ? 'border-[#39ff14]/50 text-[#39ff14]' : 'text-muted border-border',
                           ].join(' ')}>
                             {layer.active ? '● ACTIVE' : '○ INACTIVE'}
@@ -1049,7 +1049,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
               </div>
             </div>
 
-            <p className="text-center text-[9px] font-mono text-muted/40 mt-8 mb-4 tracking-widest">
+            <p className="text-center text-[10px] font-mono text-muted/40 mt-8 mb-4 tracking-widest">
               DHURTA-OMNI :: RUNS 100% LOCALLY :: NO SERVER :: NO ACCOUNT
             </p>
           </>
@@ -1062,7 +1062,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
 function OmniStat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2 border-b border-white/5 pb-1">
-      <span className="text-[9px] font-mono text-muted shrink-0">{label}</span>
+      <span className="text-[10px] font-mono text-muted shrink-0">{label}</span>
       <span className="text-[10px] font-mono text-right truncate" style={{ color: accent }}>{value}</span>
     </div>
   )
@@ -1075,11 +1075,11 @@ function FpRow({ label, value, ok, why }: { label: string; value: string; ok: bo
   return (
     <div className="border border-white/5 p-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[9px] font-mono text-muted">{label}</span>
-        <span className="text-[8px] font-mono px-1 border" style={{ color, borderColor: `${color}55` }}>{badge}</span>
+        <span className="text-[10px] font-mono text-muted">{label}</span>
+        <span className="text-[10px] font-mono px-1 border" style={{ color, borderColor: `${color}55` }}>{badge}</span>
       </div>
       <p className="text-[10px] font-mono text-text/90 truncate mt-0.5" title={value}>{value}</p>
-      <p className="text-[8px] font-mono text-muted/60 mt-0.5 leading-relaxed">{why}</p>
+      <p className="text-[10px] font-mono text-muted/60 mt-0.5 leading-relaxed">{why}</p>
     </div>
   )
 }
@@ -1113,7 +1113,7 @@ function ModeCard({
         </span>
         <div className="min-w-0">
           <p className="text-xs font-mono text-text truncate">{title}</p>
-          <p className="text-[9px] font-mono text-muted truncate">{subtitle}</p>
+          <p className="text-[10px] font-mono text-muted truncate">{subtitle}</p>
         </div>
       </div>
       <p className="text-[10px] font-mono text-muted mt-2 leading-relaxed flex-1">{desc}</p>
@@ -1129,7 +1129,7 @@ function ModeCard({
       </button>
       <div className="mt-2 pl-2 space-y-0.5" style={{ borderLeft: `2px solid ${accent}55` }}>
         {steps.map((step, i) => (
-          <p key={i} className="text-[9px] font-mono text-text-dim">{i + 1}. {step}</p>
+          <p key={i} className="text-[10px] font-mono text-text-dim">{i + 1}. {step}</p>
         ))}
       </div>
     </div>
