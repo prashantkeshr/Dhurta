@@ -121,7 +121,9 @@
       ],
       "icon": "build/icon.png",
       "requestedExecutionLevel": "asInvoker",
-      "publisherName": "Dhurta.inc"
+      "publisherName": "Dhurta.org",
+      "signingHashAlgorithms": ["sha256"],
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com"
     },
     "nsis": {
       "oneClick": false,

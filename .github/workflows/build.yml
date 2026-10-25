@@ -126,6 +126,28 @@ jobs:
           npm run build:renderer
           npm run build:electron
 
+      # ── Code-signing setup (Windows only) ────────────────────────────────────
+      # On Windows, if the CSC_LINK repo secret holds a base64-encoded .pfx,
+      # we write CSC_LINK + CSC_KEY_PASSWORD into GITHUB_ENV so the Package
+      # steps below pick them up and produce a signed .exe / .appx installer
+      # (shown as "Verified publisher: Dhurta.org" in SmartScreen).
+      # On Linux (and when the secret is absent) we fall back to unsigned builds.
+      # We never pass empty CSC_* vars — electron-builder treats "" as a bad path.
+      - name: Prepare code-signing
+        shell: bash
+        env:
+          _CSC_LINK: ${{ secrets.CSC_LINK }}
+          _CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          if [ "${{ matrix.name }}" = "windows" ] && [ -n "$_CSC_LINK" ]; then
+            printf 'CSC_LINK=%s\n'         "$_CSC_LINK"         >> "$GITHUB_ENV"
+            printf 'CSC_KEY_PASSWORD=%s\n' "$_CSC_KEY_PASSWORD" >> "$GITHUB_ENV"
+            echo "CSC_IDENTITY_AUTO_DISCOVERY=true"             >> "$GITHUB_ENV"
+            echo "::notice::Windows build will be code-signed (CSC_LINK is set)"
+          else
+            echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> "$GITHUB_ENV"
+          fi
+
       # ── x64 packages (REQUIRED) ──────────────────────────────────────────────
       # Packages x64 and writes latest.yml / latest-mac.yml / latest-linux.yml
       # to the release/ folder. We use --publish never here: three parallel OS
@@ -137,9 +159,8 @@ jobs:
         run: npx electron-builder --x64 --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Unsigned builds. Do NOT pass empty CSC_* vars — electron-builder reads
-          # an empty CSC_LINK as a bad file path and fails on Windows/macOS.
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # CSC_IDENTITY_AUTO_DISCOVERY (and optionally CSC_LINK / CSC_KEY_PASSWORD)
+          # are injected from GITHUB_ENV by the "Prepare code-signing" step above.
 
       # ── arm64 packages (BEST-EFFORT) ─────────────────────────────────────────
       # Built locally with --publish never so latest*.yml (written above) is NOT
@@ -150,10 +171,10 @@ jobs:
       - name: Package arm64 (local build only)
         run: npx electron-builder --arm64 --publish never
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
           npm_config_arch: arm64
           CC: ${{ matrix.arm64_cc }}
           CXX: ${{ matrix.arm64_cxx }}
+          # CSC vars inherited from GITHUB_ENV (set by "Prepare code-signing").
         continue-on-error: true
 
       # ── Upload ALL release artifacts to GitHub Release ───────────────────────
