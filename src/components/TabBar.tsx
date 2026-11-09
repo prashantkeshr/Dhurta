@@ -160,7 +160,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                     title={group.collapsed ? `Expand group "${group.name}"` : `Collapse group "${group.name}"`}
                     onDoubleClick={() => { setEditingGroupId(group.id); setEditGroupName(group.name) }}
                     onClick={() => onToggleGroup(group.id)}
-                    className="h-5 px-1.5 text-[10px] font-mono rounded-sm select-none flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    className="h-5 px-2 text-[10px] font-sans rounded-full select-none flex items-center gap-1 hover:opacity-80 transition-opacity"
                     style={{ background: groupColor + '33', color: groupColor ?? '#888', border: `1px solid ${groupColor}55` }}
                   >
                     <span>{group.collapsed ? '▶' : '▼'}</span>
@@ -190,7 +190,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 title={tab.title || 'New Tab'}
                 style={groupColor ? { borderTop: `2px solid ${groupColor}` } : undefined}
                 className={[
-                  'tab-sharp flex items-center justify-center h-full w-10 cursor-pointer border-r border-border shrink-0 relative group select-none',
+                  'tab-sharp rounded-t-[6px] flex items-center justify-center h-full w-10 cursor-pointer border-r border-border shrink-0 relative group select-none',
                   tab.id === activeTabId ? 'tab-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
                 ].join(' ')}
               >
@@ -210,7 +210,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 onMouseLeave={clearTooltip}
                 style={groupColor ? { borderTop: `2px solid ${groupColor}` } : undefined}
                 className={[
-                  'tab-sharp flex items-center gap-1.5 h-full px-2.5 min-w-[80px] max-w-[200px] cursor-pointer border-r border-border shrink-0 relative group select-none',
+                  'tab-sharp rounded-t-[6px] flex items-center gap-1.5 h-full px-2.5 min-w-[90px] max-w-[220px] cursor-pointer border-r border-border shrink-0 relative group select-none',
                   tab.id === activeTabId ? 'tab-active tab-is-active bg-surface text-text' : 'bg-obsidian text-text-dim hover:bg-surface-2 hover:text-text',
                 ].join(' ')}
               >
@@ -218,7 +218,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                   {tab.loading ? <LoadingSpinner /> : tab.favicon ? <img src={tab.favicon} className="w-3.5 h-3.5" alt="" /> : <DefaultFavicon ghost={tab.ghost} />}
                 </span>
                 <span className="text-xs truncate flex-1 font-sans">
-                  {tab.ghost && <span className="text-saffron mr-1 text-[10px]">👻</span>}
+                  {tab.ghost && <svg width="11" height="11" viewBox="0 0 12 12" fill="#FF4500" className="mr-1 shrink-0 opacity-80"><path d="M6 1a5 5 0 0 1 5 5v5l-1.6-1.2-1.4 1.2-1.4-1.2-1.4 1.2L3.6 10 2 11V6a4 4 0 0 1 4-5z"/><circle cx="4.5" cy="6" r="0.9" fill="white"/><circle cx="7.5" cy="6" r="0.9" fill="white"/></svg>}
                   {tab.title || 'New Tab'}
                 </span>
                 {(tab.playing || tab.muted) && (
@@ -244,7 +244,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                 <button
                   aria-label="Close tab"
                   onClick={(e) => { e.stopPropagation(); onClose(tab.id) }}
-                  className="tab-close-btn shrink-0 w-5 h-5 flex items-center justify-center rounded-sm active:scale-[0.80]"
+                  className="tab-close-btn shrink-0 w-5 h-5 flex items-center justify-center rounded-full active:scale-[0.80]"
                 >
                   <svg width="8" height="8" viewBox="0 0 8 8" stroke="currentColor" strokeWidth="1.4">
                     <line x1="0" y1="0" x2="8" y2="8" /><line x1="8" y1="0" x2="0" y2="8" />

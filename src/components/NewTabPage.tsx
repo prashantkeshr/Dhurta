@@ -380,7 +380,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           <p className={`text-5xl font-mono font-light tracking-[0.15em] tabular-nums ${isLight ? '' : 'drop-shadow-lg'} ${tt.text}`}>
             {timeStr}
           </p>
-          <span className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.borderGlass} ${tt.textDim} tracking-widest`}>UTC</span>
+          <span className={`text-[11px] font-mono px-2 py-0.5 border rounded-full ${tt.borderGlass} ${tt.textDim} tracking-widest`}>UTC</span>
         </div>
         <p className={`text-[11px] font-mono mt-1 tracking-widest uppercase ${tt.textDim}`}>
           {dateStr}
@@ -394,7 +394,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
       <form onSubmit={handleSearch} className="w-full max-w-xl relative">
         {/* Focus glow ring */}
         <div className={[
-          'flex border rounded-lg overflow-hidden transition-all duration-200',
+          'flex border rounded-full overflow-hidden transition-all duration-200',
           tt.borderGlass,
           tt.bgGlass,
           'backdrop-blur-md',
@@ -442,7 +442,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           </button>
 
           <input
-            className={`flex-1 bg-transparent px-3.5 py-3 text-[15px] font-mono outline-none tracking-wide ${tt.text} ${tt.textPlaceholder}`}
+            className={`flex-1 bg-transparent px-3.5 py-3 text-[15px] font-sans outline-none ${tt.text} ${tt.textPlaceholder}`}
             placeholder={ghost ? `Search anonymously via ${eng.label}…` : `Search with ${eng.label}…`}
             value={search}
             onChange={e => { setSearch(e.target.value); setSuggIdx(-1); fetchSuggestions(e.target.value) }}
@@ -464,7 +464,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
         </div>
         {/* Suggestions dropdown */}
         {showSugg && suggestions.length > 0 && (
-          <div className={`absolute left-0 right-0 top-[calc(100%+4px)] z-10 border rounded-lg ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md shadow-xl overflow-hidden`}>
+          <div className={`absolute left-0 right-0 top-[calc(100%+4px)] z-10 border rounded-2xl ${tt.borderGlass} ${tt.bgGlass} backdrop-blur-md shadow-xl overflow-hidden`}>
             {suggestions.map((s, i) => (
               <button
                 key={i}
@@ -492,7 +492,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
     favourites: !ghost ? (
       <div className="w-full max-w-lg">
         <div className="flex items-center justify-between mb-2">
-          <p className={`text-[10px] font-mono uppercase tracking-widest ${tt.textMuted}`}>Favourites</p>
+          <p className={`text-[10px] font-sans uppercase tracking-widest ${tt.textMuted}`}>Favourites</p>
           <div className="flex gap-1">
             <button onClick={() => setShowToolPicker(true)} title="Add Dhurta Tool"
               className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF4500] hover:text-[#FF4500] transition-colors`}>

@@ -204,8 +204,8 @@ export default function URLBar({
 
       {/* Ghost badge */}
       {ghost && (
-        <span className="text-[10px] text-saffron font-mono border border-saffron px-1 shrink-0 leading-tight py-0.5">
-          GHOST
+        <span className="text-[10px] text-saffron font-sans border border-saffron px-2.5 shrink-0 leading-tight py-0.5 rounded-full tracking-wide">
+          Ghost
         </span>
       )}
 
@@ -222,7 +222,7 @@ export default function URLBar({
       {/* Protected / Exposed — quick, glanceable status for the current tab */}
       {isRealPage && (
         <span
-          className="text-[10px] font-mono border px-1 shrink-0 leading-tight py-0.5"
+          className="text-[10px] font-sans border px-2.5 shrink-0 leading-tight py-0.5 rounded-full"
           style={isProtected
             ? { color: '#4CAF50', borderColor: '#4CAF50' }
             : { color: '#ef4444', borderColor: '#ef4444' }}
@@ -235,7 +235,7 @@ export default function URLBar({
       )}
 
       {/* URL input — lock icon opens the native Site Info popup */}
-      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-2 h-6 min-w-0 relative">
+      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-3 h-7 min-w-0 relative rounded-full">
         <button
           ref={lockBtnRef}
           onClick={openSitePopup}
@@ -272,7 +272,7 @@ export default function URLBar({
 
       {/* Find in page bar (inline, appears when active) */}
       {findMode && (
-        <div className="flex items-center gap-1 bg-surface border border-saffron px-1 h-7 shrink-0">
+        <div className="flex items-center gap-1 bg-surface border border-saffron px-2 h-7 shrink-0 rounded-lg">
           <input
             ref={findRef}
             value={findText}
@@ -436,7 +436,7 @@ function NavBtn({ children, onClick, title, active }: {
 
 function Chip({ label, title }: { label: string; title: string }) {
   return (
-    <span title={title} className="text-[10px] font-mono text-saffron border border-saffron px-0.5 leading-tight py-px shrink-0">
+    <span title={title} className="text-[10px] font-sans text-saffron border border-saffron px-2 leading-tight py-0.5 shrink-0 rounded-full">
       {label}
     </span>
   )

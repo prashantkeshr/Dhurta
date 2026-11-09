@@ -172,10 +172,10 @@ export default function SettingsPanel() {
               key={item.id}
               onClick={() => setSection(item.id)}
               className={[
-                'w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono transition-colors text-left',
+                'w-full flex items-center gap-2.5 px-3 py-2 text-xs font-sans transition-colors text-left',
                 section === item.id
-                  ? 'bg-surface text-saffron border-r-2 border-saffron'
-                  : 'text-muted hover:text-text hover:bg-surface/50',
+                  ? 'bg-saffron/10 text-saffron rounded-lg'
+                  : 'text-muted hover:text-text hover:bg-surface/60 rounded-lg',
               ].join(' ')}
             >
               <span className="text-sm w-4 text-center shrink-0">{item.icon}</span>

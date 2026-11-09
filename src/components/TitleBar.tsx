@@ -81,7 +81,7 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
       <div
         title={online ? 'Online' : 'Offline — no network connection'}
         className={[
-          'no-drag flex items-center gap-1.5 h-6 px-2 mr-1 border shrink-0',
+          'no-drag flex items-center gap-1.5 h-6 px-2.5 mr-1 border rounded-full shrink-0',
           online ? 'border-green-500/30 text-green-500/80' : 'border-red-500/40 text-red-400',
         ].join(' ')}
       >
@@ -94,7 +94,7 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
         <button
           onClick={onOpenOmni}
           title="Dhurta Omni — Privacy Dashboard"
-          className="no-drag flex items-center gap-1.5 h-6 px-2 mr-1 border border-saffron/30 text-saffron/80 hover:text-saffron hover:border-saffron hover:bg-saffron/10 transition-colors shrink-0"
+          className="no-drag flex items-center gap-1.5 h-6 px-2.5 mr-1 border border-saffron/30 text-saffron/80 hover:text-saffron hover:border-saffron hover:bg-saffron/10 transition-colors shrink-0 rounded-full"
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 1.5L2.5 4v3.8c0 3.2 2.4 5.9 5.5 6.7 3.1-.8 5.5-3.5 5.5-6.7V4L8 1.5z" />

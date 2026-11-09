@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -53,16 +55,16 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: rgb(var(--color-surface)); }
-::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
 
 /* ── Light mode overrides ──────────────────────────────────────────────────── */
 [data-theme="light"] ::-webkit-scrollbar-track { background: #edeef4; }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: #bcc3d6; border-radius: 2px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #bcc3d6; border-radius: 6px; }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
 
-/* Sharp tabs — no border-radius anywhere in tab bar */
-.tab-sharp { border-radius: 0 !important; }
+/* Tab bar items — rounded top corners for Chrome-style physical tab shape */
+.tab-sharp { border-radius: 6px 6px 0 0; }
 
 /* Saffron underline for active tab */
 .tab-active {
