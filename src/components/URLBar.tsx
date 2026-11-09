@@ -235,7 +235,7 @@ export default function URLBar({
       )}
 
       {/* URL input — lock icon opens the native Site Info popup */}
-      <div className="url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-3 h-7 min-w-0 relative rounded-full">
+      <div className={`url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-3 min-w-0 relative rounded-full ${editing ? 'h-8' : 'h-7'}`}>
         <button
           ref={lockBtnRef}
           onClick={openSitePopup}
@@ -257,17 +257,23 @@ export default function URLBar({
             </svg>
           )}
         </button>
-        <input
-          ref={inputRef}
-          className="url-font flex-1 text-text-dim focus:text-text bg-transparent text-xs h-full min-w-0"
-          value={displayUrl}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          spellCheck={false}
-          autoComplete="off"
-        />
+        {/* Domain-highlighted display (not editing) + hidden input (always in DOM for focus events) */}
+        <div className="flex-1 relative h-full flex items-center min-w-0">
+          {!editing && (
+            <UrlDomainDisplay url={url} displayUrl={displayUrl} />
+          )}
+          <input
+            ref={inputRef}
+            className={`url-font flex-1 text-text-dim focus:text-text bg-transparent text-xs h-full min-w-0 ${!editing ? 'absolute opacity-0 pointer-events-none inset-0 w-full' : ''}`}
+            value={editing ? input : displayUrl}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </div>
       </div>
 
       {/* Find in page bar (inline, appears when active) */}
@@ -447,6 +453,25 @@ function formatDisplay(url: string) {
     const u = new URL(url)
     return u.hostname + (u.pathname !== '/' ? u.pathname : '')
   } catch { return url }
+}
+
+function UrlDomainDisplay({ url, displayUrl }: { url: string; displayUrl: string }) {
+  if (!url || url.startsWith('dhurta://') || url === 'about:blank' || url === '') {
+    return <span className="url-font text-xs text-text-dim truncate">{displayUrl || 'New Tab'}</span>
+  }
+  try {
+    const u = new URL(url)
+    const domain = u.hostname.replace(/^www\./, '')
+    const path = (u.pathname !== '/' ? u.pathname : '') + (u.search || '')
+    return (
+      <span className="text-xs truncate font-sans flex items-baseline gap-px min-w-0">
+        <span className="text-text font-semibold shrink-0">{domain}</span>
+        {path && <span className="text-text-dim truncate">{path}</span>}
+      </span>
+    )
+  } catch {
+    return <span className="url-font text-xs text-text-dim truncate">{displayUrl}</span>
+  }
 }
 
 // ExtensionTray — uses a native OS popup menu so it renders above BrowserViews.

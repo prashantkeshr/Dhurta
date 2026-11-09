@@ -225,7 +225,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                   <button
                     onClick={(e) => { e.stopPropagation(); onMute(tab.id) }}
                     title={tab.muted ? 'Unmute tab' : 'Mute tab'}
-                    className="shrink-0 w-4 h-4 flex items-center justify-center text-muted hover:text-saffron transition-colors"
+                    className={`shrink-0 w-4 h-4 flex items-center justify-center text-muted hover:text-saffron transition-colors ${tab.playing && !tab.muted ? 'tab-audio-playing' : ''}`}
                   >
                     {tab.muted ? (
                       <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor">
@@ -294,7 +294,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
         return (
           <div
             style={{ position: 'fixed', left: Math.min(tooltip.x, window.innerWidth - 240), top: tooltip.y, zIndex: 9999 }}
-            className="pointer-events-none bg-surface-2 border border-border px-2.5 py-1.5 text-[10px] font-mono shadow-lg max-w-[236px] animate-fade-in"
+            className="pointer-events-none bg-surface-2 border border-border px-3 py-2 text-[10px] font-mono shadow-2xl max-w-[236px] animate-fade-in rounded-xl ring-1 ring-black/20"
           >
             <p className="text-text truncate font-sans text-[11px]">{t.title || 'New Tab'}</p>
             {t.url && t.url !== 'about:blank' && (
@@ -342,10 +342,11 @@ function LoadingSpinner() {
 }
 
 function DefaultFavicon({ ghost }: { ghost: boolean }) {
-  return (
+  if (ghost) return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <rect x="1" y="1" width="10" height="10" stroke={ghost ? '#FF4500' : '#444'} strokeWidth="1" />
-      <line x1="1" y1="4" x2="11" y2="4" stroke={ghost ? '#FF4500' : '#444'} strokeWidth="0.8" />
+      <rect x="1" y="1" width="10" height="10" stroke="#FF4500" strokeWidth="1" />
+      <line x1="1" y1="4" x2="11" y2="4" stroke="#FF4500" strokeWidth="0.8" />
     </svg>
   )
+  return <span className="favicon-shimmer w-3 h-3 inline-block shrink-0" />
 }

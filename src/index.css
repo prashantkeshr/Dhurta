@@ -52,23 +52,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: rgb(var(--color-surface)); }
-::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 6px; }
+/* Scrollbar — slim Opera-style, fades when idle */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.25); border-radius: 6px; transition: background 0.25s; }
 ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
 
 /* ── Light mode overrides ──────────────────────────────────────────────────── */
-[data-theme="light"] ::-webkit-scrollbar-track { background: #edeef4; }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: #bcc3d6; border-radius: 6px; }
+[data-theme="light"] ::-webkit-scrollbar-track { background: transparent; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 6px; }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
 
 /* Tab bar items — rounded top corners for Chrome-style physical tab shape */
 .tab-sharp { border-radius: 6px 6px 0 0; }
 
-/* Saffron underline for active tab */
+/* Saffron underline for active tab + elevation shadow */
 .tab-active {
   position: relative;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.42), 0 -1px 0 rgba(255,255,255,0.03) inset;
 }
 .tab-active::after {
   content: '';
@@ -137,6 +138,16 @@ body {
   border-right-color: rgba(198, 204, 218, 0.5);
 }
 
+/* URL bar glassmorphism — frosted chrome feel like Opera */
+.url-bar {
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* UI density overrides — set via data-density on <html> */
+[data-density="compact"] body { zoom: 0.91; }
+[data-density="comfortable"] body { zoom: 1.08; }
+
 /* Draggable titlebar region */
 .drag-region {
   -webkit-app-region: drag;
@@ -153,10 +164,11 @@ input, textarea {
   font-family: inherit;
 }
 
-/* URL bar font */
+/* URL bar font — Inter for a clean Chrome/Opera feel */
 .url-font {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
 }
 
 /* Panel overlay fade-in */
@@ -295,6 +307,32 @@ input, textarea {
 .animate-fade-in {
   animation: tab-tooltip-in 0.1s ease-out;
 }
+
+/* Favicon placeholder shimmer — plays while favicon loads */
+@keyframes favicon-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.favicon-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(60,60,60,0.8);
+  border-radius: 2px;
+}
+.favicon-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  animation: favicon-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Tab audio — pulse when playing */
+@keyframes audio-pulse {
+  0%, 100% { opacity: 0.65; }
+  50%       { opacity: 1; }
+}
+.tab-audio-playing { animation: audio-pulse 1.8s ease-in-out infinite; }
 
 /* Chakra privacy mode — slow wheel spin, accelerates on first enable then settles */
 @keyframes chakra-spin {

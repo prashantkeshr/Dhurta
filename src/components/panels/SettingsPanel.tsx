@@ -25,6 +25,8 @@ function saveAndNotify(key: string, val: string) {
 export default function SettingsPanel() {
   const { theme: uiTheme, toggle: toggleUiTheme } = useTheme()
   const [section,         setSection]         = useState<Section>('general')
+  const [navSearch,       setNavSearch]       = useState('')
+  const [uiDensity,       setUiDensity]       = useState<'compact' | 'normal' | 'comfortable'>('normal')
   const [cookieGuard,     setCookieGuard]     = useState(true)
   const [adBlocker,       setAdBlocker]       = useState(true)
   const [httpsOnly,       setHttpsOnly]       = useState(false)
@@ -72,6 +74,11 @@ export default function SettingsPanel() {
       setGesturePinch(gp !== 'false')
       setGestureSwipe(gs !== 'false')
     })
+    api().getSetting('uiDensity').then(d => {
+      const v = (d ?? 'normal') as 'compact' | 'normal' | 'comfortable'
+      setUiDensity(v)
+      if (v !== 'normal') document.documentElement.dataset.density = v
+    }).catch(() => {})
     api().getDownloadDefaultPath().then(setDownloadPath).catch(() => {})
     api().getSetting('downloadAskWhere').then(v => setDownloadAskWhere(v === 'true')).catch(() => {})
     api().appLockStatus().then(s => setLockStatus({ hasPin: s.hasPin })).catch(() => {})
@@ -114,6 +121,14 @@ export default function SettingsPanel() {
       saveAndNotify('newTabTheme', 'dark')
     }
   }
+
+  const allNavItems: { id: Section; icon: string; label: string }[] = [
+    { id: 'general', icon: '⚙', label: 'General' }, { id: 'appearance', icon: '🎨', label: 'Appearance' },
+    { id: 'privacy', icon: '🔒', label: 'Privacy' }, { id: 'lock', icon: '🔑', label: 'Lock' }, { id: 'about', icon: 'ℹ', label: 'About' },
+  ]
+  const filteredNavItems = navSearch.trim()
+    ? allNavItems.filter(item => item.label.toLowerCase().includes(navSearch.toLowerCase()))
+    : null
 
   const navItems: { id: Section; icon: string; label: string }[] = [
     { id: 'general',    icon: '⚙',  label: 'General' },
@@ -163,11 +178,18 @@ export default function SettingsPanel() {
     <div className="panel-overlay flex h-full w-full bg-surface border-r border-border overflow-hidden">
       {/* Left nav */}
       <div className="w-44 shrink-0 border-r border-border bg-obsidian flex flex-col">
-        <div className="p-3 border-b border-border">
-          <h2 className="text-xs font-mono text-saffron uppercase tracking-widest">Settings</h2>
+        <div className="p-3 border-b border-border space-y-2">
+          <h2 className="text-xs font-sans text-saffron uppercase tracking-widest">Settings</h2>
+          <input
+            type="text"
+            value={navSearch}
+            onChange={e => setNavSearch(e.target.value)}
+            placeholder="Search…"
+            className="w-full bg-surface border border-border text-[11px] font-sans text-text px-2 py-1 outline-none focus:border-saffron placeholder:text-muted rounded-md transition-colors"
+          />
         </div>
         <nav className="flex-1 py-1">
-          {navItems.map(item => (
+          {(filteredNavItems ?? navItems).map(item => (
             <button
               key={item.id}
               onClick={() => setSection(item.id)}
@@ -360,6 +382,28 @@ export default function SettingsPanel() {
                   <Toggle value={uiTheme === 'light'} onChange={() => toggleUiTheme()} />
                 </div>
               </SettingRow>
+            </SettingGroup>
+
+            {/* ── UI density ── */}
+            <SettingGroup title="UI Density">
+              <p className="text-[10px] text-muted font-mono mb-2">Controls the overall scale of the browser interface.</p>
+              <div className="flex gap-1.5">
+                {(['compact', 'normal', 'comfortable'] as const).map(d => (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      setUiDensity(d)
+                      document.documentElement.dataset.density = d === 'normal' ? '' : d
+                      if (d === 'normal') delete document.documentElement.dataset.density
+                      api().setSetting('uiDensity', d)
+                    }}
+                    className={[
+                      'flex-1 py-1.5 text-[10px] font-sans border capitalize rounded-md transition-colors',
+                      uiDensity === d ? 'border-saffron text-saffron bg-saffron/5' : 'border-border text-muted hover:border-saffron/50 hover:text-text',
+                    ].join(' ')}
+                  >{d}</button>
+                ))}
+              </div>
             </SettingGroup>
 
             {/* ── Gradient themes ── */}

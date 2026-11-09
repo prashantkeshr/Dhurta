@@ -105,6 +105,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
   const [customizing, setCustomizing] = useState(false)
   const [wpIdx,       setWpIdx]       = useState(0)
   const [wpVisible,   setWpVisible]   = useState(true)
+  const [wpDim,       setWpDim]       = useState(45)
   const wpTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const now = useTime()
 
@@ -313,6 +314,8 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
 
   const timeStr = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`
   const dateStr = `${DAY[now.getUTCDay()]}, ${MON[now.getUTCMonth()]} ${now.getUTCDate()}`
+  const utcHour = now.getUTCHours()
+  const greeting = utcHour < 5 ? 'Good night' : utcHour < 12 ? 'Good morning' : utcHour < 17 ? 'Good afternoon' : utcHour < 21 ? 'Good evening' : 'Good night'
   const pinned  = bookmarks.slice(0, 8)
   const activeThemeObj   = THEMES.find(t => t.id === themeId)
   const activeWallpaper  = wallpapers[wpIdx] ?? ''           // user-uploaded
@@ -376,6 +379,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
 
     clock: (
       <div className="flex flex-col items-center">
+        <p className={`text-[13px] font-sans font-medium tracking-wide mb-1.5 ${tt.textDim}`}>{greeting}</p>
         <div className="flex items-baseline gap-2">
           <p className={`text-5xl font-mono font-light tracking-[0.15em] tabular-nums ${isLight ? '' : 'drop-shadow-lg'} ${tt.text}`}>
             {timeStr}
@@ -678,7 +682,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           aria-hidden
         />
       )}
-      {hasWallpaper && <div className="absolute inset-0 bg-black/45 pointer-events-none" />}
+      {hasWallpaper && <div className="absolute inset-0 pointer-events-none" style={{ background: `rgba(0,0,0,${wpDim / 100})` }} />}
 
       {/* Slideshow indicator dots — only for user-uploaded multi-wallpaper */}
       {wallpapers.length > 1 && (
@@ -754,6 +758,24 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           )
         })}
       </div>
+
+      {/* Wallpaper dim slider — only when wallpaper active */}
+      {hasWallpaper && !ghost && (
+        <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2">
+            <circle cx="5" cy="5" r="3.5"/>
+            <line x1="5" y1="0.5" x2="5" y2="2"/><line x1="5" y1="8" x2="5" y2="9.5"/>
+            <line x1="0.5" y1="5" x2="2" y2="5"/><line x1="8" y1="5" x2="9.5" y2="5"/>
+          </svg>
+          <input
+            type="range" min={0} max={80} value={wpDim}
+            onChange={e => setWpDim(Number(e.target.value))}
+            className="w-20 h-1 accent-saffron cursor-pointer"
+            title="Wallpaper dim level"
+          />
+          <span className="text-[9px] font-mono text-white/35 w-6 text-right">{wpDim}%</span>
+        </div>
+      )}
 
       {/* Customize toggle */}
       {!ghost && (
@@ -868,7 +890,7 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
       <button
         onClick={() => onNavigate(bookmark.url)}
         title={bookmark.url}
-        className={`w-full h-[84px] flex flex-col items-center justify-center gap-1.5 p-2 border backdrop-blur-sm transition-colors cursor-pointer ${tileBg}`}
+        className={`w-full h-[84px] flex flex-col items-center justify-center gap-1.5 p-2 border backdrop-blur-sm transition-all duration-200 cursor-pointer hover:scale-[1.05] hover:shadow-2xl rounded-xl ${tileBg}`}
       >
         <SmartFavicon
           url={bookmark.url}
