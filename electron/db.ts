@@ -101,12 +101,7 @@ export function initDatabase() {
   // Seed default favourites on first run only (table starts empty)
   const bmCount = (db.prepare('SELECT COUNT(*) AS n FROM bookmarks').get() as { n: number }).n
   if (bmCount === 0) {
-    const seedBm = db.prepare(
-      'INSERT OR IGNORE INTO bookmarks (url, title, favicon) VALUES (?, ?, ?)'
-    )
-    seedBm.run('dhurta-tool://setu', 'Dhurta Setu', '')
-    seedBm.run('https://www.youtube.com', 'YouTube', 'https://www.youtube.com/favicon.ico')
-    seedBm.run('https://aistudio.google.com', 'Google AI Studio', 'https://www.gstatic.com/aistudio/ai_studio_favicon.png')
+    db.prepare('INSERT OR IGNORE INTO bookmarks (url, title, favicon) VALUES (?, ?, ?)').run('dhurta-tool://setu', 'Dhurta Setu', '')
   }
 
   // v5 migration: enable WebRTC block + anti-fingerprint by default for all installs.
@@ -129,14 +124,6 @@ export function initDatabase() {
 
   // Backfill: ensure Dhurta Setu exists as a bookmark for existing installs
   db.prepare('INSERT OR IGNORE INTO bookmarks (url, title, favicon) VALUES (?, ?, ?)').run('dhurta-tool://setu', 'Dhurta Setu', '')
-
-  // Backfill: fix existing seeded bookmarks that were stored with empty favicon
-  const favicons: Record<string, string> = {
-    'https://www.youtube.com':    'https://www.youtube.com/favicon.ico',
-    'https://aistudio.google.com': 'https://www.gstatic.com/aistudio/ai_studio_favicon.png',
-  }
-  const fixFav = db.prepare('UPDATE bookmarks SET favicon = ? WHERE url = ? AND (favicon IS NULL OR favicon = \'\')')
-  for (const [url, fav] of Object.entries(favicons)) fixFav.run(fav, url)
 
   // Run incinerate on startup
   runIncinerate()

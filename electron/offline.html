@@ -12,8 +12,9 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .err-code{font-size:10px;letter-spacing:2px;color:#1E1E1E;margin-bottom:4px}
 .err-title{font-size:20px;font-weight:bold;color:#aaa;margin-bottom:4px}
 .err-url{font-size:10px;color:#282828;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:20px}
-.retry{background:transparent;border:1px solid #FF4500;color:#FF4500;padding:7px 26px;font-family:monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .12s;margin-bottom:6px}
+.retry{background:transparent;border:1px solid #FF4500;color:#FF4500;padding:7px 26px;font-family:monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .12s;margin-bottom:6px;min-width:140px}
 .retry:hover{background:#FF4500;color:#000}
+.retry:disabled{opacity:.5;cursor:not-allowed}
 .reconnect-note{font-size:9px;color:#232323;letter-spacing:1px;margin-bottom:22px;height:14px}
 canvas{display:block;cursor:pointer;border:1px solid #111}
 .game-ui{display:flex;align-items:center;justify-content:space-between;margin-top:6px;width:640px}
@@ -31,7 +32,7 @@ canvas{display:block;cursor:pointer;border:1px solid #111}
 <div class="err-code" id="eCode">ERR_INTERNET_DISCONNECTED</div>
 <div class="err-title" id="eTitle">No internet connection</div>
 <div class="err-url" id="eUrl"></div>
-<button class="retry" onclick="doRetry()">↺ Try Again</button>
+<button class="retry" id="retryBtn" onclick="doRetry()">↺ Try Again</button>
 <div class="reconnect-note" id="reconnNote"></div>
 
 <canvas id="c" width="640" height="180"></canvas>
@@ -81,21 +82,42 @@ document.getElementById('eTitle').textContent = errTitle
 if (failUrl) document.getElementById('eUrl').textContent = failUrl
 
 function doRetry() {
-  if (failUrl) location.replace(failUrl)
-  else history.back()
+  const btn = document.getElementById('retryBtn')
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Retrying…' }
+  setTimeout(() => {
+    if (failUrl) {
+      window.location.href = failUrl
+    } else {
+      history.back()
+    }
+  }, 100)
 }
 
 // ── Auto-reconnect ────────────────────────────────────────────────────────────
 ;(function autoReconn() {
   let checking = false
+  const PING_URLS = [
+    'https://www.gstatic.com/generate_204',
+    'https://www.cloudflare.com/cdn-cgi/trace',
+    'https://1.1.1.1',
+  ]
+  async function checkOnline() {
+    for (const url of PING_URLS) {
+      try {
+        await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: AbortSignal.timeout(3000) })
+        return true
+      } catch (_) {}
+    }
+    return false
+  }
   setInterval(async () => {
     if (checking) return
     checking = true
-    try {
-      await fetch('https://www.gstatic.com/generate_204', { mode:'no-cors', cache:'no-store' })
+    const online = await checkOnline()
+    if (online) {
       document.getElementById('reconnNote').textContent = '✓ Back online — reloading…'
-      setTimeout(doRetry, 800)
-    } catch (_) {
+      setTimeout(doRetry, 600)
+    } else {
       document.getElementById('reconnNote').textContent = '⟳ Checking connection…'
       setTimeout(() => { document.getElementById('reconnNote').textContent = '' }, 1500)
     }

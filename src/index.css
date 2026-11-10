@@ -148,6 +148,11 @@ body {
 [data-density="compact"] body { zoom: 0.91; }
 [data-density="comfortable"] body { zoom: 1.08; }
 
+/* Text size overrides — set via data-fontsize on <html> */
+[data-fontsize="small"]  body { font-size: 11px; }
+[data-fontsize="large"]  body { font-size: 15px; }
+[data-fontsize="xlarge"] body { font-size: 17px; }
+
 /* Draggable titlebar region */
 .drag-region {
   -webkit-app-region: drag;

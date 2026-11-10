@@ -77,6 +77,12 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
     setLoadingModels(false)
   }, [])
 
+  // Auto-detect available models when panel opens
+  useEffect(() => {
+    fetchModels(endpoint)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamBuffer])
@@ -206,7 +212,16 @@ export default function AIPanel({ activeTabId, activeTabUrl, activeTabTitle }: P
             <path d="M2 11c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" />
           </svg>
           <span className="font-medium text-[12px] tracking-wide">AI Assistant</span>
-          <span className="text-[10px] text-muted bg-surface/60 border border-border px-1 py-0.5 rounded">local</span>
+          {loadingModels ? (
+            <span className="text-[10px] text-muted bg-surface/60 border border-border px-1 py-0.5 rounded flex items-center gap-1">
+              <span className="w-2 h-2 border border-saffron border-t-transparent rounded-full animate-spin inline-block" />
+              detecting…
+            </span>
+          ) : availableModels.length > 0 ? (
+            <span className="text-[10px] text-green-400 bg-green-900/20 border border-green-700/40 px-1 py-0.5 rounded">● connected</span>
+          ) : (
+            <span className="text-[10px] text-muted bg-surface/60 border border-border px-1 py-0.5 rounded">local</span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (

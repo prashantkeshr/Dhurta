@@ -27,6 +27,7 @@ export default function SettingsPanel() {
   const [section,         setSection]         = useState<Section>('general')
   const [navSearch,       setNavSearch]       = useState('')
   const [uiDensity,       setUiDensity]       = useState<'compact' | 'normal' | 'comfortable'>('normal')
+  const [uiFontSize,      setUiFontSize]      = useState<'small' | 'normal' | 'large' | 'xlarge'>('normal')
   const [cookieGuard,     setCookieGuard]     = useState(true)
   const [adBlocker,       setAdBlocker]       = useState(true)
   const [httpsOnly,       setHttpsOnly]       = useState(false)
@@ -78,6 +79,12 @@ export default function SettingsPanel() {
       const v = (d ?? 'normal') as 'compact' | 'normal' | 'comfortable'
       setUiDensity(v)
       if (v !== 'normal') document.documentElement.dataset.density = v
+    }).catch(() => {})
+    api().getSetting('uiFontSize').then(f => {
+      const v = (f ?? 'normal') as 'small' | 'normal' | 'large' | 'xlarge'
+      setUiFontSize(v)
+      if (v !== 'normal') document.documentElement.dataset.fontsize = v
+      else delete document.documentElement.dataset.fontsize
     }).catch(() => {})
     api().getDownloadDefaultPath().then(setDownloadPath).catch(() => {})
     api().getSetting('downloadAskWhere').then(v => setDownloadAskWhere(v === 'true')).catch(() => {})
@@ -402,6 +409,36 @@ export default function SettingsPanel() {
                       uiDensity === d ? 'border-saffron text-saffron bg-saffron/5' : 'border-border text-muted hover:border-saffron/50 hover:text-text',
                     ].join(' ')}
                   >{d}</button>
+                ))}
+              </div>
+            </SettingGroup>
+
+            {/* ── Text Size ── */}
+            <SettingGroup title="Text Size">
+              <p className="text-[10px] text-muted font-mono mb-2">Controls the base text size across the browser interface.</p>
+              <div className="flex gap-1.5">
+                {([
+                  { id: 'small',  label: 'Small',   hint: 'A' },
+                  { id: 'normal', label: 'Normal',  hint: 'A' },
+                  { id: 'large',  label: 'Large',   hint: 'A' },
+                  { id: 'xlarge', label: 'X-Large', hint: 'A' },
+                ] as const).map((opt, i) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      setUiFontSize(opt.id)
+                      if (opt.id !== 'normal') document.documentElement.dataset.fontsize = opt.id
+                      else delete document.documentElement.dataset.fontsize
+                      api().setSetting('uiFontSize', opt.id)
+                    }}
+                    className={[
+                      'flex-1 flex flex-col items-center gap-0.5 py-2 border rounded-md transition-colors',
+                      uiFontSize === opt.id ? 'border-saffron text-saffron bg-saffron/5' : 'border-border text-muted hover:border-saffron/50 hover:text-text',
+                    ].join(' ')}
+                  >
+                    <span className="font-sans font-medium leading-none" style={{ fontSize: `${10 + i * 2}px` }}>{opt.hint}</span>
+                    <span className="text-[9px] font-mono capitalize">{opt.label}</span>
+                  </button>
                 ))}
               </div>
             </SettingGroup>

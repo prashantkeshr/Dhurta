@@ -259,6 +259,18 @@ export default function App() {
   // Load wallpapers once on mount — real-time updates come via dhurta:settingChanged
   useEffect(() => { loadWallpapers() }, [loadWallpapers])
 
+  // Apply persisted UI density + font size before Settings panel opens
+  useEffect(() => {
+    if (!isElectron) return
+    window.dhurta.getSetting('uiDensity').then(d => {
+      if (d && d !== 'normal') document.documentElement.dataset.density = d
+    }).catch(() => {})
+    window.dhurta.getSetting('uiFontSize').then(f => {
+      if (f && f !== 'normal') document.documentElement.dataset.fontsize = f
+      else delete document.documentElement.dataset.fontsize
+    }).catch(() => {})
+  }, [])
+
   // Real-time reload when SettingsPanel saves wallpapers
   useEffect(() => {
     if (!isElectron) return

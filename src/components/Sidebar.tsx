@@ -155,10 +155,10 @@ export default function Sidebar({
       {/* Chakra warning toast */}
       {chakraWarning && (
         <div className="relative w-full px-1 mb-1">
-          <div className="bg-[#1a0800] border border-[#FF4500]/60 rounded-xl px-2 py-1.5 text-[7px] font-mono text-[#FF4500] leading-tight">
-            <p className="font-bold mb-0.5">⚠ Security Risk</p>
-            <p>{chakraWarning}</p>
-            <button onClick={onDismissChakraWarning} className="mt-1 text-[#FF4500]/60 hover:text-[#FF4500]">✕ dismiss</button>
+          <div className="bg-[#1a0800] border border-[#FF4500]/60 rounded-xl px-2 py-1.5 text-[9px] font-sans text-[#FF4500] leading-snug">
+            <p className="font-semibold mb-0.5 text-[10px]">⚠ Security Risk</p>
+            <p className="text-[#FF4500]/80">{chakraWarning}</p>
+            <button onClick={onDismissChakraWarning} className="mt-1 text-[9px] text-[#FF4500]/50 hover:text-[#FF4500] transition-colors">✕ dismiss</button>
           </div>
         </div>
       )}
@@ -168,7 +168,7 @@ export default function Sidebar({
       {/* ━━━ TIER 2 — Navigation & Page Actions ━━━ */}
       {/* Apps */}
       <button ref={appsRef} title="Dhurta Apps" onClick={handleAppsClick}
-        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron hover:bg-white/8 rounded-xl transition-all duration-100 active:scale-[0.92]">
+        className="w-9 h-9 flex items-center justify-center text-text/40 hover:text-saffron hover:bg-white/8 rounded-xl transition-all duration-100 active:scale-[0.92]">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
           <circle cx="2.5" cy="2.5" r="1.3" /><circle cx="6.5" cy="2.5" r="1.3" /><circle cx="10.5" cy="2.5" r="1.3" />
           <circle cx="2.5" cy="6.5" r="1.3" /><circle cx="6.5" cy="6.5" r="1.3" /><circle cx="10.5" cy="6.5" r="1.3" />
@@ -178,7 +178,7 @@ export default function Sidebar({
 
       {/* Tools */}
       <button ref={toolsRef} title="Dhurta Tools — Setu, Connect, Developer, Omni, Bridge" onClick={handleToolsClick}
-        className="w-9 h-9 flex items-center justify-center text-text/45 hover:text-saffron hover:bg-white/8 rounded-xl transition-all duration-100 active:scale-[0.92]">
+        className="w-9 h-9 flex items-center justify-center text-text/40 hover:text-saffron hover:bg-white/8 rounded-xl transition-all duration-100 active:scale-[0.92]">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M10.5 2.5a3 3 0 0 0-3.3 4.8L3 11.5l1.5 1.5 4.2-4.2a3 3 0 0 0 4.8-3.3L11.5 7.5 10 6l2-2z" />
         </svg>
