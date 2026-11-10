@@ -257,14 +257,19 @@ export default function URLBar({
             </svg>
           )}
         </button>
-        {/* Domain-highlighted display (not editing) + hidden input (always in DOM for focus events) */}
+        {/* Domain-highlighted display (not editing) + input (always in DOM for focus/keyboard events) */}
         <div className="flex-1 relative h-full flex items-center min-w-0">
           {!editing && (
-            <UrlDomainDisplay url={url} displayUrl={displayUrl} />
+            <div
+              className="absolute inset-0 flex items-center cursor-text min-w-0 overflow-hidden"
+              onClick={() => { setEditing(true); setInput(url); setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0) }}
+            >
+              <UrlDomainDisplay url={url} displayUrl={displayUrl} />
+            </div>
           )}
           <input
             ref={inputRef}
-            className={`url-font flex-1 text-text-dim focus:text-text bg-transparent text-xs h-full min-w-0 ${!editing ? 'absolute opacity-0 pointer-events-none inset-0 w-full' : ''}`}
+            className={`url-font flex-1 text-text-dim focus:text-text bg-transparent text-xs h-full min-w-0 ${!editing ? 'opacity-0 absolute inset-0 w-full cursor-text' : ''}`}
             value={editing ? input : displayUrl}
             onChange={(e) => setInput(e.target.value)}
             onFocus={handleFocus}
