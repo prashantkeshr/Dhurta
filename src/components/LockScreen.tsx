@@ -86,13 +86,13 @@ export default function LockScreen({ hasPin, onUnlocked }: Props) {
 
       {/* Decorative glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #FF572208 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(circle, #FA2D4808 0%, transparent 70%)' }} />
 
       <div className="relative flex flex-col items-center gap-6 px-8 py-10 w-80">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
           <img src="./dhurta-logo.png" alt="Dhurta" className="w-14 h-14 object-contain opacity-90"
-            style={{ filter: 'drop-shadow(0 0 12px #FF572266)' }} />
+            style={{ filter: 'drop-shadow(0 0 12px #FA2D4866)' }} />
           <p className="text-[10px] font-mono text-saffron uppercase tracking-[0.3em]">
             {mode === 'show-recovery' ? 'Save Recovery Phrase' :
              mode === 'recovery'      ? 'Account Recovery' :

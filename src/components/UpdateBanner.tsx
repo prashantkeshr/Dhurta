@@ -82,7 +82,7 @@ export default function UpdateBanner({ onOpenUpdatePage }: Props) {
                 className="block h-full rounded-full"
                 style={{
                   width: `${percent}%`,
-                  background: 'linear-gradient(90deg, #FF5722, #FF6B00)',
+                  background: 'linear-gradient(90deg, #FA2D48, #FF6B00)',
                   transition: 'width 0.3s ease',
                 }}
               />

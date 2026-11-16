@@ -71,7 +71,7 @@ export default function TabSearchOverlay({ tabs, activeTabId, closedTabs, onSwit
       {/* Palette card — fixed to top of chrome, safe from BrowserView */}
       <div
         className="absolute left-1/2 -translate-x-1/2 top-[74px] w-[480px] max-w-[90vw] bg-[#111] border border-border shadow-2xl"
-        style={{ boxShadow: '0 0 0 1px #FF572220, 0 16px 48px rgba(0,0,0,0.8)' }}
+        style={{ boxShadow: '0 0 0 1px #FA2D4820, 0 16px 48px rgba(0,0,0,0.8)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Search input */}

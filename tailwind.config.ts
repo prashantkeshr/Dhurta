@@ -6,11 +6,11 @@ export default {
     extend: {
       colors: {
         obsidian:      'rgb(var(--color-obsidian) / <alpha-value>)',
-        saffron:       '#FF5722',
-        'saffron-dim': '#D84315',
-        'saffron-glow':'#FF7043',
-        'gold':        '#F59E0B',
-        'gold-dim':    '#D97706',
+        saffron:       '#FA2D48',
+        'saffron-dim': '#C41F32',
+        'saffron-glow':'#FF5260',
+        'gold':        '#FF7849',
+        'gold-dim':    '#E85F1A',
         surface:       'rgb(var(--color-surface) / <alpha-value>)',
         'surface-2':   'rgb(var(--color-surface2) / <alpha-value>)',
         'surface-3':   'rgb(var(--color-surface3) / <alpha-value>)',
@@ -33,8 +33,8 @@ export default {
           '80%': { transform: 'translate(1px, -2px)', opacity: '0.95' },
         },
         'saffron-pulse': {
-          '0%, 100%': { boxShadow: '0 0 5px #FF5722' },
-          '50%': { boxShadow: '0 0 14px #FF5722, 0 0 28px #FF572233' },
+          '0%, 100%': { boxShadow: '0 0 5px #FA2D48' },
+          '50%': { boxShadow: '0 0 14px #FA2D48, 0 0 28px #FA2D4833' },
         },
         'fade-in': {
           from: { opacity: '0', transform: 'translateY(4px)' },

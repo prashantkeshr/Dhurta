@@ -60,14 +60,14 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
 
   return (
     <div className="drag-region flex items-center h-10 bg-obsidian border-b border-border select-none shrink-0 relative z-[9999]"
-      style={{ borderBottomColor: 'rgba(42,46,82,0.6)' }}>
+      style={{ borderBottomColor: 'rgba(58,60,72,0.6)' }}>
       {/* Logo + brand — sits inside the sidebar width block */}
       <div className="w-16 shrink-0 flex items-center justify-center">
         <img
           src="./dhurta-logo.png"
           alt="Dhurta Developer Browser"
           className="w-8 h-8 object-contain"
-          style={{ filter: 'drop-shadow(0 0 5px rgba(255,87,34,0.5)) drop-shadow(0 0 12px rgba(245,158,11,0.2))' }}
+          style={{ filter: 'drop-shadow(0 0 5px rgba(250,45,72,0.5)) drop-shadow(0 0 12px rgba(255,120,73,0.2))' }}
           draggable={false}
         />
       </div>
@@ -81,12 +81,12 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
         ) : (
           <span className="flex items-center gap-1.5">
             <span className="text-[10px] font-mono tracking-[0.3em] uppercase"
-              style={{ color: '#FF5722', textShadow: '0 0 8px rgba(255,87,34,0.4)' }}>
+              style={{ color: 'var(--accent-primary)', letterSpacing: '0.3em' }}>
               DHURTA
             </span>
             <span className="text-[10px] font-mono text-muted/40 tracking-widest">·</span>
             <span className="text-[10px] font-mono tracking-[0.22em] uppercase"
-              style={{ color: 'rgba(218,222,248,0.45)', letterSpacing: '0.22em' }}>
+              style={{ color: 'rgba(240,240,245,0.45)', letterSpacing: '0.22em' }}>
               DEVELOPER BROWSER
             </span>
           </span>
@@ -124,8 +124,8 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
 
       {/* Live clock + date */}
       <div className="no-drag flex flex-col items-end justify-center px-3 shrink-0 leading-none gap-px">
-        <span className="text-[11px] font-mono tabular-nums tracking-wider" style={{ color: 'rgba(218,222,248,0.72)' }}>{timeStr}</span>
-        <span className="text-[10px] font-mono tracking-wider" style={{ color: 'rgba(88,96,148,0.9)' }}>{dateStr}</span>
+        <span className="text-[11px] font-mono tabular-nums tracking-wider" style={{ color: 'rgba(240,240,245,0.72)' }}>{timeStr}</span>
+        <span className="text-[10px] font-mono tracking-wider" style={{ color: 'rgba(118,120,134,0.9)' }}>{dateStr}</span>
       </div>
 
       {/* Windows-style controls — premium subtle */}
@@ -134,27 +134,27 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
           <button
             onClick={minimize}
             className="h-10 w-10 flex items-center justify-center transition-colors"
-            style={{ color: 'rgba(88,96,148,0.7)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(42,46,82,0.4)'; e.currentTarget.style.color = 'rgba(218,222,248,0.9)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
+            style={{ color: 'rgba(118,120,134,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(58,60,72,0.4)'; e.currentTarget.style.color = 'rgba(240,240,245,0.9)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(118,120,134,0.7)' }}
           >
             <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1" /></svg>
           </button>
           <button
             onClick={maximize}
             className="h-10 w-10 flex items-center justify-center transition-colors"
-            style={{ color: 'rgba(88,96,148,0.7)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(42,46,82,0.4)'; e.currentTarget.style.color = 'rgba(218,222,248,0.9)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
+            style={{ color: 'rgba(118,120,134,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(58,60,72,0.4)'; e.currentTarget.style.color = 'rgba(240,240,245,0.9)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(118,120,134,0.7)' }}
           >
             <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1"><rect x="0.5" y="0.5" width="9" height="9" /></svg>
           </button>
           <button
             onClick={close}
             className="h-10 w-10 flex items-center justify-center transition-all"
-            style={{ color: 'rgba(88,96,148,0.7)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#FF5722'; e.currentTarget.style.color = '#fff' }}
-            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
+            style={{ color: 'rgba(118,120,134,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#FA2D48'; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(118,120,134,0.7)' }}
           >
             <svg width="9" height="9" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.3"><line x1="0" y1="0" x2="10" y2="10" /><line x1="10" y1="0" x2="0" y2="10" /></svg>
           </button>

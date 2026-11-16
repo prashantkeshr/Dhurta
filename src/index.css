@@ -10,41 +10,38 @@
   padding: 0;
 }
 
-/* ── Theme: Dark — Premium Deep-Space Developer ────────────────────────────── */
+/* ── Opera-inspired Dark Theme ───────────────────────────────────────────── */
 :root {
   color-scheme: dark;
-  /* Deep navy-black palette — rich developer-grade depth */
-  --color-obsidian: 6 7 14;         /* #06070E — deep space near-black              */
-  --color-surface:  12 13 24;       /* #0C0D18 — elevated panel surface              */
-  --color-surface2: 19 21 38;       /* #131526 — nested / hover surface              */
-  --color-surface3: 28 30 54;       /* #1C1E36 — active / deeper hover               */
-  --color-border:   42 46 82;       /* #2A2E52 — indigo-tinted subtle border         */
-  --color-muted:    88 96 148;      /* #586094 — muted icons / placeholder           */
-  --color-text:     218 222 248;    /* #DADEFF — premium slightly-blue white         */
-  --color-text-dim: 128 138 182;    /* #808AB6 — secondary text, blue-grey           */
-  /* Accent glow tokens */
-  --accent-primary: #FF5722;        /* refined saffron — slightly warmer, richer     */
-  --accent-gold:    #F59E0B;        /* premium amber-gold for highlights             */
-  --accent-glow:    rgba(255,87,34,0.22);
-  /* Ghost mode tab bar */
+  --color-obsidian: 18 18 22;        /* #121216 — Opera deep dark base   */
+  --color-surface:  26 27 32;        /* #1A1B20 — toolbar / panel bg     */
+  --color-surface2: 36 37 44;        /* #24252C — hover / elevated       */
+  --color-surface3: 50 52 62;        /* #32343E — active / selected      */
+  --color-border:   58 60 72;        /* #3A3C48 — neutral subtle border  */
+  --color-muted:    118 120 134;     /* #767886 — muted icons / labels   */
+  --color-text:     240 240 245;     /* #F0F0F5 — Opera-clean near-white */
+  --color-text-dim: 150 152 164;     /* #9698A4 — secondary text         */
+  --accent-primary: #FA2D48;         /* Opera signature red              */
+  --accent-gold:    #FF7849;         /* Opera warm secondary             */
+  --accent-glow:    rgba(250,45,72,0.20);
   --color-ghost-tab: 10 2 22;
   --color-ghost-border: 255 0 51;
 }
 
-/* ── Theme: Light — Premium Airy Developer ──────────────────────────────────── */
+/* ── Light Theme ─────────────────────────────────────────────────────────── */
 [data-theme="light"] {
   color-scheme: light;
-  --color-obsidian: 248 249 254;    /* #F8F9FE — cool near-white with subtle blue    */
-  --color-surface:  240 242 252;    /* #F0F2FC — elevated panel                      */
-  --color-surface2: 229 232 248;    /* #E5E8F8 — nested surfaces                     */
-  --color-surface3: 216 220 242;    /* #D8DCF2 — hover surface                       */
-  --color-border:   194 200 230;    /* #C2C8E6 — clean indigo-tinted border          */
-  --color-muted:    118 130 172;    /* #7682AC — muted icons / secondary text        */
-  --color-text:     12 14 36;       /* #0C0E24 — deep navy-black body text           */
-  --color-text-dim: 54 66 110;      /* #36426E — dimmed secondary text               */
-  --accent-primary: #FF5722;
-  --accent-gold:    #D97706;
-  --accent-glow:    rgba(255,87,34,0.14);
+  --color-obsidian: 248 248 250;    /* #F8F8FA */
+  --color-surface:  240 241 244;    /* #F0F1F4 */
+  --color-surface2: 229 230 236;    /* #E5E6EC */
+  --color-surface3: 215 217 226;    /* #D7D9E2 */
+  --color-border:   194 196 206;    /* #C2C4CE */
+  --color-muted:    118 120 132;    /* #767884 */
+  --color-text:     12 12 18;       /* #0C0C12 */
+  --color-text-dim: 72 74 86;       /* #484A56 */
+  --accent-primary: #FA2D48;
+  --accent-gold:    #E8600A;
+  --accent-glow:    rgba(250,45,72,0.14);
   --color-ghost-tab: 236 230 255;
   --color-ghost-border: 172 72 218;
 }
@@ -59,113 +56,99 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar — premium slim, indigo-tinted track */
-::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: rgba(42,46,82,0.12); border-radius: 6px; }
-::-webkit-scrollbar-thumb { background: rgba(88,96,148,0.3); border-radius: 6px; transition: background 0.25s; }
+/* Scrollbar — Opera slim clean */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; transition: background 0.25s; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
-/* ── Light mode overrides ──────────────────────────────────────────────────── */
-[data-theme="light"] ::-webkit-scrollbar-track { background: rgba(194,200,230,0.2); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(118,130,172,0.25); border-radius: 6px; }
+[data-theme="light"] ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 8px; }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
-/* Tab bar items — rounded top corners for Chrome-style physical tab shape */
-.tab-sharp { border-radius: 7px 7px 0 0; }
+/* ── Opera tab shape — rounded top corners ───────────────────────────────── */
+.tab-sharp { border-radius: 8px 8px 0 0; }
 
-/* Premium active tab underline + elevation */
+/* Opera active tab — elevated bg + TOP accent border (Opera trademark) */
 .tab-active {
   position: relative;
-  box-shadow: 0 -3px 18px rgba(42,46,82,0.6), 0 -1px 0 rgba(218,222,248,0.04) inset;
+  box-shadow: none;
 }
 .tab-active::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 8px;
-  right: 8px;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-primary) 30%, var(--accent-primary) 70%, transparent);
-  box-shadow: 0 0 10px var(--accent-primary), 0 0 20px var(--accent-glow);
-  border-radius: 2px;
+  background: var(--accent-primary);
+  border-radius: 2px 2px 0 0;
 }
 
 [data-theme="light"] .tab-active::after {
-  box-shadow: 0 0 6px rgba(255, 87, 34, 0.5);
+  box-shadow: none;
 }
 
 [data-theme="light"] .tab-active {
-  box-shadow: 0 -1px 8px rgba(12, 14, 36, 0.07) inset;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
-/* Sidebar icon — premium hover glow */
+/* Sidebar icon — Opera clean, no glow */
 .sidebar-icon {
-  transition: color 0.15s, filter 0.15s;
+  transition: color 0.15s;
 }
 .sidebar-icon:hover {
   color: var(--accent-primary);
-  filter: drop-shadow(0 0 5px var(--accent-primary));
 }
 
-/* Ghost mode pulse on sidebar icon */
+/* Ghost mode pulse */
 .ghost-active {
   color: var(--accent-primary);
   animation: saffron-pulse 2s ease-in-out infinite;
   filter: drop-shadow(0 0 8px var(--accent-primary));
 }
 
-[data-theme="light"] .sidebar-icon:hover {
-  color: var(--accent-primary);
-  filter: none;
-}
-[data-theme="light"] .ghost-active {
-  filter: none;
-}
+[data-theme="light"] .sidebar-icon:hover { color: var(--accent-primary); filter: none; }
+[data-theme="light"] .ghost-active { filter: none; }
 
-/* Glitch on hover */
+/* Glitch hover */
 .glitch-hover:hover {
   animation: glitch 0.4s ease-in-out;
 }
 
-/* Premium glassmorphism sidebar — deep frosted navy-black */
+/* Opera sidebar — solid dark panel (not glass) */
 .glass {
-  background: rgba(6, 7, 14, 0.88);
-  backdrop-filter: blur(16px) saturate(1.6);
-  -webkit-backdrop-filter: blur(16px) saturate(1.6);
-  border-right: 1px solid rgba(42, 46, 82, 0.5);
-  box-shadow: 2px 0 24px rgba(6, 7, 14, 0.4), 1px 0 0 rgba(42, 46, 82, 0.3);
+  background: rgb(var(--color-surface));
+  border-right: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 1px 0 0 rgba(0,0,0,0.3);
 }
 
 [data-theme="light"] .glass {
-  background: rgba(248, 249, 254, 0.96);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: 2px 0 28px rgba(12, 14, 36, 0.09), 1px 0 0 rgba(194, 200, 230, 0.6);
-  border-right-color: rgba(194, 200, 230, 0.55);
+  background: rgb(var(--color-surface));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 1px 0 0 rgba(0,0,0,0.06);
+  border-right-color: rgba(0,0,0,0.08);
 }
 
-/* URL bar glassmorphism — frosted chrome feel like Opera */
+/* URL bar container */
 .url-bar {
-  backdrop-filter: blur(14px) saturate(1.4);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-/* UI density overrides — set via data-density on <html> */
+/* UI density */
 [data-density="compact"] body { zoom: 0.91; }
 [data-density="comfortable"] body { zoom: 1.08; }
 
-/* Text size overrides — set via data-fontsize on <html> */
+/* Text size */
 [data-fontsize="small"]  body { font-size: 11px; }
 [data-fontsize="large"]  body { font-size: 15px; }
 [data-fontsize="xlarge"] body { font-size: 17px; }
 
-/* Draggable titlebar region */
-.drag-region {
-  -webkit-app-region: drag;
-}
-.no-drag {
-  -webkit-app-region: no-drag;
-}
+/* Draggable region */
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
 
 /* Input reset */
 input, textarea {
@@ -175,33 +158,34 @@ input, textarea {
   font-family: inherit;
 }
 
-/* URL bar font — Inter for a clean Chrome/Opera feel */
+/* URL bar font */
 .url-font {
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 12.5px;
   letter-spacing: -0.01em;
 }
 
-/* Panel overlay fade-in */
+/* Panel overlay */
 .panel-overlay {
-  animation: fade-in 0.15s ease-out;
+  animation: panel-slide-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Nuclear button pulse — premium glow */
+/* Nuclear button — Opera red on hover */
 .nuclear-btn {
   transition: all 0.2s;
 }
 .nuclear-btn:hover {
   background: var(--accent-primary);
-  box-shadow: 0 0 24px var(--accent-primary), 0 0 48px var(--accent-glow);
+  box-shadow: 0 0 20px var(--accent-glow), 0 0 40px var(--accent-glow);
 }
 
 [data-theme="light"] .nuclear-btn:hover {
   background: var(--accent-primary);
-  box-shadow: 0 0 16px rgba(255, 87, 34, 0.42), 0 2px 10px rgba(255, 87, 34, 0.28);
+  box-shadow: 0 0 14px rgba(250,45,72,0.4), 0 2px 8px rgba(250,45,72,0.26);
   color: #fff;
 }
 
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
 @keyframes glitch {
   0%, 100% { transform: translate(0); opacity: 1; }
   20% { transform: translate(-2px, 1px); opacity: 0.8; }
@@ -220,16 +204,11 @@ input, textarea {
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Chrome/Opera-style panel slide-in from left ──────────────────────────── */
 @keyframes panel-slide-in {
   from { opacity: 0; transform: translateX(-12px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-.panel-overlay {
-  animation: panel-slide-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-}
 
-/* ── Tab smooth-appear on new tab ─────────────────────────────────────────── */
 @keyframes tab-appear {
   from { opacity: 0; transform: scaleX(0.85); transform-origin: left; }
   to   { opacity: 1; transform: scaleX(1); }
@@ -238,12 +217,11 @@ input, textarea {
   animation: tab-appear 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Smooth tab background transition ─────────────────────────────────────── */
 .tab-sharp {
   transition: background-color 0.1s ease, color 0.1s ease;
 }
 
-/* ── Close button always visible on active tab ────────────────────────────── */
+/* Close button — hidden, visible on hover */
 .tab-close-btn {
   opacity: 0;
   transition: opacity 0.12s ease, color 0.1s ease, transform 0.08s ease;
@@ -254,10 +232,9 @@ input, textarea {
 }
 .tab-close-btn:hover {
   opacity: 1 !important;
-  color: #FF5722;
+  color: var(--accent-primary);
 }
 
-/* ── Tooltip slide-down ────────────────────────────────────────────────────── */
 @keyframes tooltip-in {
   from { opacity: 0; transform: translateY(-4px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -266,7 +243,6 @@ input, textarea {
   animation: tooltip-in 0.12s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Toggle switch — smooth thumb slide ──────────────────────────────────── */
 .toggle-thumb {
   transition: left 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.15s ease;
 }
@@ -274,14 +250,12 @@ input, textarea {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-/* ── Button press ripple ──────────────────────────────────────────────────── */
 @keyframes btn-press {
   0%   { transform: scale(1); }
   50%  { transform: scale(0.93); }
   100% { transform: scale(1); }
 }
 
-/* ── Sidebar panel item hover ─────────────────────────────────────────────── */
 .sidebar-btn {
   transition: color 0.12s ease, background 0.12s ease, transform 0.08s ease;
 }
@@ -289,12 +263,10 @@ input, textarea {
   transform: scale(0.9);
 }
 
-/* ── URL bar focus ring (Chrome-style) ───────────────────────────────────── */
 .url-bar-focus-ring {
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-/* ── Inline confirm row (extension removal) ──────────────────────────────── */
 @keyframes confirm-slide-in {
   from { opacity: 0; max-height: 0; }
   to   { opacity: 1; max-height: 48px; }
@@ -318,7 +290,7 @@ input, textarea {
   animation: tab-tooltip-in 0.1s ease-out;
 }
 
-/* Favicon placeholder shimmer — plays while favicon loads */
+/* Favicon placeholder shimmer */
 @keyframes favicon-shimmer {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -326,7 +298,7 @@ input, textarea {
 .favicon-shimmer {
   position: relative;
   overflow: hidden;
-  background: rgba(60,60,60,0.8);
+  background: rgba(255,255,255,0.08);
   border-radius: 2px;
 }
 .favicon-shimmer::after {
@@ -337,14 +309,14 @@ input, textarea {
   animation: favicon-shimmer 1.5s ease-in-out infinite;
 }
 
-/* Tab audio — pulse when playing */
+/* Tab audio pulse */
 @keyframes audio-pulse {
   0%, 100% { opacity: 0.65; }
   50%       { opacity: 1; }
 }
 .tab-audio-playing { animation: audio-pulse 1.8s ease-in-out infinite; }
 
-/* Chakra privacy mode — slow wheel spin, accelerates on first enable then settles */
+/* Chakra spin — Opera red glow */
 @keyframes chakra-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -352,7 +324,7 @@ input, textarea {
 
 .chakra-active {
   animation: chakra-spin 6s linear infinite;
-  filter: drop-shadow(0 0 6px #FF5722) drop-shadow(0 0 14px rgba(255,87,34,0.36));
+  filter: drop-shadow(0 0 6px var(--accent-primary)) drop-shadow(0 0 14px var(--accent-glow));
 }
 
 .chakra-idle {
@@ -364,7 +336,7 @@ input, textarea {
   opacity: 1;
 }
 
-/* Tab bar loading progress bar — indeterminate shimmer */
+/* Tab loading bar — Opera red to orange */
 @keyframes tab-loading-sweep {
   0%   { transform: translateX(-100%); }
   60%  { transform: translateX(200%); }
@@ -377,7 +349,7 @@ input, textarea {
   left: 0;
   width: 55%;
   height: 100%;
-  background: linear-gradient(90deg, transparent 0%, #FF5722 35%, #F59E0B 65%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--accent-primary) 35%, var(--accent-gold) 65%, transparent 100%);
   animation: tab-loading-sweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -386,21 +358,20 @@ input, textarea {
   100% { transform: translateX(400%); }
 }
 
-/* ── Premium Light mode component elevation ─────────────────────────────────── */
-
+/* Light mode overrides */
 [data-theme="light"] .panel-overlay {
-  box-shadow: 4px 0 36px rgba(12, 14, 36, 0.11), 1px 0 0 rgba(12, 14, 36, 0.06);
+  box-shadow: 4px 0 36px rgba(0,0,0,0.08), 1px 0 0 rgba(0,0,0,0.04);
 }
 
 [data-theme="light"] .url-bar {
   background: rgb(var(--color-surface));
-  box-shadow: 0 1px 0 rgba(12, 14, 36, 0.07), 0 2px 10px rgba(12, 14, 36, 0.05);
-  border-bottom-color: rgba(194, 200, 230, 0.75) !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+  border-bottom-color: rgba(0,0,0,0.1) !important;
 }
 
 [data-theme="light"] .tab-bar {
   background: rgb(var(--color-surface));
-  border-bottom-color: rgba(194, 200, 230, 0.85) !important;
+  border-bottom-color: rgba(0,0,0,0.1) !important;
 }
 
 [data-theme="light"] .tab-inactive-hover:hover {
@@ -408,30 +379,30 @@ input, textarea {
 }
 
 [data-theme="light"] .download-tray-popup {
-  box-shadow: 0 10px 36px rgba(12, 14, 36, 0.14), 0 2px 10px rgba(12, 14, 36, 0.07),
-              0 0 0 1px rgba(12, 14, 36, 0.05);
+  box-shadow: 0 10px 36px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06),
+              0 0 0 1px rgba(0,0,0,0.04);
 }
 
 [data-theme="light"] .url-input-box {
   background: #ffffff !important;
-  box-shadow: inset 0 1px 4px rgba(12, 14, 36, 0.09), inset 0 0 0 1px rgba(194, 200, 230, 0.85);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.1);
   border-color: transparent !important;
 }
 
 [data-theme="light"] .url-input-box:focus-within {
-  box-shadow: inset 0 1px 3px rgba(12, 14, 36, 0.06),
-              0 0 0 2px rgba(255, 87, 34, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04),
+              0 0 0 2px rgba(250,45,72,0.2);
   border-color: transparent !important;
 }
 
 [data-theme="light"] .chip-saffron {
-  background: rgba(255, 87, 34, 0.09);
-  color: #c43900;
-  border-color: rgba(255, 87, 34, 0.3);
+  background: rgba(250,45,72,0.08);
+  color: #c0001a;
+  border-color: rgba(250,45,72,0.3);
 }
 
 [data-theme="light"] .ghost-badge {
-  background: rgba(255, 87, 34, 0.07);
-  color: #c43900;
-  border-color: rgba(255, 87, 34, 0.25);
+  background: rgba(250,45,72,0.07);
+  color: #c0001a;
+  border-color: rgba(250,45,72,0.25);
 }

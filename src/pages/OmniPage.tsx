@@ -498,7 +498,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
 
   const activeCount = layers.filter(l => l.active).length
   const score = Math.round((activeCount / layers.length) * 100)
-  const scoreColor = score >= 80 ? '#39ff14' : score >= 50 ? '#FF5722' : '#ff2bd6'
+  const scoreColor = score >= 80 ? '#39ff14' : score >= 50 ? '#FA2D48' : '#ff2bd6'
   const suggestions = layers.filter(l => !l.active)
   // isMasked must reflect what was ACTUALLY measured, not just whether a privacy
   // toggle is on somewhere in the app. Omni renders inside its own tab (reusing
@@ -586,11 +586,11 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             {/* ── Row: IP / DNS Leak Check — full width ── */}
             <div className="omni-panel omni-orange mt-4 p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="omni-panel-label text-[#FF5722]">◈ IP / DNS Leak Check</p>
+                <p className="omni-panel-label text-[#FA2D48]">◈ IP / DNS Leak Check</p>
                 <button
                   onClick={checkIp}
                   disabled={ipStatus === 'loading'}
-                  className="text-[10px] font-mono border border-[#FF5722]/40 text-[#FF5722] hover:bg-[#FF5722]/10 px-2 py-1 transition-colors disabled:opacity-40"
+                  className="text-[10px] font-mono border border-[#FA2D48]/40 text-[#FA2D48] hover:bg-[#FA2D48]/10 px-2 py-1 transition-colors disabled:opacity-40"
                 >
                   {ipStatus === 'loading' ? 'checking…' : '↻ re-check'}
                 </button>
@@ -621,11 +621,11 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                     <OmniStat label="Country" value={`${ipInfo.country ?? '—'} (${ipInfo.countryCode ?? '—'})`} accent="#00fff2" />
                     <OmniStat label="City / Region" value={`${ipInfo.city ?? '—'}, ${ipInfo.region ?? '—'}`} accent="#9d00ff" />
                     <OmniStat label="ISP / Org" value={ipInfo.org ?? '—'} accent="#9d00ff" />
-                    <OmniStat label="Coordinates" value={ipInfo.lat != null ? `${ipInfo.lat.toFixed(2)}, ${ipInfo.lon?.toFixed(2)}` : '—'} accent="#FF5722" />
+                    <OmniStat label="Coordinates" value={ipInfo.lat != null ? `${ipInfo.lat.toFixed(2)}, ${ipInfo.lon?.toFixed(2)}` : '—'} accent="#FA2D48" />
                     <OmniStat
                       label="Ghost Mode"
                       value={!ghostMode ? 'OFF' : isMasked ? 'ON (Tor)' : 'ON (this tab unprotected)'}
-                      accent={ghostMode && isMasked ? '#39ff14' : ghostMode ? '#ff2bd6' : '#FF5722'}
+                      accent={ghostMode && isMasked ? '#39ff14' : ghostMode ? '#ff2bd6' : '#FA2D48'}
                     />
                   </div>
                 </>
@@ -651,7 +651,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                   {realIpStatus === 'error' && <p className="text-[10px] font-mono text-[#ff2bd6]">✕ {realIpInfo?.error ?? 'lookup failed'}</p>}
                   {realIpStatus === 'done' && realIpInfo && (
                     <>
-                      <p className="text-xs font-mono text-[#FF5722]">{realIpInfo.ip}</p>
+                      <p className="text-xs font-mono text-[#FA2D48]">{realIpInfo.ip}</p>
                       <p className="text-[10px] font-mono text-muted mt-0.5">{realIpInfo.country} ({realIpInfo.countryCode}) · {realIpInfo.org}</p>
                     </>
                   )}
@@ -699,7 +699,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
                 <ModeCard
                   active={currentMode === 'chakra'}
                   busy={chakraBusy}
-                  accent="#FF5722"
+                  accent="#FA2D48"
                   iconSrc="./chakra-icon.png"
                   title="Chakra Shield"
                   subtitle="Moderate — everyday protection"
@@ -837,11 +837,11 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             {/* ── Row: Fingerprint surface scanner ── */}
             <div className="omni-panel omni-orange mt-4 p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="omni-panel-label text-[#FF5722]">◎ Fingerprint Surface Scanner — Active Tab</p>
+                <p className="omni-panel-label text-[#FA2D48]">◎ Fingerprint Surface Scanner — Active Tab</p>
                 <button
                   onClick={scanFingerprint}
                   disabled={fpStatus === 'loading'}
-                  className="text-[10px] font-mono border border-[#FF5722]/40 text-[#FF5722] hover:bg-[#FF5722]/10 px-2 py-1 transition-colors disabled:opacity-40"
+                  className="text-[10px] font-mono border border-[#FA2D48]/40 text-[#FA2D48] hover:bg-[#FA2D48]/10 px-2 py-1 transition-colors disabled:opacity-40"
                 >
                   {fpStatus === 'loading' ? 'scanning…' : '↻ rescan'}
                 </button>
@@ -900,7 +900,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
 
               <div className="omni-panel omni-orange p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="omni-panel-label text-[#FF5722]">▣ Live Request Feed — Active Tab</p>
+                  <p className="omni-panel-label text-[#FA2D48]">▣ Live Request Feed — Active Tab</p>
                   <span className="text-[10px] font-mono text-muted">{requests.length} captured</span>
                 </div>
                 <div className="omni-scroll max-h-56 overflow-y-auto space-y-1 pr-1">
@@ -963,13 +963,13 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             {/* Suggestions */}
             {suggestions.length > 0 && (
               <div className="omni-panel omni-orange mt-4 p-4">
-                <p className="omni-panel-label text-[#FF5722] mb-2">⚠ Suggested Next Steps</p>
+                <p className="omni-panel-label text-[#FA2D48] mb-2">⚠ Suggested Next Steps</p>
                 <div className="flex flex-wrap gap-2">
                   {suggestions.map(s => (
                     <button
                       key={s.id}
                       onClick={() => setExpanded(s.id)}
-                      className="text-[10px] font-mono border border-[#FF5722]/40 text-[#FF5722]/90 hover:bg-[#FF5722]/10 hover:border-[#FF5722] px-2.5 py-1.5 transition-colors"
+                      className="text-[10px] font-mono border border-[#FA2D48]/40 text-[#FA2D48]/90 hover:bg-[#FA2D48]/10 hover:border-[#FA2D48] px-2.5 py-1.5 transition-colors"
                     >
                       {s.icon} {s.title}
                     </button>
@@ -981,7 +981,7 @@ export default function OmniPage({ activeTabId, theme = 'dark' }: Props) {
             {/* Layers grid */}
             <div className="mt-4 grid grid-cols-1 gap-3">
               {layers.map((layer, i) => {
-                const colors = ['#00fff2', '#ff2bd6', '#9d00ff', '#39ff14', '#FF5722', '#00fff2']
+                const colors = ['#00fff2', '#ff2bd6', '#9d00ff', '#39ff14', '#FA2D48', '#00fff2']
                 const c = colors[i % colors.length]
                 return (
                   <div key={layer.id} className="omni-panel p-4" style={{ borderColor: layer.active ? `${c}55` : undefined }}>

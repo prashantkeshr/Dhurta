@@ -353,17 +353,17 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           className="w-28 h-28 object-contain select-none transition-all duration-500"
           style={ghost
             ? { filter: 'drop-shadow(0 0 18px #FF0033cc) drop-shadow(0 0 40px #FF003388)' }
-            : { filter: 'drop-shadow(0 0 14px rgba(255,87,34,0.55)) drop-shadow(0 0 32px rgba(245,158,11,0.22))' }}
+            : { filter: 'drop-shadow(0 0 14px rgba(250,45,72,0.55)) drop-shadow(0 0 32px rgba(255,120,73,0.22))' }}
         />
         <h1
           className="font-mono font-light tracking-[0.38em] uppercase mt-2 flex items-center gap-2"
           style={{ fontSize: '11px' }}
         >
           <span style={{
-            color: ghost ? '#FF0033' : '#FF5722',
+            color: ghost ? '#FF0033' : '#FA2D48',
             textShadow: ghost
               ? '0 0 6px #FF0033, 0 0 18px #FF003399'
-              : '0 0 8px rgba(255,87,34,0.55), 0 0 22px rgba(255,87,34,0.28)',
+              : '0 0 8px rgba(250,45,72,0.55), 0 0 22px rgba(250,45,72,0.28)',
           }}>
             {ghost ? 'GHOST MODE' : 'DHURTA'}
           </span>
@@ -409,7 +409,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           tt.borderGlass,
           tt.bgGlass,
           'backdrop-blur-md',
-          'focus-within:border-[#FF5722]/70',
+          'focus-within:border-[#FA2D48]/70',
           isLight
             ? 'shadow-md focus-within:shadow-[0_0_0_3px_rgba(255,69,0,0.12)]'
             : 'shadow-lg shadow-black/30 focus-within:shadow-[0_0_0_3px_rgba(255,69,0,0.18)]',
@@ -471,9 +471,9 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           <button
             type="submit"
             className="active:scale-95 text-white px-5 py-3 text-[11px] font-mono tracking-[0.18em] font-semibold transition-all shrink-0"
-            style={{ background: 'linear-gradient(135deg, #FF5722 0%, #E64A19 100%)' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, #FF7043 0%, #FF5722 100%)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, #FF5722 0%, #E64A19 100%)' }}
+            style={{ background: 'linear-gradient(135deg, #FA2D48 0%, #C41F32 100%)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, #FF5260 0%, #FA2D48 100%)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'linear-gradient(135deg, #FA2D48 0%, #C41F32 100%)' }}
           >GO</button>
         </div>
         {/* Suggestions dropdown */}
@@ -487,11 +487,11 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                 className={[
                   'w-full text-left px-4 py-2.5 text-sm font-mono transition-colors flex items-center gap-2.5',
                   i === suggIdx
-                    ? 'bg-[#FF5722]/15 text-[#FF5722]'
-                    : `${tt.text} hover:bg-[#FF5722]/8 hover:text-[#FF5722]`,
+                    ? 'bg-[#FA2D48]/15 text-[#FA2D48]'
+                    : `${tt.text} hover:bg-[#FA2D48]/8 hover:text-[#FA2D48]`,
                 ].join(' ')}
               >
-                <svg className={`w-3 h-3 shrink-0 ${i === suggIdx ? 'text-[#FF5722]' : tt.textMuted}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 12 12">
+                <svg className={`w-3 h-3 shrink-0 ${i === suggIdx ? 'text-[#FA2D48]' : tt.textMuted}`} fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 12 12">
                   <circle cx="5" cy="5" r="3.5"/><line x1="7.5" y1="7.5" x2="11" y2="11"/>
                 </svg>
                 {s}
@@ -509,7 +509,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           <p className={`text-[10px] font-sans uppercase tracking-widest ${tt.textMuted}`}>Favourites</p>
           <div className="flex gap-1">
             <button onClick={() => setShowToolPicker(true)} title="Add Dhurta Tool"
-              className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF5722] hover:text-[#FF5722] transition-colors`}>
+              className={`text-[11px] font-mono px-1.5 py-0.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FA2D48] hover:text-[#FA2D48] transition-colors`}>
               + Tool
             </button>
           </div>
@@ -543,7 +543,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           {pinned.length < 8 && (
             <button
               onClick={openAdd}
-              className={`flex flex-col items-center justify-center gap-1 h-[84px] border ${tt.borderTile} ${tt.bgTile} backdrop-blur-sm hover:border-[#FF5722] transition-colors`}
+              className={`flex flex-col items-center justify-center gap-1 h-[84px] border ${tt.borderTile} ${tt.bgTile} backdrop-blur-sm hover:border-[#FA2D48] transition-colors`}
             >
               <span className={`text-xl leading-none ${tt.textFaint}`}>+</span>
               <span className={`text-[11px] font-mono ${tt.textFaint}`}>Add</span>
@@ -555,7 +555,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
             onClick={() => setShowToolPicker(false)}>
             <div className={`${isLight ? 'bg-white border-gray-200 shadow-xl' : 'bg-[#111] border-[#2a2a2a]'} border p-4 w-72 shadow-2xl`}
               onClick={e => e.stopPropagation()}>
-              <h3 className="text-[10px] font-mono text-[#FF5722] uppercase tracking-widest mb-3">Add Dhurta Tool</h3>
+              <h3 className="text-[10px] font-mono text-[#FA2D48] uppercase tracking-widest mb-3">Add Dhurta Tool</h3>
               <p className={`text-[11px] font-mono uppercase tracking-wider mb-1 ${tt.textMuted}`}>Ecosystem</p>
               {[
                 { id: 'setu', name: 'Dhurta Setu', desc: 'Bridge & web index', url: 'dhurta-tool://setu' },
@@ -573,7 +573,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                     className={`w-full flex items-center gap-3 px-3 py-2 mb-1 border transition-colors ${
                       exists
                         ? `${isLight ? 'border-gray-100 text-gray-300' : 'border-[#1a1a1a] text-[#333]'} cursor-not-allowed`
-                        : `${isLight ? 'border-gray-200 hover:border-[#FF5722]' : 'border-[#2a2a2a] hover:border-[#FF5722]'} ${tt.text}`
+                        : `${isLight ? 'border-gray-200 hover:border-[#FA2D48]' : 'border-[#2a2a2a] hover:border-[#FA2D48]'} ${tt.text}`
                     }`}>
                     <SmartFavicon url={`dhurta-tool://${t.id}`} name={t.name} size={16} />
                     <div className="text-left">
@@ -601,7 +601,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                     className={`w-full flex items-center gap-3 px-3 py-2 mb-1 border transition-colors ${
                       exists
                         ? `${isLight ? 'border-gray-100 text-gray-300' : 'border-[#1a1a1a] text-[#333]'} cursor-not-allowed`
-                        : `${isLight ? 'border-gray-200 hover:border-[#FF5722]' : 'border-[#2a2a2a] hover:border-[#FF5722]'} ${tt.text}`
+                        : `${isLight ? 'border-gray-200 hover:border-[#FA2D48]' : 'border-[#2a2a2a] hover:border-[#FA2D48]'} ${tt.text}`
                     }`}>
                     <SmartFavicon url={`dhurta-tool://${t.id}`} name={t.name} size={16} />
                     <div className="text-left">
@@ -612,7 +612,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                 )
               })}
               <button onClick={() => setShowToolPicker(false)}
-                className={`mt-2 w-full text-[10px] font-mono py-1.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FF5722] hover:text-[#FF5722] transition-colors`}>
+                className={`mt-2 w-full text-[10px] font-mono py-1.5 border ${tt.ctrlBorder} ${tt.ctrlText} hover:border-[#FA2D48] hover:text-[#FA2D48] transition-colors`}>
                 Close
               </button>
             </div>
@@ -703,7 +703,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
               onClick={() => { setWpIdx(i); setWpVisible(true) }}
               className={[
                 'w-1.5 h-1.5 rounded-full transition-all',
-                i === wpIdx ? 'bg-[#FF5722] scale-125' : 'bg-white/30 hover:bg-white/60',
+                i === wpIdx ? 'bg-[#FA2D48] scale-125' : 'bg-white/30 hover:bg-white/60',
               ].join(' ')}
             />
           ))}
@@ -728,12 +728,12 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                   <button
                     onClick={() => moveWidget(w.id, -1)}
                     disabled={idx === 0}
-                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FF5722] ${tt.ctrlText} hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors`}
+                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FA2D48] ${tt.ctrlText} hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors`}
                   >▲</button>
                   <button
                     onClick={() => moveWidget(w.id, 1)}
                     disabled={idx === layout.length - 1}
-                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FF5722] ${tt.ctrlText} hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors`}
+                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FA2D48] ${tt.ctrlText} hover:text-white disabled:opacity-20 disabled:cursor-not-allowed transition-colors`}
                   >▼</button>
                 </div>
               )}
@@ -748,7 +748,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                   <button
                     onClick={() => cycleAlign(w.id)}
                     title={`Align: ${align} → click to cycle`}
-                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FF5722] ${tt.ctrlText} hover:text-white transition-colors`}
+                    className={`w-5 h-5 text-[10px] ${tt.ctrlBg} border ${tt.ctrlBorder} hover:border-[#FA2D48] ${tt.ctrlText} hover:text-white transition-colors`}
                   >{alignIcon}</button>
                   <button
                     onClick={() => toggleWidget(w.id)}
@@ -757,7 +757,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                       `w-5 h-5 text-[10px] ${tt.ctrlBg} border transition-colors`,
                       w.visible
                         ? `${tt.ctrlBorder} hover:border-red-500 ${tt.ctrlText} hover:text-red-400`
-                        : 'border-[#FF5722]/50 text-[#FF5722]/80 hover:border-[#FF5722] hover:text-[#FF5722]',
+                        : 'border-[#FA2D48]/50 text-[#FA2D48]/80 hover:border-[#FA2D48] hover:text-[#FA2D48]',
                     ].join(' ')}
                   >
                     {w.visible ? '✕' : '+'}
@@ -794,7 +794,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
           className={[
             'absolute bottom-3 right-3 z-20 text-[10px] font-mono px-2.5 py-1 border transition-colors',
             customizing
-              ? 'border-[#FF5722] text-[#FF5722] ' + (isLight ? 'bg-white/80' : 'bg-black/60')
+              ? 'border-[#FA2D48] text-[#FA2D48] ' + (isLight ? 'bg-white/80' : 'bg-black/60')
               : isLight
                 ? 'border-gray-300/50 text-gray-400 hover:border-gray-400 hover:text-gray-600 bg-white/50'
                 : 'border-white/15 text-white/25 hover:border-white/40 hover:text-white/50 bg-black/20',
@@ -809,7 +809,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className={`${isLight ? 'bg-white border-gray-200 shadow-xl' : 'bg-[#111] border-[#2a2a2a]'} border p-5 w-80 shadow-2xl`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-mono text-[#FF5722] uppercase tracking-widest">
+              <h3 className="text-[10px] font-mono text-[#FA2D48] uppercase tracking-widest">
                 {editBm.id === -1 ? 'Add Favourite' : 'Edit Favourite'}
               </h3>
               <button onClick={() => setEditBm(null)} className={`text-sm leading-none ${isLight ? 'text-gray-400 hover:text-gray-700' : 'text-[#555] hover:text-white'}`}>✕</button>
@@ -821,7 +821,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                   value={editTitle}
                   onChange={e => setEditTitle(e.target.value)}
                   placeholder="My Site"
-                  className={`mt-1 w-full border text-xs font-mono px-2 py-1.5 outline-none focus:border-[#FF5722] ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-[#1a1a1a] border-[#2a2a2a] text-white'}`}
+                  className={`mt-1 w-full border text-xs font-mono px-2 py-1.5 outline-none focus:border-[#FA2D48] ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-[#1a1a1a] border-[#2a2a2a] text-white'}`}
                 />
               </label>
               <label className="block">
@@ -831,7 +831,7 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
                   onChange={e => setEditUrl(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSave()}
                   placeholder="https://example.com"
-                  className={`mt-1 w-full border text-xs font-mono px-2 py-1.5 outline-none focus:border-[#FF5722] ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-[#1a1a1a] border-[#2a2a2a] text-white'}`}
+                  className={`mt-1 w-full border text-xs font-mono px-2 py-1.5 outline-none focus:border-[#FA2D48] ${isLight ? 'bg-gray-50 border-gray-200 text-gray-800' : 'bg-[#1a1a1a] border-[#2a2a2a] text-white'}`}
                   autoFocus={editBm.id === -1}
                 />
               </label>
@@ -839,11 +839,11 @@ export default function NewTabPage({ onNavigate, ghost, wallpapers, browserTheme
             <div className="flex gap-2 mt-4">
               <button
                 onClick={handleSave}
-                className="flex-1 text-xs font-mono text-white bg-[#FF5722] hover:bg-orange-500 py-2 transition-colors"
+                className="flex-1 text-xs font-mono text-white bg-[#FA2D48] hover:bg-orange-500 py-2 transition-colors"
               >Save</button>
               <button
                 onClick={() => setEditBm(null)}
-                className={`flex-1 text-xs font-mono border hover:border-[#FF5722] py-2 transition-colors ${isLight ? 'text-gray-500 border-gray-200 hover:text-gray-800' : 'text-[#666] border-[#2a2a2a] hover:text-white'}`}
+                className={`flex-1 text-xs font-mono border hover:border-[#FA2D48] py-2 transition-colors ${isLight ? 'text-gray-500 border-gray-200 hover:text-gray-800' : 'text-[#666] border-[#2a2a2a] hover:text-white'}`}
               >Cancel</button>
             </div>
           </div>
@@ -858,7 +858,7 @@ function FaviconImg({ src: _src, fallback }: { src: string; fallback: string }) 
   // SpeedDialTile passes the full bookmark object directly now; this shim
   // exists for any call-sites that still pass a raw src string.
   return (
-    <div className="w-5 h-5 shrink-0 flex items-center justify-center text-[10px] font-mono text-[#FF5722] border border-[#FF5722]/50">
+    <div className="w-5 h-5 shrink-0 flex items-center justify-center text-[10px] font-mono text-[#FA2D48] border border-[#FA2D48]/50">
       {fallback}
     </div>
   )
@@ -885,7 +885,7 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
     catch { return bookmark.title || bookmark.url }
   })()
 
-  const tileBg      = isLight ? 'bg-white/75 border-gray-200 hover:border-[#FF5722] hover:bg-white/90' : 'bg-black/25 border-white/15 hover:border-[#FF5722] hover:bg-black/40'
+  const tileBg      = isLight ? 'bg-white/75 border-gray-200 hover:border-[#FA2D48] hover:bg-white/90' : 'bg-black/25 border-white/15 hover:border-[#FA2D48] hover:bg-black/40'
   const tileLabel   = isLight ? 'text-gray-500 group-hover:text-gray-800' : 'text-white/60 group-hover:text-white/90'
   const ctrlBg      = isLight ? 'bg-white/90 border border-gray-200' : 'bg-black/80'
 
@@ -907,7 +907,7 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
           name={bookmark.title || domain}
           size={20}
           className="w-5 h-5 object-contain shrink-0"
-          letterClassName="w-5 h-5 flex items-center justify-center text-[10px] font-mono text-[#FF5722] border border-[#FF5722]/50 shrink-0"
+          letterClassName="w-5 h-5 flex items-center justify-center text-[10px] font-mono text-[#FA2D48] border border-[#FA2D48]/50 shrink-0"
         />
         <span className={`text-[11px] font-mono w-full text-center leading-tight transition-colors line-clamp-2 px-1 ${tileLabel}`}>
           {bookmark.title || domain}
@@ -919,7 +919,7 @@ function SpeedDialTile({ bookmark, onNavigate, onEdit, onDelete, isLight = false
         <button
           onClick={e => { e.stopPropagation(); onEdit(bookmark) }}
           title="Edit"
-          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-[#FF5722] text-gray-500 hover:text-white text-[10px] transition-colors`}
+          className={`w-[18px] h-[18px] flex items-center justify-center ${ctrlBg} hover:bg-[#FA2D48] text-gray-500 hover:text-white text-[10px] transition-colors`}
         >✎</button>
         <button
           onClick={e => { e.stopPropagation(); onDelete(bookmark.id) }}

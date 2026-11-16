@@ -15,19 +15,19 @@ const STEPS: Step[] = [
     icon: (
       <img src="./dhurta-logo.png" alt="Dhurta Developer Browser" draggable={false}
         className="w-16 h-16 object-contain"
-        style={{ filter: 'drop-shadow(0 0 18px rgba(255,87,34,0.55)) drop-shadow(0 0 36px rgba(245,158,11,0.22))' }} />
+        style={{ filter: 'drop-shadow(0 0 18px rgba(250,45,72,0.55)) drop-shadow(0 0 36px rgba(255,120,73,0.22))' }} />
     ),
     title: 'Welcome to Dhurta Developer Browser',
     subtitle: 'The browser that puts privacy first — always.',
     body: 'Dhurta Developer Browser is built around one principle: what you browse is your business. No telemetry, no cloud sync, no fingerprinting. Everything runs locally on your machine.',
-    accent: '#FF5722',
+    accent: '#FA2D48',
   },
   {
     icon: (
       <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ filter: 'drop-shadow(0 0 14px #FF003388)' }}>
         <circle cx="28" cy="28" r="26" stroke="#FF003366" strokeWidth="1.5" />
         <circle cx="28" cy="28" r="18" stroke="#FF003344" strokeWidth="1" strokeDasharray="3 3" />
-        <text x="28" y="36" textAnchor="middle" fontSize="22" fill="#FF5722">👻</text>
+        <text x="28" y="36" textAnchor="middle" fontSize="22" fill="#FA2D48">👻</text>
       </svg>
     ),
     title: 'Ghost Mode',
@@ -47,18 +47,18 @@ const STEPS: Step[] = [
   },
   {
     icon: (
-      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ filter: 'drop-shadow(0 0 12px rgba(255,87,34,0.4))' }}>
-        <circle cx="28" cy="22" r="11" stroke="#FF5722" strokeWidth="1.5" />
-        <path d="M12 50c0-8.8 7.2-16 16-16s16 7.2 16 16" stroke="#FF5722" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="23" cy="21" r="2" fill="#FF5722" />
-        <circle cx="33" cy="21" r="2" fill="#FF5722" />
-        <path d="M22 27c1.5 2 8.5 2 10 0" stroke="#FF5722" strokeWidth="1.2" strokeLinecap="round" />
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ filter: 'drop-shadow(0 0 12px rgba(250,45,72,0.4))' }}>
+        <circle cx="28" cy="22" r="11" stroke="#FA2D48" strokeWidth="1.5" />
+        <path d="M12 50c0-8.8 7.2-16 16-16s16 7.2 16 16" stroke="#FA2D48" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="23" cy="21" r="2" fill="#FA2D48" />
+        <circle cx="33" cy="21" r="2" fill="#FA2D48" />
+        <path d="M22 27c1.5 2 8.5 2 10 0" stroke="#FA2D48" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
     title: 'AI Assistant',
     subtitle: 'Local LLM — no data leaves your machine.',
     body: 'Connect Ollama or LM Studio running on localhost and get AI help — summarise pages, ask questions, extract key points — with zero cloud dependency.',
-    accent: '#FF5722',
+    accent: '#FA2D48',
   },
   {
     icon: (
@@ -99,18 +99,18 @@ export default function OnboardingModal() {
   return (
     <div
       className={['fixed inset-0 z-[9998] flex items-center justify-center transition-opacity duration-200', closing ? 'opacity-0' : 'opacity-100'].join(' ')}
-      style={{ background: 'rgba(6,7,14,0.92)', backdropFilter: 'blur(8px) saturate(1.4)' }}
+      style={{ background: 'rgba(18,18,22,0.92)', backdropFilter: 'blur(8px) saturate(1.4)' }}
     >
       <div
         className="relative flex flex-col border border-border w-[420px] max-w-[90vw] shadow-2xl"
         style={{
-          background: 'rgb(12,13,24)',
-          boxShadow: `0 0 0 1px rgba(255,87,34,0.14), 0 24px 80px rgba(6,7,14,0.92), 0 8px 32px rgba(42,46,82,0.3)`,
-          borderColor: 'rgba(42,46,82,0.7)',
+          background: 'rgb(18,18,22)',
+          boxShadow: `0 0 0 1px rgba(250,45,72,0.14), 0 24px 80px rgba(18,18,22,0.92), 0 8px 32px rgba(58,60,72,0.3)`,
+          borderColor: 'rgba(58,60,72,0.7)',
         }}
       >
         {/* Top accent bar — premium gradient */}
-        <div className="h-[2px] w-full" style={{ background: `linear-gradient(90deg, transparent 0%, ${current.accent ?? '#FF5722'} 35%, rgba(245,158,11,0.6) 65%, transparent 100%)` }} />
+        <div className="h-[2px] w-full" style={{ background: `linear-gradient(90deg, transparent 0%, ${current.accent ?? '#FA2D48'} 35%, rgba(255,120,73,0.6) 65%, transparent 100%)` }} />
 
         {/* Skip */}
         <button
@@ -129,7 +129,7 @@ export default function OnboardingModal() {
 
           {/* Text */}
           <div className="flex flex-col gap-1.5">
-            <h2 className="text-[18px] font-semibold tracking-tight" style={{ color: current.accent ?? '#FF5722' }}>
+            <h2 className="text-[18px] font-semibold tracking-tight" style={{ color: current.accent ?? '#FA2D48' }}>
               {current.title}
             </h2>
             <p className="text-[12px] font-mono text-muted">{current.subtitle}</p>
@@ -150,7 +150,7 @@ export default function OnboardingModal() {
                   width: i === step ? 20 : 6,
                   height: 4,
                   borderRadius: 2,
-                  background: i === step ? (current.accent ?? '#FF5722') : 'rgba(42,46,82,0.6)',
+                  background: i === step ? (current.accent ?? '#FA2D48') : 'rgba(58,60,72,0.6)',
                 }}
               />
             ))}
@@ -171,7 +171,7 @@ export default function OnboardingModal() {
             <button
               onClick={dismiss}
               className="text-[11px] font-mono px-5 py-1.5 font-semibold text-black transition-all duration-100 active:scale-[0.95]"
-              style={{ background: current.accent ?? '#FF5722' }}
+              style={{ background: current.accent ?? '#FA2D48' }}
             >
               Start browsing →
             </button>
@@ -179,7 +179,7 @@ export default function OnboardingModal() {
             <button
               onClick={() => setStep(s => s + 1)}
               className="text-[11px] font-mono px-5 py-1.5 border text-text hover:text-saffron hover:border-saffron transition-all duration-100 active:scale-[0.95]"
-              style={{ borderColor: 'rgba(42,46,82,0.8)' }}
+              style={{ borderColor: 'rgba(58,60,72,0.8)' }}
             >
               Next →
             </button>

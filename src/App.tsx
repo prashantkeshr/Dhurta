@@ -797,9 +797,9 @@ function PageLoadBar({ loading }: { loading: boolean }) {
         style={{
           height: '100%',
           width: `${width}%`,
-          background: 'linear-gradient(90deg, #FF5722 0%, #FF7043 55%, #F59E0B 100%)',
+          background: 'linear-gradient(90deg, #FA2D48 0%, #FF7043 55%, #F59E0B 100%)',
           transition: width === 100 ? 'width 0.2s ease-out' : 'width 0.06s linear',
-          boxShadow: '0 0 10px rgba(255,87,34,0.65), 0 0 20px rgba(245,158,11,0.3)',
+          boxShadow: '0 0 10px rgba(250,45,72,0.65), 0 0 20px rgba(255,120,73,0.3)',
         }}
       />
     </div>

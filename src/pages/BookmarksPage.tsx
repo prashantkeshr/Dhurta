@@ -51,7 +51,7 @@ export default function BookmarksPage({ onNavigate }: Props) {
       <div className="shrink-0 border-b border-border bg-surface/30 px-8 py-4 flex items-center gap-5">
         <div>
           <div className="flex items-center gap-2">
-            <svg width="16" height="18" viewBox="0 0 16 18" fill="none" stroke="#FF5722" strokeWidth="1.4" strokeLinecap="round">
+            <svg width="16" height="18" viewBox="0 0 16 18" fill="none" stroke="#FA2D48" strokeWidth="1.4" strokeLinecap="round">
               <path d="M1 1h14v16l-7-4-7 4V1z" />
             </svg>
             <h1 className="text-sm font-mono text-text tracking-widest uppercase">Bookmarks</h1>

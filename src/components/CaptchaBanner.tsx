@@ -141,7 +141,7 @@ export default function CaptchaBanner({ activeTabId, ghostMode, onNavigate }: Pr
         {isGoogle && !ghostMode && query && (
           <>
             <button onClick={switchToBrave}
-              className="px-2.5 py-0.5 bg-[#FF5722] text-black text-[10px] font-mono hover:bg-[#FF5a1a] transition-colors shrink-0">
+              className="px-2.5 py-0.5 bg-[#FA2D48] text-black text-[10px] font-mono hover:bg-[#FF5a1a] transition-colors shrink-0">
               → Brave Search
             </button>
             <button onClick={switchToDDG}
