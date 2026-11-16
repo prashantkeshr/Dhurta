@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,107 +10,112 @@
   padding: 0;
 }
 
-/* ── Theme: Dark (default) ─────────────────────────────────────────────────── */
+/* ── Theme: Dark — Premium Deep-Space Developer ────────────────────────────── */
 :root {
   color-scheme: dark;
-  --color-obsidian: 10 10 10;
-  --color-surface:  17 17 17;
-  --color-surface2: 26 26 26;
-  --color-surface3: 34 34 34;
-  --color-border:   42 42 42;
-  --color-muted:    102 102 102;
-  --color-text:     232 232 232;
-  --color-text-dim: 153 153 153;
-  /* Ghost mode tab bar — deep purple, overridden for light mode */
-  --color-ghost-tab: 13 0 24;
+  /* Deep navy-black palette — rich developer-grade depth */
+  --color-obsidian: 6 7 14;         /* #06070E — deep space near-black              */
+  --color-surface:  12 13 24;       /* #0C0D18 — elevated panel surface              */
+  --color-surface2: 19 21 38;       /* #131526 — nested / hover surface              */
+  --color-surface3: 28 30 54;       /* #1C1E36 — active / deeper hover               */
+  --color-border:   42 46 82;       /* #2A2E52 — indigo-tinted subtle border         */
+  --color-muted:    88 96 148;      /* #586094 — muted icons / placeholder           */
+  --color-text:     218 222 248;    /* #DADEFF — premium slightly-blue white         */
+  --color-text-dim: 128 138 182;    /* #808AB6 — secondary text, blue-grey           */
+  /* Accent glow tokens */
+  --accent-primary: #FF5722;        /* refined saffron — slightly warmer, richer     */
+  --accent-gold:    #F59E0B;        /* premium amber-gold for highlights             */
+  --accent-glow:    rgba(255,87,34,0.22);
+  /* Ghost mode tab bar */
+  --color-ghost-tab: 10 2 22;
   --color-ghost-border: 255 0 51;
 }
 
-/* ── Theme: Light ──────────────────────────────────────────────────────────── */
+/* ── Theme: Light — Premium Airy Developer ──────────────────────────────────── */
 [data-theme="light"] {
   color-scheme: light;
-  /* Blue-tinted neutral palette — feels airy and premium against saffron */
-  --color-obsidian: 250 251 252;    /* #FAFBFC — near-white with subtle cool tint */
-  --color-surface:  242 244 248;    /* #F2F4F8 — light panel bg                  */
-  --color-surface2: 232 235 242;    /* #E8EBF2 — nested surfaces                 */
-  --color-surface3: 220 224 234;    /* #DCE0EA — hover surface                   */
-  --color-border:   198 204 218;    /* #C6CCDA — clean visible border             */
-  --color-muted:    130 142 164;    /* #828EA4 — muted icons / secondary text     */
-  --color-text:     13 18 38;       /* #0D1226 — deep navy-black                  */
-  --color-text-dim: 64 78 108;      /* #404E6C — secondary text                   */
-  /* Ghost mode tab bar — light lavender tint for light theme */
-  --color-ghost-tab: 238 232 255;
-  --color-ghost-border: 180 80 220;
+  --color-obsidian: 248 249 254;    /* #F8F9FE — cool near-white with subtle blue    */
+  --color-surface:  240 242 252;    /* #F0F2FC — elevated panel                      */
+  --color-surface2: 229 232 248;    /* #E5E8F8 — nested surfaces                     */
+  --color-surface3: 216 220 242;    /* #D8DCF2 — hover surface                       */
+  --color-border:   194 200 230;    /* #C2C8E6 — clean indigo-tinted border          */
+  --color-muted:    118 130 172;    /* #7682AC — muted icons / secondary text        */
+  --color-text:     12 14 36;       /* #0C0E24 — deep navy-black body text           */
+  --color-text-dim: 54 66 110;      /* #36426E — dimmed secondary text               */
+  --accent-primary: #FF5722;
+  --accent-gold:    #D97706;
+  --accent-glow:    rgba(255,87,34,0.14);
+  --color-ghost-tab: 236 230 255;
+  --color-ghost-border: 172 72 218;
 }
 
 body {
   background: rgb(var(--color-obsidian));
   color: rgb(var(--color-text));
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
   overflow: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar — slim Opera-style, fades when idle */
+/* Scrollbar — premium slim, indigo-tinted track */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.25); border-radius: 6px; transition: background 0.25s; }
-::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+::-webkit-scrollbar-track { background: rgba(42,46,82,0.12); border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(88,96,148,0.3); border-radius: 6px; transition: background 0.25s; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
 /* ── Light mode overrides ──────────────────────────────────────────────────── */
-[data-theme="light"] ::-webkit-scrollbar-track { background: transparent; }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 6px; }
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #FF4500; }
+[data-theme="light"] ::-webkit-scrollbar-track { background: rgba(194,200,230,0.2); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(118,130,172,0.25); border-radius: 6px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
 /* Tab bar items — rounded top corners for Chrome-style physical tab shape */
-.tab-sharp { border-radius: 6px 6px 0 0; }
+.tab-sharp { border-radius: 7px 7px 0 0; }
 
-/* Saffron underline for active tab + elevation shadow */
+/* Premium active tab underline + elevation */
 .tab-active {
   position: relative;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.42), 0 -1px 0 rgba(255,255,255,0.03) inset;
+  box-shadow: 0 -3px 18px rgba(42,46,82,0.6), 0 -1px 0 rgba(218,222,248,0.04) inset;
 }
 .tab-active::after {
   content: '';
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 8px;
+  right: 8px;
   height: 2px;
-  background: #FF4500;
-  box-shadow: 0 0 8px #FF4500;
+  background: linear-gradient(90deg, transparent, var(--accent-primary) 30%, var(--accent-primary) 70%, transparent);
+  box-shadow: 0 0 10px var(--accent-primary), 0 0 20px var(--accent-glow);
+  border-radius: 2px;
 }
 
-/* Light mode active tab — crisp underline, no dark glow bleed */
 [data-theme="light"] .tab-active::after {
-  box-shadow: 0 0 5px rgba(255, 69, 0, 0.45);
+  box-shadow: 0 0 6px rgba(255, 87, 34, 0.5);
 }
 
-/* Light mode active tab — subtle top shadow for "lifted" feeling */
 [data-theme="light"] .tab-active {
-  box-shadow: 0 -1px 6px rgba(13, 18, 38, 0.06) inset;
+  box-shadow: 0 -1px 8px rgba(12, 14, 36, 0.07) inset;
 }
 
-/* Sidebar icon glow on hover */
+/* Sidebar icon — premium hover glow */
 .sidebar-icon {
   transition: color 0.15s, filter 0.15s;
 }
 .sidebar-icon:hover {
-  color: #FF4500;
-  filter: drop-shadow(0 0 6px #FF4500);
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 5px var(--accent-primary));
 }
 
 /* Ghost mode pulse on sidebar icon */
 .ghost-active {
-  color: #FF4500;
+  color: var(--accent-primary);
   animation: saffron-pulse 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px #FF4500);
+  filter: drop-shadow(0 0 8px var(--accent-primary));
 }
 
-/* Light mode — remove neon glow from sidebar icons (looks harsh on white) */
 [data-theme="light"] .sidebar-icon:hover {
-  color: #FF4500;
+  color: var(--accent-primary);
   filter: none;
 }
 [data-theme="light"] .ghost-active {
@@ -122,20 +127,21 @@ body {
   animation: glitch 0.4s ease-in-out;
 }
 
-/* Glassmorphism sidebar */
+/* Premium glassmorphism sidebar — deep frosted navy-black */
 .glass {
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(6, 7, 14, 0.88);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border-right: 1px solid rgba(42, 46, 82, 0.5);
+  box-shadow: 2px 0 24px rgba(6, 7, 14, 0.4), 1px 0 0 rgba(42, 46, 82, 0.3);
 }
 
-/* Light mode sidebar — white frosted glass with right-side depth shadow */
 [data-theme="light"] .glass {
-  background: rgba(248, 249, 252, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 2px 0 24px rgba(13, 18, 38, 0.07), 1px 0 0 rgba(13, 18, 38, 0.05);
-  border-right-color: rgba(198, 204, 218, 0.5);
+  background: rgba(248, 249, 254, 0.96);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 2px 0 28px rgba(12, 14, 36, 0.09), 1px 0 0 rgba(194, 200, 230, 0.6);
+  border-right-color: rgba(194, 200, 230, 0.55);
 }
 
 /* URL bar glassmorphism — frosted chrome feel like Opera */
@@ -181,19 +187,18 @@ input, textarea {
   animation: fade-in 0.15s ease-out;
 }
 
-/* Nuclear button pulse */
+/* Nuclear button pulse — premium glow */
 .nuclear-btn {
   transition: all 0.2s;
 }
 .nuclear-btn:hover {
-  background: #FF4500;
-  box-shadow: 0 0 20px #FF4500, 0 0 40px #FF450044;
+  background: var(--accent-primary);
+  box-shadow: 0 0 24px var(--accent-primary), 0 0 48px var(--accent-glow);
 }
 
-/* Light mode nuclear — softer glow (dark glow bleeds on white) */
 [data-theme="light"] .nuclear-btn:hover {
-  background: #FF4500;
-  box-shadow: 0 0 14px rgba(255, 69, 0, 0.4), 0 2px 8px rgba(255, 69, 0, 0.25);
+  background: var(--accent-primary);
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.42), 0 2px 10px rgba(255, 87, 34, 0.28);
   color: #fff;
 }
 
@@ -206,8 +211,8 @@ input, textarea {
 }
 
 @keyframes saffron-pulse {
-  0%, 100% { box-shadow: 0 0 4px #FF4500; }
-  50% { box-shadow: 0 0 12px #FF4500, 0 0 24px #FF450055; }
+  0%, 100% { box-shadow: 0 0 5px var(--accent-primary); }
+  50% { box-shadow: 0 0 14px var(--accent-primary), 0 0 28px var(--accent-glow); }
 }
 
 @keyframes fade-in {
@@ -249,7 +254,7 @@ input, textarea {
 }
 .tab-close-btn:hover {
   opacity: 1 !important;
-  color: #FF4500;
+  color: #FF5722;
 }
 
 /* ── Tooltip slide-down ────────────────────────────────────────────────────── */
@@ -347,7 +352,7 @@ input, textarea {
 
 .chakra-active {
   animation: chakra-spin 6s linear infinite;
-  filter: drop-shadow(0 0 6px #FF4500) drop-shadow(0 0 14px #FF450055);
+  filter: drop-shadow(0 0 6px #FF5722) drop-shadow(0 0 14px rgba(255,87,34,0.36));
 }
 
 .chakra-idle {
@@ -372,7 +377,7 @@ input, textarea {
   left: 0;
   width: 55%;
   height: 100%;
-  background: linear-gradient(90deg, transparent 0%, #FF4500 40%, #FFB300 60%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, #FF5722 35%, #F59E0B 65%, transparent 100%);
   animation: tab-loading-sweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
@@ -381,60 +386,52 @@ input, textarea {
   100% { transform: translateX(400%); }
 }
 
-/* ── Light mode component elevation ───────────────────────────────────────── */
+/* ── Premium Light mode component elevation ─────────────────────────────────── */
 
-/* Panels slide in with a shadow to "float" above the browser content */
 [data-theme="light"] .panel-overlay {
-  box-shadow: 4px 0 32px rgba(13, 18, 38, 0.1), 1px 0 0 rgba(13, 18, 38, 0.06);
+  box-shadow: 4px 0 36px rgba(12, 14, 36, 0.11), 1px 0 0 rgba(12, 14, 36, 0.06);
 }
 
-/* URL bar — separate it from the white page content with a crisp bottom shadow */
 [data-theme="light"] .url-bar {
   background: rgb(var(--color-surface));
-  box-shadow: 0 1px 0 rgba(13, 18, 38, 0.06), 0 2px 8px rgba(13, 18, 38, 0.04);
-  border-bottom-color: rgba(198, 204, 218, 0.7) !important;
+  box-shadow: 0 1px 0 rgba(12, 14, 36, 0.07), 0 2px 10px rgba(12, 14, 36, 0.05);
+  border-bottom-color: rgba(194, 200, 230, 0.75) !important;
 }
 
-/* Tab bar — light mode top border and deeper active-tab separation */
 [data-theme="light"] .tab-bar {
   background: rgb(var(--color-surface));
-  border-bottom-color: rgba(198, 204, 218, 0.8) !important;
+  border-bottom-color: rgba(194, 200, 230, 0.85) !important;
 }
 
-/* Inactive tab hover in light mode — warmer saffron tint */
 [data-theme="light"] .tab-inactive-hover:hover {
   background: rgb(var(--color-surface2));
 }
 
-/* Download tray popup in light — distinct card shadow */
 [data-theme="light"] .download-tray-popup {
-  box-shadow: 0 8px 32px rgba(13, 18, 38, 0.12), 0 2px 8px rgba(13, 18, 38, 0.06),
-              0 0 0 1px rgba(13, 18, 38, 0.05);
+  box-shadow: 0 10px 36px rgba(12, 14, 36, 0.14), 0 2px 10px rgba(12, 14, 36, 0.07),
+              0 0 0 1px rgba(12, 14, 36, 0.05);
 }
 
-/* URL input box in light — inset shadow for depth, white bg for contrast */
 [data-theme="light"] .url-input-box {
   background: #ffffff !important;
-  box-shadow: inset 0 1px 3px rgba(13, 18, 38, 0.08), inset 0 0 0 1px rgba(198, 204, 218, 0.8);
+  box-shadow: inset 0 1px 4px rgba(12, 14, 36, 0.09), inset 0 0 0 1px rgba(194, 200, 230, 0.85);
   border-color: transparent !important;
 }
 
 [data-theme="light"] .url-input-box:focus-within {
-  box-shadow: inset 0 1px 3px rgba(13, 18, 38, 0.06),
-              0 0 0 2px rgba(255, 69, 0, 0.18);
+  box-shadow: inset 0 1px 3px rgba(12, 14, 36, 0.06),
+              0 0 0 2px rgba(255, 87, 34, 0.2);
   border-color: transparent !important;
 }
 
-/* Saffron badge / chip — brighter on white backgrounds */
 [data-theme="light"] .chip-saffron {
-  background: rgba(255, 69, 0, 0.08);
-  color: #cc3700;
-  border-color: rgba(255, 69, 0, 0.3);
+  background: rgba(255, 87, 34, 0.09);
+  color: #c43900;
+  border-color: rgba(255, 87, 34, 0.3);
 }
 
-/* Ghost badge in light mode */
 [data-theme="light"] .ghost-badge {
-  background: rgba(255, 69, 0, 0.06);
-  color: #cc3700;
-  border-color: rgba(255, 69, 0, 0.25);
+  background: rgba(255, 87, 34, 0.07);
+  color: #c43900;
+  border-color: rgba(255, 87, 34, 0.25);
 }

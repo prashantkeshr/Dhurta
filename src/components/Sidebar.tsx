@@ -54,7 +54,7 @@ function SecBtn({ children, label, active, danger, onClick }: {
       className={[
         'w-9 h-9 flex items-center justify-center transition-all duration-100 active:scale-[0.92]',
         active  ? 'text-saffron bg-saffron/15 rounded-xl'
-        : danger ? 'text-text/45 hover:text-[#FF4500] hover:bg-white/8 rounded-xl'
+        : danger ? 'text-text/45 hover:text-[#FF5722] hover:bg-white/8 rounded-xl'
         : 'text-text/40 hover:text-saffron hover:bg-white/8 rounded-xl',
       ].join(' ')}
     >
@@ -115,14 +115,14 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="glass border-r border-border flex flex-col items-center py-2 w-14 shrink-0 z-50">
+    <aside className="glass flex flex-col items-center py-2 w-14 shrink-0 z-50">
 
       {/* ━━━ TIER 1 — Identity & Privacy Shield ━━━ */}
       {/* Ghost toggle — primary action, always prominent */}
       <button
         title={ghostMode
           ? (torActive ? 'Ghost ON · Tor active ✓' : 'Ghost ON · upgrading to Tor…')
-          : 'Enable Ghost Mode — Tor routing + fingerprint spoofing'}
+          : 'Dhurta Developer Browser — Enable Ghost Mode (Tor + fingerprint spoofing)'}
         onClick={onToggleGhost}
         className="w-10 h-10 flex items-center justify-center mb-0.5 transition-all duration-300 active:scale-[0.92] relative"
         style={ghostMode ? {
@@ -131,34 +131,34 @@ export default function Sidebar({
           background: 'radial-gradient(circle, #FF003318 0%, transparent 70%)',
         } : {}}
       >
-        <img src="./dhurta-logo.png" alt="Dhurta" draggable={false}
+        <img src="./dhurta-logo.png" alt="Dhurta Developer Browser" draggable={false}
           className="w-9 h-9 object-contain transition-all duration-300"
           style={ghostMode
             ? { filter: 'drop-shadow(0 0 8px #FF0033cc) drop-shadow(0 0 20px #FF003388)' }
-            : { opacity: 0.75, filter: 'drop-shadow(0 0 4px #FFB30055)' }} />
+            : { opacity: 0.8, filter: 'drop-shadow(0 0 5px rgba(255,87,34,0.45)) drop-shadow(0 0 12px rgba(245,158,11,0.18))' }} />
         {torConnecting && (
-          <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#FF4500] border border-[#0a0a0a] animate-pulse" />
+          <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#FF5722] border border-[#06070e] animate-pulse" />
         )}
       </button>
 
       {/* Chakra — one-click full shield */}
       <button
-        title={chakraBusy ? 'Activating…' : chakraActive ? 'Chakra Shield ON — click to disable' : 'Chakra Shield — enable all privacy features'}
+        title={chakraBusy ? 'Activating…' : chakraActive ? 'Dhurta Developer Browser — Chakra Shield ON (click to disable)' : 'Dhurta Developer Browser — Chakra Shield (enable all privacy)'}
         onClick={onToggleChakra}
         disabled={chakraBusy}
         className="w-10 h-10 flex items-center justify-center transition-all duration-300 active:scale-[0.92] disabled:opacity-50"
       >
-        <img src="./chakra-icon.png" alt="Chakra" draggable={false}
+        <img src="./chakra-icon.png" alt="Dhurta Developer Browser — Chakra Shield" draggable={false}
           className={['w-8 h-8 object-contain', chakraActive ? 'chakra-active' : 'chakra-idle'].join(' ')} />
       </button>
 
       {/* Chakra warning toast */}
       {chakraWarning && (
         <div className="relative w-full px-1 mb-1">
-          <div className="bg-[#1a0800] border border-[#FF4500]/60 rounded-xl px-2 py-1.5 text-[9px] font-sans text-[#FF4500] leading-snug">
+          <div className="bg-[#1a0800] border border-[#FF5722]/60 rounded-xl px-2 py-1.5 text-[9px] font-sans text-[#FF5722] leading-snug">
             <p className="font-semibold mb-0.5 text-[10px]">⚠ Security Risk</p>
-            <p className="text-[#FF4500]/80">{chakraWarning}</p>
-            <button onClick={onDismissChakraWarning} className="mt-1 text-[9px] text-[#FF4500]/50 hover:text-[#FF4500] transition-colors">✕ dismiss</button>
+            <p className="text-[#FF5722]/80">{chakraWarning}</p>
+            <button onClick={onDismissChakraWarning} className="mt-1 text-[9px] text-[#FF5722]/50 hover:text-[#FF5722] transition-colors">✕ dismiss</button>
           </div>
         </div>
       )}
@@ -319,7 +319,7 @@ export default function Sidebar({
       <button
         title="Nuclear Wipe — Destroy all data and quit"
         onClick={onNuclearWipe}
-        className="nuclear-btn w-9 h-9 flex items-center justify-center border border-border/40 text-text/25 hover:border-[#FF4500]/60 hover:text-[#FF4500] transition-all duration-200 active:scale-[0.90] mb-1 mt-0.5"
+        className="nuclear-btn w-9 h-9 flex items-center justify-center border border-border/40 text-text/25 hover:border-[#FF5722]/60 hover:text-[#FF5722] transition-all duration-200 active:scale-[0.90] mb-1 mt-0.5"
       >
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4">
           <circle cx="9" cy="9" r="7" />

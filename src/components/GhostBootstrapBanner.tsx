@@ -74,10 +74,10 @@ export default function GhostBootstrapBanner({ ghostMode, torActive }: Props) {
         borderBottom: '1px solid #3a2410',
       }}
     >
-      <span className="text-base shrink-0" style={{ color: '#FF4500' }}>🧅</span>
+      <span className="text-base shrink-0" style={{ color: '#FF5722' }}>🧅</span>
 
       <span className="flex-1 min-w-0">
-        <span className="font-semibold" style={{ color: '#FF4500' }}>
+        <span className="font-semibold" style={{ color: '#FF5722' }}>
           Connecting to Tor onion routing…
         </span>
         <span className="text-[#a08060]">
@@ -91,7 +91,7 @@ export default function GhostBootstrapBanner({ ghostMode, torActive }: Props) {
             className="block h-full rounded-full"
             style={{
               width: `${Math.max(3, percent)}%`,
-              background: 'linear-gradient(90deg, #FF4500, #ff8a50)',
+              background: 'linear-gradient(90deg, #FF5722, #ff8a50)',
               transition: 'width 0.4s ease',
             }}
           />

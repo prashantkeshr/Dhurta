@@ -28,7 +28,7 @@ function extColor(ext: string) {
   if (['zip','rar','7z','tar','gz','xpi','crx'].includes(ext)) return '#FF9800'
   if (['exe','msi','apk'].includes(ext)) return '#F44336'
   if (['js','ts','py','go','rs','cpp','html','css','json'].includes(ext)) return '#00BCD4'
-  return '#FF4500'
+  return '#FF5722'
 }
 
 export default function DownloadsPage() {
@@ -109,7 +109,7 @@ export default function DownloadsPage() {
       <div className="shrink-0 border-b border-border bg-surface/30 px-6 py-3.5 flex items-center gap-5 flex-wrap">
         <div>
           <div className="flex items-center gap-2">
-            <svg width="15" height="17" viewBox="0 0 15 17" fill="none" stroke="#FF4500" strokeWidth="1.4" strokeLinecap="round">
+            <svg width="15" height="17" viewBox="0 0 15 17" fill="none" stroke="#FF5722" strokeWidth="1.4" strokeLinecap="round">
               <line x1="7.5" y1="1" x2="7.5" y2="12" />
               <polyline points="3,8 7.5,13 12,8" />
               <line x1="1" y1="15.5" x2="14" y2="15.5" />

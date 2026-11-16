@@ -235,7 +235,7 @@ export default function URLBar({
       )}
 
       {/* URL input — lock icon opens the native Site Info popup */}
-      <div className={`url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF450018] transition-all duration-150 px-3 min-w-0 relative rounded-full ${editing ? 'h-8' : 'h-7'}`}>
+      <div className={`url-input-box flex-1 flex items-center bg-surface border border-border hover:border-border/80 focus-within:border-saffron/60 focus-within:shadow-[0_0_0_2px_#FF572218] transition-all duration-150 px-3 min-w-0 relative rounded-full ${editing ? 'h-8' : 'h-7'}`}>
         <button
           ref={lockBtnRef}
           onClick={openSitePopup}

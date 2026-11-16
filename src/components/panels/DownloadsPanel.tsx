@@ -284,15 +284,15 @@ function DownloadRow({ d, onRemove, onDeleteFile, onPause, onResume, onCancel }:
                     width: `${pct}%`,
                     background: isPaused
                       ? 'linear-gradient(90deg,#666,#888)'
-                      : 'linear-gradient(90deg,#FF4500 0%,#FF6A33 100%)',
-                    boxShadow: isPaused ? 'none' : '0 0 8px #FF450066',
+                      : 'linear-gradient(90deg,#FF5722 0%,#FF6A33 100%)',
+                    boxShadow: isPaused ? 'none' : '0 0 8px #FF572266',
                   }}
                 />
               ) : (
                 <div
                   className="h-full w-1/3 rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg,#FF4500,#FF6A33)',
+                    background: 'linear-gradient(90deg,#FF5722,#FF6A33)',
                     animation: 'dl-slide 1.2s ease-in-out infinite',
                   }}
                 />
@@ -414,7 +414,7 @@ function FileTypeIcon({ filename, state }: { filename: string; state: Download['
     : isZip   ? '#FF9800'
     : isExe   ? '#F44336'
     : isCode  ? '#00BCD4'
-    : '#FF4500'
+    : '#FF5722'
 
   const label = ext ? ext.toUpperCase().slice(0, 3) : 'BIN'
 

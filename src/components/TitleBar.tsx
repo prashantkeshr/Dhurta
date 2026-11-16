@@ -59,44 +59,62 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
   const dateStr = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`
 
   return (
-    <div className="drag-region flex items-center h-10 bg-obsidian border-b border-border select-none shrink-0 relative z-[9999]">
-      {/* Logo — sits inside the sidebar width block */}
+    <div className="drag-region flex items-center h-10 bg-obsidian border-b border-border select-none shrink-0 relative z-[9999]"
+      style={{ borderBottomColor: 'rgba(42,46,82,0.6)' }}>
+      {/* Logo + brand — sits inside the sidebar width block */}
       <div className="w-16 shrink-0 flex items-center justify-center">
         <img
           src="./dhurta-logo.png"
-          alt="Dhurta"
-          className="w-8 h-8 object-contain drop-shadow-[0_0_6px_#FFB30066]"
+          alt="Dhurta Developer Browser"
+          className="w-8 h-8 object-contain"
+          style={{ filter: 'drop-shadow(0 0 5px rgba(255,87,34,0.5)) drop-shadow(0 0 12px rgba(245,158,11,0.2))' }}
           draggable={false}
         />
       </div>
 
-      {/* Title */}
-      <div className="flex-1 flex items-center justify-center">
-        <span className="text-xs text-muted font-mono tracking-widest uppercase">
-          {title || 'Dhurta'}
-        </span>
+      {/* Title — show page title or branded app name */}
+      <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
+        {title && title !== 'Dhurta' && title !== 'Dhurta Developer Browser' ? (
+          <span className="text-xs text-muted font-mono tracking-widest uppercase truncate max-w-[400px]">
+            {title}
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5">
+            <span className="text-[10px] font-mono tracking-[0.3em] uppercase"
+              style={{ color: '#FF5722', textShadow: '0 0 8px rgba(255,87,34,0.4)' }}>
+              DHURTA
+            </span>
+            <span className="text-[10px] font-mono text-muted/40 tracking-widest">·</span>
+            <span className="text-[10px] font-mono tracking-[0.22em] uppercase"
+              style={{ color: 'rgba(218,222,248,0.45)', letterSpacing: '0.22em' }}>
+              DEVELOPER BROWSER
+            </span>
+          </span>
+        )}
       </div>
 
-      {/* Network status — online/offline */}
+      {/* Network status */}
       <div
         title={online ? 'Online' : 'Offline — no network connection'}
         className={[
           'no-drag flex items-center gap-1.5 h-6 px-2.5 mr-1 border rounded-full shrink-0',
-          online ? 'border-green-500/30 text-green-500/80' : 'border-red-500/40 text-red-400',
+          online
+            ? 'border-emerald-500/25 text-emerald-400/70'
+            : 'border-red-500/40 text-red-400',
         ].join(' ')}
       >
-        <span className={['w-1.5 h-1.5 rounded-full shrink-0', online ? 'bg-green-500' : 'bg-red-500 animate-pulse'].join(' ')} />
+        <span className={['w-1.5 h-1.5 rounded-full shrink-0', online ? 'bg-emerald-400' : 'bg-red-500 animate-pulse'].join(' ')} />
         <span className="text-[10px] font-mono uppercase tracking-widest">{online ? 'Online' : 'Offline'}</span>
       </div>
 
-      {/* Dhurta Omni shortcut — privacy control dashboard */}
+      {/* Dhurta Omni shortcut */}
       {onOpenOmni && (
         <button
           onClick={onOpenOmni}
           title="Dhurta Omni — Privacy Dashboard"
-          className="no-drag flex items-center gap-1.5 h-6 px-2.5 mr-1 border border-saffron/30 text-saffron/80 hover:text-saffron hover:border-saffron hover:bg-saffron/10 transition-colors shrink-0 rounded-full"
+          className="no-drag flex items-center gap-1.5 h-6 px-2.5 mr-1 border border-saffron/25 text-saffron/70 hover:text-saffron hover:border-saffron hover:bg-saffron/8 transition-colors shrink-0 rounded-full"
         >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 1.5L2.5 4v3.8c0 3.2 2.4 5.9 5.5 6.7 3.1-.8 5.5-3.5 5.5-6.7V4L8 1.5z" />
             <circle cx="8" cy="7.6" r="1.6" fill="currentColor" stroke="none" />
           </svg>
@@ -104,39 +122,41 @@ export default function TitleBar({ title, onOpenOmni }: Props) {
         </button>
       )}
 
-      {/* Live clock + date — top-right corner */}
+      {/* Live clock + date */}
       <div className="no-drag flex flex-col items-end justify-center px-3 shrink-0 leading-none gap-px">
-        <span className="text-[11px] font-mono text-text/80 tabular-nums tracking-wider">{timeStr}</span>
-        <span className="text-[10px] font-mono text-muted tracking-wider">{dateStr}</span>
+        <span className="text-[11px] font-mono tabular-nums tracking-wider" style={{ color: 'rgba(218,222,248,0.72)' }}>{timeStr}</span>
+        <span className="text-[10px] font-mono tracking-wider" style={{ color: 'rgba(88,96,148,0.9)' }}>{dateStr}</span>
       </div>
 
-      {/* Windows-style controls */}
+      {/* Windows-style controls — premium subtle */}
       {(typeof window.dhurta === 'undefined' || window.dhurta.platform !== 'darwin') && (
         <div className="no-drag flex items-center shrink-0">
           <button
             onClick={minimize}
-            className="h-10 w-12 flex items-center justify-center text-muted hover:bg-surface-2 hover:text-text transition-colors"
+            className="h-10 w-10 flex items-center justify-center transition-colors"
+            style={{ color: 'rgba(88,96,148,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(42,46,82,0.4)'; e.currentTarget.style.color = 'rgba(218,222,248,0.9)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
           >
-            <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor">
-              <rect width="10" height="1" />
-            </svg>
+            <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1" /></svg>
           </button>
           <button
             onClick={maximize}
-            className="h-10 w-12 flex items-center justify-center text-muted hover:bg-surface-2 hover:text-text transition-colors"
+            className="h-10 w-10 flex items-center justify-center transition-colors"
+            style={{ color: 'rgba(88,96,148,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(42,46,82,0.4)'; e.currentTarget.style.color = 'rgba(218,222,248,0.9)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-              <rect x="0.5" y="0.5" width="9" height="9" />
-            </svg>
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1"><rect x="0.5" y="0.5" width="9" height="9" /></svg>
           </button>
           <button
             onClick={close}
-            className="h-10 w-12 flex items-center justify-center text-muted hover:bg-saffron hover:text-white transition-colors"
+            className="h-10 w-10 flex items-center justify-center transition-all"
+            style={{ color: 'rgba(88,96,148,0.7)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#FF5722'; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'rgba(88,96,148,0.7)' }}
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.2">
-              <line x1="0" y1="0" x2="10" y2="10" />
-              <line x1="10" y1="0" x2="0" y2="10" />
-            </svg>
+            <svg width="9" height="9" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.3"><line x1="0" y1="0" x2="10" y2="10" /><line x1="10" y1="0" x2="0" y2="10" /></svg>
           </button>
         </div>
       )}

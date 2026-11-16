@@ -300,15 +300,15 @@ function ExtensionCard({ ext, confirming, onLaunch, onRemove, onCancelRemove, on
           title={isEnabled ? 'Disable extension' : 'Enable extension'}
           className="shrink-0 relative w-9 h-5 rounded-full border transition-colors disabled:opacity-50"
           style={{
-            background: isEnabled ? '#FF450033' : 'transparent',
-            borderColor: isEnabled ? '#FF4500' : '#555',
+            background: isEnabled ? '#FF572233' : 'transparent',
+            borderColor: isEnabled ? '#FF5722' : '#555',
           }}
         >
           <span
             className="absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all duration-200"
             style={{
               left: isEnabled ? 'calc(100% - 1.125rem)' : '0.125rem',
-              background: isEnabled ? '#FF4500' : '#555',
+              background: isEnabled ? '#FF5722' : '#555',
             }}
           />
         </button>

@@ -135,7 +135,7 @@ export default function UpdatePage() {
             <div className="flex items-start gap-4">
               <span style={{ fontSize: 36 }}>✅</span>
               <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: 16, color: '#FF4500' }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: 16, color: '#FF5722' }}>
                   Dhurta is up to date
                 </p>
                 <p style={{ margin: '6px 0 0', color: 'var(--color-muted)', fontSize: 13 }}>
@@ -174,7 +174,7 @@ export default function UpdatePage() {
             <div className="flex items-start gap-4">
               <span style={{ fontSize: 36 }}>⬇️</span>
               <div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: 16, color: '#FF4500' }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: 16, color: '#FF5722' }}>
                   Update available — v{info?.version}
                 </p>
                 <p style={{ margin: '6px 0 0', color: 'var(--color-muted)', fontSize: 13 }}>
@@ -190,7 +190,7 @@ export default function UpdatePage() {
               <div className="flex items-center gap-3 mb-4">
                 <span style={{ fontSize: 28 }}>⬇️</span>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: '#FF4500' }}>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: 15, color: '#FF5722' }}>
                     Downloading Dhurta v{info?.version}
                   </p>
                   <p style={{ margin: '3px 0 0', color: 'var(--color-muted)', fontSize: 12 }}>
@@ -204,7 +204,7 @@ export default function UpdatePage() {
                   style={{
                     width: `${progress.percent}%`,
                     height: '100%',
-                    background: 'linear-gradient(90deg, #FF4500, #FF6B00)',
+                    background: 'linear-gradient(90deg, #FF5722, #FF6B00)',
                     borderRadius: 6,
                     transition: 'width 0.3s ease',
                   }}
@@ -222,7 +222,7 @@ export default function UpdatePage() {
               <div className="flex items-start gap-4 mb-6">
                 <span style={{ fontSize: 36 }}>🎉</span>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 17, color: '#FF4500' }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 17, color: '#FF5722' }}>
                     Dhurta v{info?.version} is ready to install
                   </p>
                   <p style={{ margin: '6px 0 0', color: 'var(--color-muted)', fontSize: 13 }}>
@@ -235,7 +235,7 @@ export default function UpdatePage() {
                   onClick={install}
                   disabled={installing || deferred}
                   style={{
-                    background: (installing || deferred) ? 'rgba(255,69,0,0.15)' : '#FF4500',
+                    background: (installing || deferred) ? 'rgba(255,69,0,0.15)' : '#FF5722',
                     color: (installing || deferred) ? 'var(--color-muted)' : '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -305,7 +305,7 @@ export default function UpdatePage() {
             onClick={checkNow}
             style={{
               background: 'transparent',
-              color: '#FF4500',
+              color: '#FF5722',
               border: '1px solid rgba(255,69,0,0.4)',
               borderRadius: 8,
               padding: '9px 20px',
@@ -350,7 +350,7 @@ export default function UpdatePage() {
               {info?.version && info.version !== currentVersion && (
                 <tr>
                   <td style={{ padding: '4px 0' }}>Available version</td>
-                  <td style={{ color: '#FF4500' }}>v{info.version}</td>
+                  <td style={{ color: '#FF5722' }}>v{info.version}</td>
                 </tr>
               )}
               {info?.releaseDate && (

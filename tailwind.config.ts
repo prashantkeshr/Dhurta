@@ -6,9 +6,11 @@ export default {
     extend: {
       colors: {
         obsidian:      'rgb(var(--color-obsidian) / <alpha-value>)',
-        saffron:       '#FF4500',
-        'saffron-dim': '#CC3700',
-        'saffron-glow':'#FF6A33',
+        saffron:       '#FF5722',
+        'saffron-dim': '#D84315',
+        'saffron-glow':'#FF7043',
+        'gold':        '#F59E0B',
+        'gold-dim':    '#D97706',
         surface:       'rgb(var(--color-surface) / <alpha-value>)',
         'surface-2':   'rgb(var(--color-surface2) / <alpha-value>)',
         'surface-3':   'rgb(var(--color-surface3) / <alpha-value>)',
@@ -18,8 +20,9 @@ export default {
         'text-dim':    'rgb(var(--color-text-dim) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans:    ['Inter', 'Space Grotesk', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        mono:    ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       keyframes: {
         glitch: {
@@ -30,8 +33,8 @@ export default {
           '80%': { transform: 'translate(1px, -2px)', opacity: '0.95' },
         },
         'saffron-pulse': {
-          '0%, 100%': { boxShadow: '0 0 4px #FF4500' },
-          '50%': { boxShadow: '0 0 12px #FF4500, 0 0 24px #FF450055' },
+          '0%, 100%': { boxShadow: '0 0 5px #FF5722' },
+          '50%': { boxShadow: '0 0 14px #FF5722, 0 0 28px #FF572233' },
         },
         'fade-in': {
           from: { opacity: '0', transform: 'translateY(4px)' },

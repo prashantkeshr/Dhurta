@@ -218,7 +218,7 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
                   {tab.loading ? <LoadingSpinner /> : tab.favicon ? <img src={tab.favicon} className="w-3.5 h-3.5" alt="" /> : <DefaultFavicon ghost={tab.ghost} />}
                 </span>
                 <span className="text-xs truncate flex-1 font-sans">
-                  {tab.ghost && <svg width="11" height="11" viewBox="0 0 12 12" fill="#FF4500" className="mr-1 shrink-0 opacity-80"><path d="M6 1a5 5 0 0 1 5 5v5l-1.6-1.2-1.4 1.2-1.4-1.2-1.4 1.2L3.6 10 2 11V6a4 4 0 0 1 4-5z"/><circle cx="4.5" cy="6" r="0.9" fill="white"/><circle cx="7.5" cy="6" r="0.9" fill="white"/></svg>}
+                  {tab.ghost && <svg width="11" height="11" viewBox="0 0 12 12" fill="#FF5722" className="mr-1 shrink-0 opacity-80"><path d="M6 1a5 5 0 0 1 5 5v5l-1.6-1.2-1.4 1.2-1.4-1.2-1.4 1.2L3.6 10 2 11V6a4 4 0 0 1 4-5z"/><circle cx="4.5" cy="6" r="0.9" fill="white"/><circle cx="7.5" cy="6" r="0.9" fill="white"/></svg>}
                   {tab.title || 'New Tab'}
                 </span>
                 {(tab.playing || tab.muted) && (
@@ -335,8 +335,8 @@ export default function TabBar({ tabs, activeTabId, onSwitch, onClose, onNew, on
 function LoadingSpinner() {
   return (
     <svg className="animate-spin" width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <circle cx="6" cy="6" r="5" stroke="#2A2A2A" strokeWidth="2" />
-      <path d="M6 1 A5 5 0 0 1 11 6" stroke="#FF4500" strokeWidth="2" strokeLinecap="square" />
+      <circle cx="6" cy="6" r="5" stroke="rgba(42,46,82,0.6)" strokeWidth="2" />
+      <path d="M6 1 A5 5 0 0 1 11 6" stroke="#FF5722" strokeWidth="2" strokeLinecap="square" />
     </svg>
   )
 }
@@ -344,8 +344,8 @@ function LoadingSpinner() {
 function DefaultFavicon({ ghost }: { ghost: boolean }) {
   if (ghost) return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-      <rect x="1" y="1" width="10" height="10" stroke="#FF4500" strokeWidth="1" />
-      <line x1="1" y1="4" x2="11" y2="4" stroke="#FF4500" strokeWidth="0.8" />
+      <rect x="1" y="1" width="10" height="10" stroke="#FF5722" strokeWidth="1" />
+      <line x1="1" y1="4" x2="11" y2="4" stroke="#FF5722" strokeWidth="0.8" />
     </svg>
   )
   return <span className="favicon-shimmer w-3 h-3 inline-block shrink-0" />
