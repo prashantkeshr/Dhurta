@@ -57,8 +57,8 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "inc.dhurta.browser",
-    "productName": "Dhurta",
+    "appId": "inc.dhurta.developerbrowser",
+    "productName": "Dhurta Developer Browser",
     "copyright": "Copyright © 2026 Dhurta.inc. All Rights Reserved.",
     "directories": {
       "output": "release",
@@ -130,8 +130,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Dhurta Browser",
-      "uninstallDisplayName": "Dhurta",
+      "shortcutName": "Dhurta Developer Browser",
+      "uninstallDisplayName": "Dhurta Developer Browser",
       "license": "LICENSE"
     },
     "appx": {
