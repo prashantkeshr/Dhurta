@@ -1,6 +1,6 @@
 {
   "name": "dhurta",
-  "version": "1.4.21",
+  "version": "1.4.22",
   "description": "Dhurta 🔱 — a sovereign, privacy-native desktop browser by Dhurta.inc.",
   "main": "dist-electron/main.js",
   "author": {
@@ -122,7 +122,9 @@
       "icon": "build/icon.png",
       "requestedExecutionLevel": "asInvoker",
       "publisherName": "Dhurta.org",
-      "signingHashAlgorithms": ["sha256"],
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
       "rfc3161TimeStampServer": "http://timestamp.digicert.com"
     },
     "nsis": {
@@ -141,7 +143,9 @@
       "publisherDisplayName": "Dhurta.org",
       "identityName": "28516Dhurta.org.DhurtaDeveloperBrowser",
       "publisher": "CN=095C7737-926D-4FDD-B3E1-1B8D33DB5EEE",
-      "languages": ["en-US"],
+      "languages": [
+        "en-US"
+      ],
       "showNameOnTiles": false
     },
     "portable": {
@@ -212,4 +216,3 @@
     ]
   }
 }
-
