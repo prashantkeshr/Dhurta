@@ -135,11 +135,11 @@
       "license": "LICENSE"
     },
     "appx": {
-      "applicationId": "DhurtaBrowser",
+      "applicationId": "DhurtaDeveloperBrowser",
       "backgroundColor": "#111111",
-      "displayName": "Dhurta Browser",
+      "displayName": "Dhurta Developer Browser",
       "publisherDisplayName": "Dhurta.org",
-      "identityName": "28516Dhurta.org.Dhurta",
+      "identityName": "28516Dhurta.org.DhurtaDeveloperBrowser",
       "publisher": "CN=095C7737-926D-4FDD-B3E1-1B8D33DB5EEE",
       "languages": ["en-US"],
       "showNameOnTiles": false
