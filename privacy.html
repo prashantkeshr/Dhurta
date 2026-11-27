@@ -18,7 +18,10 @@
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.75;overflow-x:hidden;min-height:100vh}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.75;overflow-x:hidden;min-height:100vh;opacity:0;transition:opacity .4s ease}
+body.ready{opacity:1}
+.pt-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;pointer-events:none;opacity:0;transition:opacity .32s ease}
+.pt-overlay.out{opacity:1;pointer-events:all}
 h1,h2,h3{font-family:'Playfair Display',Georgia,serif;line-height:1.15}
 a{color:inherit;text-decoration:none}
 
@@ -114,6 +117,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center}
 </style>
 </head>
 <body>
+<div class="pt-overlay" id="pt-overlay"></div>
 
 <nav>
   <div class="nav-inner">
@@ -121,7 +125,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center}
       <img src="assets/dhurta-logo.png" alt="Dhurta">
       <span class="nav-brand-name">DHURTA</span>
     </div>
-    <a href="index.html" class="nav-back">← Back to site</a>
+    <a href="index.html" class="nav-back nav-t">← Back to site</a>
   </div>
 </nav>
 
@@ -143,7 +147,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center}
 
   <!-- PRODUCT CARDS -->
   <div class="cards">
-    <a href="privacy-browser.html" class="card card-browser">
+    <a href="privacy-browser.html" class="card card-browser nav-t">
       <div class="card-body">
         <img src="assets/dhurta-logo.png" alt="Dhurta Browser" class="card-logo">
         <span class="card-label">Consumer Product</span>
@@ -160,7 +164,7 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center}
       </div>
     </a>
 
-    <a href="privacy-dev.html" class="card card-dev">
+    <a href="privacy-dev.html" class="card card-dev nav-t">
       <div class="card-body">
         <img src="assets/logo-dev.png" alt="Dhurta Developer Browser" class="card-logo">
         <span class="card-label">Developer Edition</span>
@@ -220,12 +224,25 @@ footer{border-top:1px solid var(--border);padding:32px;text-align:center}
 <footer>
   <div class="footer-copy">© 2026 Dhurta. Privacy isn't a feature here — it's the whole point. 🔱</div>
   <div class="footer-links">
-    <a href="index.html">Home</a>
-    <a href="privacy-browser.html">Browser Privacy</a>
-    <a href="privacy-dev.html">Developer Privacy</a>
+    <a href="index.html" class="nav-t">Home</a>
+    <a href="privacy-browser.html" class="nav-t">Browser Privacy</a>
+    <a href="privacy-dev.html" class="nav-t">Developer Privacy</a>
     <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">GitHub</a>
   </div>
 </footer>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('ready'); });
+const overlay = document.getElementById('pt-overlay');
+document.querySelectorAll('a.nav-t').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('http') || a.target === '_blank') return;
+    e.preventDefault();
+    overlay.classList.add('out');
+    setTimeout(() => { window.location.href = href; }, 300);
+  });
+});
+</script>
 </body>
 </html>

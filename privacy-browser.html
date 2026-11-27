@@ -4,336 +4,809 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Privacy Policy — Dhurta Browser</title>
-<meta name="description" content="Dhurta Browser collects no personal data, no telemetry, and no analytics. Everything stays on your device. Full privacy policy.">
+<meta name="description" content="Complete privacy policy for Dhurta Browser. Zero telemetry, no analytics, no personal data collected. Everything stays on your device.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://browser.dhurta.org/privacy-browser.html">
 <link rel="icon" href="assets/dhurta-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
 :root{
-  --bg:#06070E;--surface:#0C0D18;--surface2:#111222;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-  --gold:#C9A84C;--saffron:#FF4500;--teal:#00D4AA;
-  --fg:#EDE9E4;--fg2:#9A9490;--fg3:#4A4440;--white:#fff;
+  --bg:#06070E;--surface:#0B0C18;--surface2:#111222;--surface3:#161728;
+  --border:rgba(255,255,255,.07);--border-hi:rgba(255,255,255,.13);
+  --accent:#FF4500;--accent-dim:rgba(255,69,0,.7);--accent-glow:rgba(255,69,0,.08);
+  --teal:#00D4AA;--gold:#C9A84C;--blue:#4A9EFF;--rose:#F06292;
+  --fg:#EDE9E4;--fg2:#9A9490;--fg3:#3A3630;--white:#fff;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.75;overflow-x:hidden}
-h1,h2,h3{font-family:'Playfair Display',Georgia,serif;line-height:1.15}
-.mono{font-family:'JetBrains Mono',monospace}
-a{color:var(--saffron);text-decoration:none}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.8;overflow-x:hidden;opacity:0;transition:opacity .45s ease}
+body.ready{opacity:1}
+h1,h2,h3,h4{font-family:'Playfair Display',Georgia,serif;line-height:1.2}
+code,kbd{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:var(--surface2);border:1px solid var(--border-hi);padding:1px 6px;border-radius:3px;color:var(--gold)}
+a{color:var(--accent);text-decoration:none;transition:color .2s}
 a:hover{text-decoration:underline;text-underline-offset:3px}
-.container{max-width:860px;margin:0 auto;padding:0 28px}
+strong{color:var(--white);font-weight:600}
+.container{max-width:1080px;margin:0 auto;padding:0 28px}
 
-/* NAV */
-nav{background:rgba(6,7,14,.9);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 28px;position:sticky;top:0;z-index:10}
-.nav-inner{max-width:860px;margin:0 auto;height:58px;display:flex;align-items:center;justify-content:space-between}
-.nav-brand{display:flex;align-items:center;gap:9px;text-decoration:none}
-.nav-brand img{width:26px;height:26px;object-fit:contain}
-.nav-brand-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--fg);letter-spacing:.04em}
-.nav-back{font-size:12px;color:var(--fg2);text-decoration:none;display:flex;align-items:center;gap:5px;transition:color .2s}
-.nav-back:hover{color:var(--fg)}
+/* PAGE TRANSITION OVERLAY */
+.pt-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;pointer-events:none;opacity:0;transition:opacity .32s ease}
+.pt-overlay.out{opacity:1;pointer-events:all}
+
+/* PROGRESS BAR */
+#prog{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent) 0%,var(--teal) 100%);width:0%;z-index:1000;transition:width .08s linear}
+
+/* NAVBAR */
+.navbar{background:rgba(6,7,14,.92);backdrop-filter:blur(28px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-wrap{max-width:1080px;margin:0 auto;padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-brand img{width:28px;height:28px;object-fit:contain}
+.nav-brand-text{display:flex;flex-direction:column}
+.nav-brand-name{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--fg);letter-spacing:.05em;line-height:1.2}
+.nav-brand-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.nav-pill{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:4px;background:var(--accent-glow);border:1px solid rgba(255,69,0,.25);color:var(--accent)}
+.nav-link{font-size:12.5px;color:var(--fg2);text-decoration:none;transition:color .2s;white-space:nowrap}
+.nav-link:hover{color:var(--fg);text-decoration:none}
+.nav-link.dev{color:var(--gold)}
+.nav-link.dev:hover{color:#e8c35e}
 
 /* HERO */
-.hero{padding:72px 0 48px;border-bottom:1px solid var(--border)}
-.hero-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--saffron);opacity:.7;margin-bottom:14px;display:block}
-.hero-title{font-size:clamp(32px,5vw,52px);font-weight:700;letter-spacing:-.025em;color:var(--white);margin-bottom:16px}
-.hero-sub{font-size:16px;color:var(--fg2);line-height:1.7;max-width:620px;margin-bottom:28px}
-.hero-badges{display:flex;flex-wrap:wrap;gap:10px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
-.badge-teal{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.2);color:var(--teal)}
-.badge-gold{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold)}
-.badge-saffron{background:rgba(255,69,0,.1);border:1px solid rgba(255,69,0,.2);color:var(--saffron)}
-.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
-
-/* META */
-.meta-bar{padding:20px 0;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:24px}
-.meta-item{display:flex;flex-direction:column;gap:3px}
-.meta-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3)}
+.hero{padding:72px 0 56px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-30%;right:-5%;width:700px;height:700px;background:radial-gradient(circle,rgba(255,69,0,.035) 0%,transparent 60%);pointer-events:none}
+.hero-kicker{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);opacity:.7;margin-bottom:18px}
+.hero-kicker::before{content:'';width:24px;height:1px;background:currentColor}
+.hero-h1{font-size:clamp(32px,5.5vw,52px);font-weight:700;letter-spacing:-.025em;color:var(--white);margin-bottom:12px}
+.hero-h1 em{font-style:italic;color:var(--accent)}
+.hero-lead{font-size:16px;color:var(--fg2);line-height:1.75;max-width:640px;margin-bottom:28px}
+.badge-row{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:32px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.badge-teal{background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.18);color:var(--teal)}
+.badge-accent{background:var(--accent-glow);border:1px solid rgba(255,69,0,.2);color:var(--accent)}
+.badge-gold{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);color:var(--gold)}
+.badge-blue{background:rgba(74,158,255,.07);border:1px solid rgba(74,158,255,.18);color:var(--blue)}
+.badge-dot{width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0}
+.meta-grid{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.meta-cell{padding:12px 20px;border-right:1px solid var(--border);flex:1;min-width:120px}
+.meta-cell:last-child{border-right:none}
+.meta-label{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);display:block;margin-bottom:4px}
 .meta-val{font-size:13px;color:var(--fg2)}
+.meta-val a{color:var(--accent)}
 
-/* TOC */
-.toc{padding:32px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin:48px 0 0}
-.toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);margin-bottom:16px}
-.toc-list{list-style:none;display:flex;flex-direction:column;gap:7px}
-.toc-list a{font-size:13.5px;color:var(--fg2);text-decoration:none;display:flex;align-items:center;gap:8px;transition:color .2s}
-.toc-list a:hover{color:var(--fg)}
-.toc-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg3);min-width:22px}
+/* TWO-COLUMN LAYOUT */
+.layout{display:grid;grid-template-columns:258px 1fr;gap:0;padding:60px 0 100px;align-items:start}
+.sidebar{position:sticky;top:80px;padding-right:36px;max-height:calc(100vh - 100px);overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:2px}
+.toc-title{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--fg3);margin-bottom:14px;display:block}
+.toc-nav{display:flex;flex-direction:column;gap:1px}
+.toc-link{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;font-size:12.5px;color:var(--fg2);text-decoration:none;transition:all .15s;border-left:2px solid transparent;line-height:1.3}
+.toc-link:hover{color:var(--fg);background:rgba(255,255,255,.025);text-decoration:none}
+.toc-link.active{color:var(--accent);background:var(--accent-glow);border-left-color:var(--accent)}
+.toc-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--fg3);min-width:20px;flex-shrink:0}
+.toc-sep{height:1px;background:var(--border);margin:10px 10px}
+.toc-switch{margin-top:20px;padding:14px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.14);border-radius:8px}
+.toc-switch-label{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);display:block;margin-bottom:8px}
+.toc-switch-link{display:block;font-size:12px;color:var(--gold);text-decoration:none;padding:7px 10px;border-radius:5px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.12);transition:all .2s;text-align:center}
+.toc-switch-link:hover{background:rgba(201,168,76,.12);text-decoration:none}
 
 /* CONTENT */
-.content{padding:60px 0 100px}
-.section{margin-bottom:56px;scroll-margin-top:80px}
-.section-num{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--saffron);opacity:.7;margin-bottom:10px;display:block}
-.section h2{font-size:clamp(20px,3vw,28px);font-weight:600;color:var(--white);margin-bottom:16px;letter-spacing:-.02em}
+.content{border-left:1px solid var(--border);padding-left:48px}
+.section{margin-bottom:64px;scroll-margin-top:80px}
+.section-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);opacity:.6;display:block;margin-bottom:10px}
+.section h2{font-size:clamp(20px,2.8vw,28px);font-weight:700;color:var(--white);margin-bottom:18px;letter-spacing:-.02em}
+.section h3{font-size:15px;font-weight:600;color:var(--fg);margin:28px 0 10px;font-family:'Inter',sans-serif;letter-spacing:-.01em}
+.section h3.sub{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--accent);border-left:2px solid var(--accent);padding-left:10px;margin:24px 0 10px}
 .section p{color:var(--fg2);margin-bottom:14px;font-size:14.5px}
 .section p:last-child{margin-bottom:0}
+.divider{height:1px;background:linear-gradient(90deg,var(--border-hi) 0%,transparent 100%);margin:56px 0}
 
-/* CALLOUT */
-.callout{padding:20px 24px;border-radius:12px;margin:20px 0;border-left:3px solid}
-.callout-teal{background:rgba(0,212,170,.05);border-color:var(--teal)}
-.callout-gold{background:rgba(201,168,76,.05);border-color:var(--gold)}
-.callout-saffron{background:rgba(255,69,0,.06);border-color:var(--saffron)}
-.callout p{color:var(--fg);font-size:14px;margin:0}
-.callout strong{color:var(--white)}
+/* CALLOUTS */
+.callout{padding:18px 22px;border-radius:8px;margin:20px 0;border:1px solid;position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:currentColor;opacity:.6}
+.co-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:block;opacity:.8}
+.callout p{font-size:14px;margin:0}
+.c-teal{background:rgba(0,212,170,.04);border-color:rgba(0,212,170,.14);color:var(--teal)}
+.c-teal p{color:var(--fg)}
+.c-accent{background:var(--accent-glow);border-color:rgba(255,69,0,.16);color:var(--accent)}
+.c-accent p{color:var(--fg)}
+.c-gold{background:rgba(201,168,76,.04);border-color:rgba(201,168,76,.14);color:var(--gold)}
+.c-gold p{color:var(--fg)}
+.c-blue{background:rgba(74,158,255,.04);border-color:rgba(74,158,255,.14);color:var(--blue)}
+.c-blue p{color:var(--fg)}
+.c-warning{background:rgba(240,98,146,.04);border-color:rgba(240,98,146,.14);color:var(--rose)}
+.c-warning p{color:var(--fg)}
 
-/* DATA TABLE */
-.data-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px}
-.data-table th{text-align:left;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--fg3);border-bottom:1px solid var(--border2);background:var(--surface)}
-.data-table td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--fg2);vertical-align:top}
+/* TABLES */
+.table-wrap{overflow-x:auto;margin:20px 0;border:1px solid var(--border);border-radius:8px}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table thead{background:var(--surface2)}
+.data-table th{text-align:left;padding:11px 15px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);border-bottom:1px solid var(--border-hi);white-space:nowrap}
+.data-table td{padding:11px 15px;border-bottom:1px solid var(--border);color:var(--fg2);vertical-align:top;font-size:13.5px;line-height:1.5}
 .data-table td:first-child{color:var(--fg);font-weight:500}
 .data-table tr:last-child td{border-bottom:none}
-.tag-no{color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:11px}
-.tag-yes{color:var(--teal);font-family:'JetBrains Mono',monospace;font-size:11px}
-.tag-local{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:11px}
+.data-table tr:hover td{background:rgba(255,255,255,.01)}
+.t-no{color:#EF9A9A;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700}
+.t-local{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700}
+.t-na{color:var(--fg3);font-family:'JetBrains Mono',monospace;font-size:10px}
+.t-yes{color:var(--teal);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700}
 
-/* LIST */
-.check-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin:16px 0}
-.check-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--fg2)}
-.check-list li::before{content:'✓';color:var(--teal);font-weight:700;flex-shrink:0;margin-top:1px}
-.x-list li::before{content:'✕';color:#ff6b6b}
+/* LISTS */
+.check-list,.x-list,.bullet-list{list-style:none;display:flex;flex-direction:column;gap:9px;margin:14px 0}
+.check-list li,.x-list li,.bullet-list li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px;color:var(--fg2)}
+.check-list li::before{content:'✓';color:var(--teal);font-weight:700;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:4px}
+.x-list li::before{content:'✕';color:#EF9A9A;font-weight:700;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:4px}
+.bullet-list li::before{content:'·';color:var(--accent);font-weight:700;flex-shrink:0;font-size:18px;margin-top:-1px;line-height:1.5}
+
+/* RIGHTS CARDS */
+.rights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin:20px 0}
+.right-card{padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:8px;transition:border-color .2s,transform .2s}
+.right-card:hover{border-color:var(--border-hi);transform:translateY(-2px)}
+.right-card-icon{font-size:22px;margin-bottom:10px;display:block}
+.right-card-name{font-weight:600;color:var(--white);font-size:13.5px;margin-bottom:5px}
+.right-card-desc{font-size:12.5px;color:var(--fg2);line-height:1.6}
+
+/* CONTACT GRID */
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin:20px 0}
+.contact-card{padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:8px;transition:border-color .2s}
+.contact-card:hover{border-color:var(--border-hi)}
+.contact-role{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--fg3);margin-bottom:6px;display:block}
+.contact-email{font-size:14px;color:var(--accent);font-weight:500;word-break:break-all;text-decoration:none;display:block}
+.contact-email:hover{text-decoration:underline}
+.contact-note{font-size:12px;color:var(--fg2);margin-top:6px;line-height:1.55}
 
 /* FOOTER */
-footer{border-top:1px solid var(--border);padding:36px 0;text-align:center}
-.footer-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
-.footer-logo img{width:22px;height:22px;object-fit:contain;opacity:.6}
+.site-footer{border-top:1px solid var(--border);padding:48px 0 36px}
+.footer-wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+.footer-top{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;text-decoration:none}
+.footer-brand-row img{width:28px;height:28px;object-fit:contain}
+.footer-brand-row span{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:var(--fg)}
+.footer-tagline{font-size:13px;color:var(--fg2);line-height:1.65}
+.footer-col-title{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);margin-bottom:14px;display:block}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:9px}
+.footer-links a{font-size:13.5px;color:var(--fg2);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--fg)}
+.footer-links a.active{color:var(--accent)}
+.footer-bottom{padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .footer-copy{font-size:12px;color:var(--fg3)}
-.footer-links{display:flex;justify-content:center;gap:20px;margin-top:12px;flex-wrap:wrap}
-.footer-links a{font-size:12px;color:var(--fg3);text-decoration:none;transition:color .2s}
-.footer-links a:hover{color:var(--fg2)}
+.footer-legal{display:flex;gap:16px;flex-wrap:wrap}
+.footer-legal a{font-size:12px;color:var(--fg3);text-decoration:none;transition:color .2s}
+.footer-legal a:hover{color:var(--fg2)}
 
+/* BACK TO TOP */
+#back-top{position:fixed;bottom:28px;right:28px;width:40px;height:40px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:all .25s;color:var(--fg2);font-size:16px;text-decoration:none;z-index:50}
+#back-top.show{opacity:1;pointer-events:all}
+#back-top:hover{background:var(--surface2);border-color:var(--border-hi);color:var(--accent);text-decoration:none}
+
+/* RESPONSIVE */
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;padding-right:0;margin-bottom:40px;max-height:none;overflow-y:visible}
+  .toc-nav{flex-direction:row;flex-wrap:wrap;gap:4px}
+  .toc-link{padding:5px 8px;border-left:none;border-bottom:2px solid transparent;border-radius:4px 4px 0 0}
+  .toc-link.active{border-left-color:transparent;border-bottom-color:var(--accent)}
+  .toc-sep,.toc-switch{display:none}
+  .content{border-left:none;padding-left:0;border-top:1px solid var(--border);padding-top:40px}
+  .footer-top{grid-template-columns:1fr 1fr}
+}
 @media(max-width:600px){
-  .meta-bar{gap:16px}
-  .data-table{font-size:12px}
-  .data-table th,.data-table td{padding:8px 10px}
+  .hero{padding:48px 0 36px}
+  .meta-grid{flex-direction:column}
+  .meta-cell{border-right:none;border-bottom:1px solid var(--border)}
+  .meta-cell:last-child{border-bottom:none}
+  .footer-top{grid-template-columns:1fr}
+  .footer-bottom{flex-direction:column;text-align:center}
+  .rights-grid{grid-template-columns:1fr}
+  .contact-grid{grid-template-columns:1fr}
+  .nav-actions .nav-link.dev{display:none}
 }
 </style>
 </head>
 <body>
+<div class="pt-overlay" id="pt-overlay"></div>
+<div id="prog"></div>
 
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="nav-brand">
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-wrap">
+    <a href="index.html" class="nav-brand nav-t">
       <img src="assets/dhurta-logo.png" alt="Dhurta">
-      <span class="nav-brand-name">DHURTA BROWSER</span>
+      <div class="nav-brand-text">
+        <span class="nav-brand-name">DHURTA BROWSER</span>
+        <span class="nav-brand-sub">Consumer Edition</span>
+      </div>
     </a>
-    <a href="index.html" class="nav-back">← Back to site</a>
+    <div class="nav-actions">
+      <span class="nav-pill">BROWSER</span>
+      <a href="privacy.html" class="nav-link nav-t">← Privacy Hub</a>
+      <a href="privacy-dev.html" class="nav-link dev nav-t">Dev Edition →</a>
+    </div>
   </div>
 </nav>
 
 <div class="container">
-
   <!-- HERO -->
-  <div class="hero">
-    <span class="hero-label">Legal · Privacy</span>
-    <h1 class="hero-title">Privacy Policy</h1>
-    <p class="hero-sub">Dhurta Browser is built on a single architectural principle: your data never leaves your device. This policy documents exactly what we collect, store, and share — which is nothing, verifiably.</p>
-    <div class="hero-badges">
-      <span class="badge badge-teal"><span class="badge-dot"></span> Zero Telemetry</span>
-      <span class="badge badge-teal"><span class="badge-dot"></span> No Analytics</span>
-      <span class="badge badge-teal"><span class="badge-dot"></span> No Account Required</span>
-      <span class="badge badge-gold"><span class="badge-dot"></span> Local Storage Only</span>
-      <span class="badge badge-saffron"><span class="badge-dot"></span> Open Source · Verifiable</span>
+  <section class="hero">
+    <span class="hero-kicker">Legal · Privacy Policy · Consumer Edition</span>
+    <h1 class="hero-h1">Privacy Policy<br><em>Dhurta Browser</em></h1>
+    <p class="hero-lead">Dhurta Browser is built on a single architectural commitment: your data never leaves your device. This document is the complete, unabridged account of every data practice the browser follows — including the data we deliberately chose not to collect.</p>
+    <div class="badge-row">
+      <span class="badge badge-teal"><span class="badge-dot"></span>Zero Telemetry</span>
+      <span class="badge badge-teal"><span class="badge-dot"></span>No Analytics</span>
+      <span class="badge badge-teal"><span class="badge-dot"></span>No Account Required</span>
+      <span class="badge badge-gold"><span class="badge-dot"></span>Local Storage Only</span>
+      <span class="badge badge-blue"><span class="badge-dot"></span>Open Source · Auditable</span>
+      <span class="badge badge-accent"><span class="badge-dot"></span>GDPR · CCPA · COPPA Compliant</span>
     </div>
-  </div>
+    <div class="meta-grid">
+      <div class="meta-cell"><span class="meta-label">Product</span><span class="meta-val">Dhurta Browser</span></div>
+      <div class="meta-cell"><span class="meta-label">Applies To</span><span class="meta-val">v1.0 and later</span></div>
+      <div class="meta-cell"><span class="meta-label">Effective Date</span><span class="meta-val">27 November 2026</span></div>
+      <div class="meta-cell"><span class="meta-label">Last Updated</span><span class="meta-val">27 November 2026</span></div>
+      <div class="meta-cell"><span class="meta-label">Privacy Contact</span><span class="meta-val"><a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a></span></div>
+    </div>
+  </section>
 
-  <!-- META -->
-  <div class="meta-bar">
-    <div class="meta-item">
-      <span class="meta-label">Product</span>
-      <span class="meta-val">Dhurta Browser</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">Effective Date</span>
-      <span class="meta-val">27 November 2026</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">Last Updated</span>
-      <span class="meta-val">27 November 2026</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">Applies To</span>
-      <span class="meta-val">Windows · macOS · Linux</span>
-    </div>
-    <div class="meta-item">
-      <span class="meta-label">Contact</span>
-      <span class="meta-val"><a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a></span>
-    </div>
-  </div>
-
-  <!-- TOC -->
-  <div class="toc">
-    <div class="toc-title">Contents</div>
-    <ul class="toc-list">
-      <li><a href="#overview"><span class="toc-num">01</span> Overview — The Short Version</a></li>
-      <li><a href="#what-we-collect"><span class="toc-num">02</span> What We Collect</a></li>
-      <li><a href="#local-data"><span class="toc-num">03</span> Data Stored Locally on Your Device</a></li>
-      <li><a href="#ghost-mode"><span class="toc-num">04</span> Ghost Mode &amp; Tor Routing</a></li>
-      <li><a href="#third-party"><span class="toc-num">05</span> Third-Party Services &amp; Websites</a></li>
-      <li><a href="#updates"><span class="toc-num">06</span> Software Updates</a></li>
-      <li><a href="#children"><span class="toc-num">07</span> Children's Privacy</a></li>
-      <li><a href="#rights"><span class="toc-num">08</span> Your Rights &amp; Control</a></li>
-      <li><a href="#changes"><span class="toc-num">09</span> Changes to This Policy</a></li>
-      <li><a href="#contact"><span class="toc-num">10</span> Contact</a></li>
-    </ul>
-  </div>
-
-  <!-- CONTENT -->
-  <div class="content">
-
-    <div class="section" id="overview">
-      <span class="section-num">01 — Overview</span>
-      <h2>The Short Version</h2>
-      <div class="callout callout-teal">
-        <p><strong>Dhurta collects nothing about you.</strong> No usage analytics, no crash reports, no browsing history sent anywhere, no account, no email, no identifiers of any kind transmitted to any server. Everything the browser stores lives on your device and is fully readable by you.</p>
+  <!-- LAYOUT -->
+  <div class="layout">
+    <!-- SIDEBAR TOC -->
+    <aside class="sidebar">
+      <span class="toc-title">Contents</span>
+      <nav class="toc-nav" aria-label="Policy sections">
+        <a href="#s01" class="toc-link"><span class="toc-num">01</span>Introduction</a>
+        <a href="#s02" class="toc-link"><span class="toc-num">02</span>Data Controller</a>
+        <a href="#s03" class="toc-link"><span class="toc-num">03</span>Scope</a>
+        <a href="#s04" class="toc-link"><span class="toc-num">04</span>What We Don't Collect</a>
+        <a href="#s05" class="toc-link"><span class="toc-num">05</span>Local Storage</a>
+        <a href="#s06" class="toc-link"><span class="toc-num">06</span>Ghost Mode &amp; Tor</a>
+        <a href="#s07" class="toc-link"><span class="toc-num">07</span>Chakra Shield</a>
+        <a href="#s08" class="toc-link"><span class="toc-num">08</span>Cookies &amp; Tracking</a>
+        <a href="#s09" class="toc-link"><span class="toc-num">09</span>Third-Party Websites</a>
+        <a href="#s10" class="toc-link"><span class="toc-num">10</span>Software Updates</a>
+        <a href="#s11" class="toc-link"><span class="toc-num">11</span>Security Measures</a>
+        <a href="#s12" class="toc-link"><span class="toc-num">12</span>Children's Privacy</a>
+        <div class="toc-sep"></div>
+        <a href="#s13" class="toc-link"><span class="toc-num">13</span>GDPR Rights</a>
+        <a href="#s14" class="toc-link"><span class="toc-num">14</span>CCPA Rights</a>
+        <a href="#s15" class="toc-link"><span class="toc-num">15</span>Universal Rights</a>
+        <a href="#s16" class="toc-link"><span class="toc-num">16</span>Data Retention</a>
+        <a href="#s17" class="toc-link"><span class="toc-num">17</span>International Users</a>
+        <a href="#s18" class="toc-link"><span class="toc-num">18</span>Policy Changes</a>
+        <a href="#s19" class="toc-link"><span class="toc-num">19</span>Governing Law</a>
+        <a href="#s20" class="toc-link"><span class="toc-num">20</span>Contact &amp; DPO</a>
+      </nav>
+      <div class="toc-switch">
+        <span class="toc-switch-label">Developer Edition</span>
+        <a href="privacy-dev.html" class="toc-switch-link nav-t">View Developer Privacy →</a>
       </div>
-      <p>This is not a marketing claim — it is an architectural constraint. Dhurta has no server infrastructure to receive telemetry, because we never built one. The source code is public on <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">GitHub</a> and can be audited to verify every statement in this policy.</p>
-    </div>
+    </aside>
 
-    <div class="section" id="what-we-collect">
-      <span class="section-num">02 — What We Collect</span>
-      <h2>What We Collect</h2>
-      <p>The following table documents every category of data and what happens to it:</p>
-      <table class="data-table">
-        <thead>
-          <tr><th>Data Category</th><th>Collected?</th><th>Sent to Dhurta?</th><th>Where It Goes</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Browsing history</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Your device only</td></tr>
-          <tr><td>Bookmarks</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Your device only</td></tr>
-          <tr><td>Passwords / credentials</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Encrypted on your device</td></tr>
-          <tr><td>Search queries</td><td class="tag-no">NOT STORED</td><td class="tag-no">NEVER</td><td>Sent only to your chosen search engine</td></tr>
-          <tr><td>Usage analytics / telemetry</td><td class="tag-no">NEVER</td><td class="tag-no">NEVER</td><td>Not collected</td></tr>
-          <tr><td>Crash reports</td><td class="tag-no">NEVER</td><td class="tag-no">NEVER</td><td>Not collected</td></tr>
-          <tr><td>IP address</td><td class="tag-no">NEVER</td><td class="tag-no">NEVER</td><td>Not logged by Dhurta</td></tr>
-          <tr><td>Device identifiers</td><td class="tag-no">NEVER</td><td class="tag-no">NEVER</td><td>Not collected</td></tr>
-          <tr><td>Extension data</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Your device only</td></tr>
-          <tr><td>Download history</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Your device only</td></tr>
-          <tr><td>Form / autofill data</td><td class="tag-local">LOCAL</td><td class="tag-no">NEVER</td><td>Encrypted on your device</td></tr>
-          <tr><td>AI assistant conversations</td><td class="tag-no">NEVER</td><td class="tag-no">NEVER</td><td>Local model only — never leaves device</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- CONTENT -->
+    <main class="content">
 
-    <div class="section" id="local-data">
-      <span class="section-num">03 — Local Data</span>
-      <h2>Data Stored Locally on Your Device</h2>
-      <p>Dhurta Browser stores the following data locally to provide browser functionality. All of it is stored in readable, standard formats on your device and is never transmitted anywhere:</p>
-      <ul class="check-list">
-        <li>Browsing history (SQLite database in your user profile directory)</li>
-        <li>Bookmarks (JSON file in your user profile directory)</li>
-        <li>Browser settings and preferences (JSON)</li>
-        <li>Saved passwords, encrypted using OS-level credential storage</li>
-        <li>Cookies and site data, scoped per-site (deletable at any time)</li>
-        <li>Cached web content to speed up page loads (clearable at any time)</li>
-        <li>Extension settings and local extension data</li>
-        <li>Download history log</li>
-        <li>Custom themes and wallpapers you have applied</li>
-      </ul>
-      <div class="callout callout-gold">
-        <p><strong>You own all of it.</strong> The Transparency Dashboard (accessible at <span class="mono" style="font-size:12px;color:var(--gold)">dhurta://transparency</span>) shows the exact location of every file the browser has written to your disk. You can export, delete, or inspect any of it at any time.</p>
-      </div>
-    </div>
+      <section class="section" id="s01">
+        <span class="section-eyebrow">01 — Introduction</span>
+        <h2>Introduction</h2>
+        <div class="callout c-teal">
+          <span class="co-label">The Shortest Version</span>
+          <p><strong>Dhurta Browser collects nothing about you.</strong> No personal data, no telemetry, no analytics, no crash reports, no browsing history sent anywhere. Everything stays on your machine. We have no server infrastructure to receive your data because we never built one.</p>
+        </div>
+        <p>This Privacy Policy governs the data practices of Dhurta Browser, a desktop web browser developed and distributed by Dhurta. We publish this policy because transparency is a prerequisite for trust — and you deserve to know, in complete detail, how software you install on your device handles information about you.</p>
+        <p>Dhurta Browser is built on the architectural principle of local-first data. Every feature — from browsing history to passwords to privacy tools like Ghost Mode — is implemented without any outbound connection to Dhurta servers. This policy documents that principle in its totality: what we store, where we store it, what we do not collect, and what rights you hold over your own data.</p>
+        <p>This policy is a living document. If the browser's data handling ever changes materially, this document will be updated with an advance notice period before the change takes effect. You can verify all claims here by auditing the public source code at <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">github.com/prashantkeshr/Dhurta</a>.</p>
+      </section>
 
-    <div class="section" id="ghost-mode">
-      <span class="section-num">04 — Ghost Mode &amp; Tor</span>
-      <h2>Ghost Mode &amp; Tor Routing</h2>
-      <p>When Ghost Mode is enabled, Dhurta launches a bundled Tor binary that routes your traffic through the Tor network. The following applies:</p>
-      <ul class="check-list">
-        <li>Your real IP address is hidden from websites you visit — they see a Tor exit node instead.</li>
-        <li>Dhurta does not log which sites you visit through Tor.</li>
-        <li>The Ghost Mode session is in-memory only — no history, cookies, or cache are written to disk when Ghost Mode is active.</li>
-        <li>Your browser fingerprint is spoofed during Ghost Mode sessions.</li>
-        <li>WebRTC is fully disabled during Ghost Mode to prevent IP leaks.</li>
-      </ul>
-      <div class="callout callout-saffron">
-        <p><strong>Important:</strong> While Dhurta routes your traffic through Tor and collects nothing itself, the Tor network is operated by independent volunteer relays. Dhurta has no control over exit nodes. For sensitive use cases, always verify your protection status using the Omni Dashboard (<span class="mono" style="font-size:12px;color:var(--saffron)">dhurta://omni</span>).</p>
-      </div>
-    </div>
+      <div class="divider"></div>
 
-    <div class="section" id="third-party">
-      <span class="section-num">05 — Third Parties</span>
-      <h2>Third-Party Services &amp; Websites</h2>
-      <p>Dhurta Browser is a tool that connects you to the web. When you browse websites, those websites may collect data about you subject to their own privacy policies. Dhurta has no control over and no visibility into what third-party websites collect.</p>
-      <p>Dhurta Browser does <strong>not</strong> include or embed any of the following:</p>
-      <ul class="check-list x-list">
-        <li>Advertising SDKs or ad networks</li>
-        <li>Analytics SDKs (Google Analytics, Mixpanel, Amplitude, etc.)</li>
-        <li>Crash reporting services (Sentry, Bugsnag, Crashlytics, etc.)</li>
-        <li>Social login or identity providers</li>
-        <li>Cloud sync services that transmit your data</li>
-        <li>Any third-party data broker integrations</li>
-      </ul>
-      <p>The only outbound network connections Dhurta makes on its own (not on your instruction) are: checking for software update version numbers from GitHub Releases. This check contains no user identifiers and can be verified in the source code.</p>
-    </div>
+      <section class="section" id="s02">
+        <span class="section-eyebrow">02 — Data Controller</span>
+        <h2>Data Controller</h2>
+        <p>For the purposes of applicable data protection laws, the data controller for Dhurta Browser is:</p>
+        <div class="callout c-gold">
+          <span class="co-label">Company Information</span>
+          <p><strong>Dhurta</strong><br>
+          Operated by: Prashant Keshr<br>
+          Website: <a href="https://browser.dhurta.org" style="color:var(--gold)">browser.dhurta.org</a><br>
+          GitHub: <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener" style="color:var(--gold)">github.com/prashantkeshr/Dhurta</a><br>
+          Primary Privacy Contact: <a href="mailto:privacy@dhurta.com" style="color:var(--gold)">privacy@dhurta.com</a></p>
+        </div>
+        <p>Because Dhurta Browser stores all data locally on your device and does not transmit personal data to any server, the practical scope of "data controller" responsibilities is limited. We hold no personal data on our servers — there are no servers involved in the browser's ordinary operation. This policy is provided as a matter of legal compliance and user transparency, not because there is data being controlled by us.</p>
+      </section>
 
-    <div class="section" id="updates">
-      <span class="section-num">06 — Software Updates</span>
-      <h2>Software Updates</h2>
-      <p>Dhurta Browser periodically checks for new versions by making a version-check request to <a href="https://github.com/prashantkeshr/Dhurta/releases" target="_blank" rel="noopener">GitHub Releases</a>. This request:</p>
-      <ul class="check-list">
-        <li>Contains no user identifier, device identifier, or any personal data</li>
-        <li>Is a standard HTTPS GET request to a public GitHub URL</li>
-        <li>Is subject to GitHub's own privacy policy for public repository traffic</li>
-        <li>Can be disabled in browser settings</li>
-      </ul>
-      <p>Update packages are downloaded from GitHub Releases or the Microsoft Store depending on how you installed the browser. Dhurta does not operate its own update servers.</p>
-    </div>
+      <div class="divider"></div>
 
-    <div class="section" id="children">
-      <span class="section-num">07 — Children's Privacy</span>
-      <h2>Children's Privacy</h2>
-      <p>Dhurta Browser does not collect any personal information from anyone — including children. Because we collect nothing, there is no specific age restriction from a data-collection standpoint. However, parents and guardians are responsible for supervising their children's internet use. We recommend using parental control software for households with minor children.</p>
-    </div>
+      <section class="section" id="s03">
+        <span class="section-eyebrow">03 — Scope</span>
+        <h2>Scope of This Policy</h2>
+        <p>This Privacy Policy applies to:</p>
+        <ul class="check-list">
+          <li>Dhurta Browser, all versions from v1.0 onwards, on Windows, macOS, and Linux</li>
+          <li>Built-in features including Ghost Mode, Chakra Shield, Omni Dashboard, ad blocking, fingerprint spoofing, and Tor routing</li>
+          <li>The official website at <a href="https://browser.dhurta.org">browser.dhurta.org</a></li>
+          <li>Official Dhurta communication channels (email support, GitHub issues)</li>
+        </ul>
+        <p>This policy does <strong>not</strong> apply to:</p>
+        <ul class="x-list">
+          <li>Websites and applications you visit using Dhurta Browser — those have their own privacy policies</li>
+          <li>Third-party browser extensions you install — those are governed by the extension developer's own policies</li>
+          <li>The Tor network — operated by independent volunteers under the Tor Project's own policies</li>
+          <li>Dhurta Developer Browser — which has its <a href="privacy-dev.html" class="nav-t">own separate privacy policy</a></li>
+        </ul>
+      </section>
 
-    <div class="section" id="rights">
-      <span class="section-num">08 — Your Rights</span>
-      <h2>Your Rights &amp; Control</h2>
-      <p>Because all data is stored locally on your device and nothing is transmitted to Dhurta, you have complete and immediate control over all your data at all times:</p>
-      <ul class="check-list">
-        <li><strong>Access:</strong> Open <span class="mono" style="font-size:12px">dhurta://transparency</span> to see every file the browser has written.</li>
-        <li><strong>Delete:</strong> Clear your history, cookies, cache, and all browser data from Settings → Privacy.</li>
-        <li><strong>Export:</strong> Export bookmarks, history, and settings as standard JSON files at any time.</li>
-        <li><strong>Portability:</strong> Your profile is a standard directory on your filesystem — copy, move, or back it up freely.</li>
-        <li><strong>Erasure:</strong> Uninstalling Dhurta Browser removes the application. Deleting your profile directory removes all locally stored data.</li>
-      </ul>
-      <p>There is no account to delete, no server-side data to request, and no data deletion form to submit — because nothing was ever sent to us.</p>
-    </div>
+      <div class="divider"></div>
 
-    <div class="section" id="changes">
-      <span class="section-num">09 — Changes</span>
-      <h2>Changes to This Policy</h2>
-      <p>If we update this privacy policy, the new version will be published at this URL with an updated effective date. We will not send you a notification — there is no account or email address to send it to. We encourage you to review this page when updating the browser.</p>
-      <p>The core commitment — zero telemetry, zero data collection, local storage only — is an architectural property of the software, not a policy that can be changed without publishing new source code. Any such change would be visible in the public <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">GitHub repository</a>.</p>
-    </div>
+      <section class="section" id="s04">
+        <span class="section-eyebrow">04 — What We Don't Collect</span>
+        <h2>Information We Deliberately Do Not Collect</h2>
+        <p>The following is an explicit, exhaustive list of data categories that Dhurta Browser does <strong>not</strong> collect, transmit, or store on any server:</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Data Category</th><th>Collected?</th><th>Sent Off-Device?</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>URLs / browsing history</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Stored locally only; never transmitted</td></tr>
+              <tr><td>Search queries</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Sent to your chosen search engine only</td></tr>
+              <tr><td>Passwords or credentials</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>OS-encrypted locally; never transmitted</td></tr>
+              <tr><td>Form input data</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Not intercepted or logged</td></tr>
+              <tr><td>Usage analytics / telemetry</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>No analytics infrastructure exists</td></tr>
+              <tr><td>Crash reports / diagnostics</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>No crash reporting infrastructure</td></tr>
+              <tr><td>Your IP address (by Dhurta)</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Not logged by Dhurta at any point</td></tr>
+              <tr><td>Device identifiers (UUID, MAC)</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Not collected or transmitted</td></tr>
+              <tr><td>Hardware fingerprint</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Spoofed on request; not logged</td></tr>
+              <tr><td>Location data (GPS / IP-based)</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Not accessed or transmitted</td></tr>
+              <tr><td>Download history</td><td class="t-local">LOCAL ONLY</td><td class="t-no">NEVER</td><td>Stored in profile; never transmitted</td></tr>
+              <tr><td>Extension data</td><td class="t-local">LOCAL ONLY</td><td class="t-no">NEVER</td><td>Stored in profile; never transmitted</td></tr>
+              <tr><td>AI assistant conversations</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Local model only — no cloud call made</td></tr>
+              <tr><td>Ad interaction / click data</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>No ad network; ads blocked by default</td></tr>
+              <tr><td>Social media activity</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>No social SDK embedded</td></tr>
+              <tr><td>Clipboard contents</td><td class="t-no">NEVER</td><td class="t-no">NEVER</td><td>Not read or logged by the browser</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout c-accent">
+          <span class="co-label">Why This Table Matters</span>
+          <p>Many privacy policies list what they collect. This table lists what we explicitly do <em>not</em> collect — because we believe the absence of data collection is the more important disclosure. Every row above represents a deliberate architectural decision not to build the infrastructure that would enable that collection.</p>
+        </div>
+      </section>
 
-    <div class="section" id="contact">
-      <span class="section-num">10 — Contact</span>
-      <h2>Contact</h2>
-      <p>If you have questions about this privacy policy or Dhurta Browser's data practices, contact us at:</p>
-      <div class="callout callout-gold" style="margin-top:16px">
-        <p><strong>Dhurta</strong><br>
-        Privacy inquiries: <a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a><br>
-        General: <a href="mailto:contact@dhurta.com">contact@dhurta.com</a><br>
-        Source code: <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">github.com/prashantkeshr/Dhurta</a></p>
-      </div>
-    </div>
+      <div class="divider"></div>
 
-  </div><!-- /content -->
-</div><!-- /container -->
+      <section class="section" id="s05">
+        <span class="section-eyebrow">05 — Local Storage</span>
+        <h2>Information Stored Locally on Your Device</h2>
+        <p>Dhurta Browser stores data locally to function. All of this data lives exclusively on your device in your user profile directory. No part of it is transmitted to Dhurta or any third party.</p>
+        <h3>What is stored locally</h3>
+        <ul class="check-list">
+          <li><strong>Browsing history:</strong> URLs, page titles, and visit timestamps stored in a local SQLite database in your profile directory.</li>
+          <li><strong>Bookmarks:</strong> Saved bookmarks and folder structure stored as JSON in your profile directory.</li>
+          <li><strong>Saved passwords:</strong> Encrypted using the operating system's native credential storage (Windows Credential Manager, macOS Keychain, Linux Secret Service). Raw passwords are never stored in plaintext anywhere.</li>
+          <li><strong>Browser settings and preferences:</strong> Your configuration choices stored as JSON.</li>
+          <li><strong>Cookies and site data:</strong> Cookies, localStorage, IndexedDB, and service worker caches for websites you visit — scoped per-site and fully deletable by you.</li>
+          <li><strong>Cache:</strong> Cached page resources to speed up repeat visits. Fully clearable from Settings.</li>
+          <li><strong>Extension data:</strong> Local data stored by extensions you install.</li>
+          <li><strong>Download history:</strong> A log of files you have downloaded, stored locally only.</li>
+          <li><strong>Custom themes and interface settings:</strong> Any wallpapers, themes, or layout preferences you have configured.</li>
+          <li><strong>Autofill data:</strong> Name, address, and payment card data you have saved — encrypted using OS credential storage.</li>
+        </ul>
+        <h3>Profile directory locations</h3>
+        <div class="callout c-gold">
+          <span class="co-label">Where Your Data Lives</span>
+          <p>
+            <strong>Windows:</strong> <code>%APPDATA%\Dhurta\User Data\Default</code><br>
+            <strong>macOS:</strong> <code>~/Library/Application Support/Dhurta/User Data/Default</code><br>
+            <strong>Linux:</strong> <code>~/.config/Dhurta/User Data/Default</code><br><br>
+            Open <code>dhurta://transparency</code> in the browser to see every file written, its size, and last modification date.
+          </p>
+        </div>
+      </section>
 
-<footer>
-  <div class="footer-logo">
-    <img src="assets/dhurta-logo.png" alt="Dhurta">
+      <div class="divider"></div>
+
+      <section class="section" id="s06">
+        <span class="section-eyebrow">06 — Ghost Mode &amp; Tor</span>
+        <h2>Ghost Mode &amp; Tor Routing</h2>
+        <p>Ghost Mode is Dhurta's enhanced private browsing feature. When activated, it routes your internet traffic through the Tor anonymity network and applies comprehensive fingerprint spoofing to prevent tracking.</p>
+        <h3>What Ghost Mode does</h3>
+        <ul class="check-list">
+          <li><strong>Tor routing:</strong> Traffic is routed through at least three volunteer-operated Tor relays before reaching its destination. Websites see only the IP address of the exit node, not your real IP.</li>
+          <li><strong>No local trace:</strong> Ghost Mode sessions are entirely in memory. No browsing history, cookies, cache, or session data are written to disk during a Ghost Mode session. When you close a Ghost Mode window, all session data is permanently discarded.</li>
+          <li><strong>Fingerprint spoofing:</strong> Canvas fingerprint, WebGL fingerprint, audio fingerprint, font enumeration, hardware concurrency, device memory, screen resolution, and timezone are all spoofed to prevent cross-site tracking.</li>
+          <li><strong>WebRTC disabled:</strong> WebRTC is completely disabled during Ghost Mode to prevent IP address leaks through media channels.</li>
+          <li><strong>JavaScript properties spoofed:</strong> User agent strings, navigator properties, and other JS-accessible browser attributes are randomised.</li>
+        </ul>
+        <h3>What Dhurta knows about your Ghost Mode usage</h3>
+        <p>Nothing. Dhurta does not log which sites you visit through Ghost Mode, when you use it, or for how long. Because Ghost Mode sessions are in-memory only and Dhurta has no server infrastructure to receive logs, there is no mechanism by which Ghost Mode activity could be tracked by Dhurta.</p>
+        <div class="callout c-blue">
+          <span class="co-label">Important — Third-Party Tor Network</span>
+          <p><strong>The Tor network is operated by independent volunteer relays worldwide — not by Dhurta.</strong> While Dhurta cannot see your traffic, Tor exit nodes are outside Dhurta's control. For the highest assurance, verify your protection status using the Omni Dashboard at <code>dhurta://omni</code> before conducting sensitive activity. Tor routing does not make illegal activity legal.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s07">
+        <span class="section-eyebrow">07 — Chakra Shield</span>
+        <h2>Chakra Shield &amp; Built-In Privacy Features</h2>
+        <p>Chakra Shield is Dhurta's integrated privacy protection layer. It is enabled by default and operates entirely locally — there are no cloud lookups, no remote filter updates during browsing sessions, and no data transmitted to Dhurta in connection with its operation.</p>
+        <h3>What Chakra Shield includes</h3>
+        <ul class="check-list">
+          <li><strong>Ad blocking:</strong> Network-level blocking of requests to known advertising and tracking domains using locally-stored filter lists. No request data is sent off-device during filtering.</li>
+          <li><strong>Anti-fingerprinting:</strong> Randomises hardware and browser properties exposed to websites to prevent cross-site tracking without cookies.</li>
+          <li><strong>WebRTC leak protection:</strong> Prevents your real IP address from being exposed through WebRTC channels, even when using a VPN.</li>
+          <li><strong>Cookie guard:</strong> Blocks third-party tracking cookies and enforces SameSite policies.</li>
+          <li><strong>HTTPS enforcement:</strong> Automatically upgrades HTTP connections to HTTPS where available using a locally-stored upgrade list.</li>
+        </ul>
+        <div class="callout c-teal">
+          <span class="co-label">Filter List Updates</span>
+          <p><strong>Filter lists are updated periodically in the background.</strong> This update check is a standard HTTPS request to our GitHub releases page containing no user data. The updated list is downloaded and stored locally. No browsing data accompanies any update request.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s08">
+        <span class="section-eyebrow">08 — Cookies &amp; Tracking</span>
+        <h2>Cookies &amp; Tracking Technologies</h2>
+        <h3>Cookies set by websites you visit</h3>
+        <p>Like all browsers, Dhurta Browser allows websites to set cookies on your device. These cookies are managed by the browser and are subject to the privacy policies of the websites that set them. Dhurta does not read, intercept, or transmit the contents of cookies set by third-party websites.</p>
+        <p>Chakra Shield blocks third-party tracking cookies by default. First-party cookies (set by the site you are actively visiting) are allowed unless you specifically block them in Settings.</p>
+        <h3>Dhurta-set cookies</h3>
+        <p>Dhurta Browser itself does not set any cookies on external websites. Dhurta does not operate a cookie-based tracking infrastructure of any kind.</p>
+        <h3>Local browser storage</h3>
+        <p>Dhurta stores browser preferences and profile data in local files and databases as described in Section 05. This is local application data that never leaves your device — it is not cookies in the web tracking sense.</p>
+        <h3>Do Not Track (DNT)</h3>
+        <p>Dhurta Browser supports the Do Not Track (DNT) header and can send it to websites you visit. However, DNT is a voluntary signal — websites are not legally required to honour it. Chakra Shield's active blocking provides stronger, enforced protection than DNT alone.</p>
+        <h3>Global Privacy Control (GPC)</h3>
+        <p>Dhurta Browser supports the Global Privacy Control signal, which notifies websites of your preference not to have your data sold or shared. Under the CCPA, websites operating in California are legally required to honour this signal.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s09">
+        <span class="section-eyebrow">09 — Third-Party Websites</span>
+        <h2>Third-Party Services &amp; Websites You Visit</h2>
+        <p>Dhurta Browser is a tool that connects you to the web. When you visit websites, those websites may collect data about you subject to their own privacy policies. Dhurta has no visibility into, and no responsibility for, what third-party websites collect from you.</p>
+        <h3>What Dhurta does not embed</h3>
+        <ul class="x-list">
+          <li>Advertising networks or ad SDKs of any kind</li>
+          <li>Google Analytics, Mixpanel, Amplitude, Segment, or any analytics SDK</li>
+          <li>Sentry, Bugsnag, Crashlytics, or any crash reporting service</li>
+          <li>Facebook Pixel, Google Tag Manager, or any marketing tracking pixel</li>
+          <li>Social login buttons (Google Sign-In, Facebook Login, etc.)</li>
+          <li>Cloud sync services that transmit your browsing data to any server</li>
+          <li>Data broker integrations or audience targeting SDKs</li>
+          <li>Any third-party SDK that makes outbound network calls without your explicit instruction</li>
+        </ul>
+        <h3>Your chosen search engine</h3>
+        <p>When you type a query in the address bar, Dhurta sends that query to whichever search engine you have configured (default: DuckDuckGo). That query is subject to your chosen search engine's own privacy policy. Dhurta does not intercept, log, or receive a copy of your search queries.</p>
+        <h3>Extensions</h3>
+        <p>Third-party extensions you install from the Chrome Web Store or other sources are independent software. Dhurta cannot control or take responsibility for the data practices of extension developers. Review each extension's permissions and privacy policy before installing it.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s10">
+        <span class="section-eyebrow">10 — Software Updates</span>
+        <h2>Software Updates</h2>
+        <p>Dhurta Browser periodically checks for new versions. This check is performed by making a standard HTTPS GET request to our public GitHub Releases page. The request:</p>
+        <ul class="check-list">
+          <li>Contains no user identifier, device identifier, session token, or personal data of any kind</li>
+          <li>Is a plain HTTPS GET to a public GitHub URL — identical to any browser request</li>
+          <li>Is subject to GitHub's own privacy policy for public repository traffic, not Dhurta's</li>
+          <li>Contains only the standard HTTPS headers sent by any browser request</li>
+        </ul>
+        <p>You can disable automatic update checks entirely in Settings → General → Updates. If you install Dhurta through the Microsoft Store, updates are managed by the Store and are subject to Microsoft's own update infrastructure.</p>
+        <div class="callout c-gold">
+          <span class="co-label">Version Check Endpoint</span>
+          <p>The update check URL is: <code>https://github.com/prashantkeshr/Dhurta/releases/latest</code>. You can verify this in the source code. No proprietary update server is involved.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s11">
+        <span class="section-eyebrow">11 — Security</span>
+        <h2>Security Measures</h2>
+        <p>Dhurta applies the following security practices to protect data stored locally on your device:</p>
+        <ul class="check-list">
+          <li><strong>OS-level credential encryption:</strong> Saved passwords and sensitive autofill data are encrypted using Windows DPAPI, macOS Keychain, or Linux Secret Service — the strongest encryption available on your operating system.</li>
+          <li><strong>SQLite encryption for sensitive databases:</strong> Profile databases containing sensitive session data are encrypted at rest.</li>
+          <li><strong>Sandboxed process model:</strong> Browser tabs run in isolated renderer processes following Chromium's multi-process security architecture, limiting the blast radius of any compromised tab.</li>
+          <li><strong>No plaintext credential storage:</strong> At no point are raw passwords or payment card numbers written to unencrypted files on disk.</li>
+          <li><strong>HTTPS enforcement:</strong> Chakra Shield upgrades connections to HTTPS wherever possible, protecting your data in transit to websites you visit.</li>
+          <li><strong>Regular security updates:</strong> Security patches are released promptly as part of the normal update cycle.</li>
+        </ul>
+        <div class="callout c-warning">
+          <span class="co-label">Security Disclosure</span>
+          <p><strong>Dhurta's security measures protect data at rest on your device.</strong> They do not protect against physical access to an unlocked device, malware running with your user permissions, or vulnerabilities in the websites you visit. If you discover a security vulnerability in Dhurta Browser, please report it to <a href="mailto:security@dhurta.com" style="color:var(--rose)">security@dhurta.com</a>. We treat all security reports as high-priority and respond within 24 hours.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s12">
+        <span class="section-eyebrow">12 — Children's Privacy</span>
+        <h2>Children's Privacy</h2>
+        <p>Dhurta Browser is a general-purpose web browser intended for users of all ages. Because we collect no personal data from anyone, we comply with the Children's Online Privacy Protection Act (COPPA) and comparable international regulations by default — there is no data collection to restrict.</p>
+        <p>Dhurta does not knowingly collect personal information from children under the age of 13 in the United States, under the age of 16 in the European Union, or under the minimum age defined by applicable law in other jurisdictions. Because we collect no personal data at all, this standard is met categorically.</p>
+        <p>Parents and guardians are encouraged to supervise their children's internet usage. We recommend parental control software for households with minor children.</p>
+        <p>If you believe a child under the applicable minimum age has transmitted personal data to us (for example, via a support email), please contact us immediately at <a href="mailto:coppa@dhurta.com">coppa@dhurta.com</a> and we will take prompt steps to delete that information.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s13">
+        <span class="section-eyebrow">13 — GDPR Rights</span>
+        <h2>Your Privacy Rights (GDPR — EU / EEA / UK Users)</h2>
+        <p>If you are located in the European Economic Area, the United Kingdom, or Switzerland, the General Data Protection Regulation (GDPR) grants you the following rights. <strong>Because Dhurta Browser processes no personal data on our servers, these rights are exercisable primarily over locally-stored data, which is entirely under your own control.</strong></p>
+        <div class="rights-grid">
+          <div class="right-card"><span class="right-card-icon">👁️</span><div class="right-card-name">Right of Access (Art. 15)</div><div class="right-card-desc">Request a copy of any personal data we hold. Because we hold none on our servers, local data can be found at <code>dhurta://transparency</code>.</div></div>
+          <div class="right-card"><span class="right-card-icon">✏️</span><div class="right-card-name">Right to Rectification (Art. 16)</div><div class="right-card-desc">Request correction of inaccurate data. Local browser data can be edited directly from browser settings at any time.</div></div>
+          <div class="right-card"><span class="right-card-icon">🗑️</span><div class="right-card-name">Right to Erasure (Art. 17)</div><div class="right-card-desc">Request deletion of your personal data. Local data is cleared from Settings → Privacy → Clear Data. Uninstalling + deleting the profile directory removes everything.</div></div>
+          <div class="right-card"><span class="right-card-icon">📦</span><div class="right-card-name">Right to Portability (Art. 20)</div><div class="right-card-desc">Export your data in machine-readable format. Use File → Export Bookmarks or History to export local data at any time.</div></div>
+          <div class="right-card"><span class="right-card-icon">🚫</span><div class="right-card-name">Right to Object (Art. 21)</div><div class="right-card-desc">Object to processing of your data. Because we process nothing on our servers, there is nothing to object to on our end.</div></div>
+          <div class="right-card"><span class="right-card-icon">⏸️</span><div class="right-card-name">Right to Restrict (Art. 18)</div><div class="right-card-desc">Restrict processing. Local processing can be restricted by modifying settings or using Ghost Mode for session isolation.</div></div>
+        </div>
+        <p>To exercise any of these rights or to file a complaint about our data practices, contact our Privacy team at <a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a>. You also have the right to lodge a complaint with your national Data Protection Authority (DPA).</p>
+        <h3>Legal Basis for Processing</h3>
+        <p>To the extent that any processing of personal data occurs (such as processing local browser data to provide browser functionality), the legal basis is <strong>performance of a contract</strong> — the browser cannot function without storing some data locally on your device — and <strong>legitimate interest</strong> in providing the service you have installed. We do not process personal data for marketing, profiling, or automated decision-making.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s14">
+        <span class="section-eyebrow">14 — CCPA Rights</span>
+        <h2>Your Privacy Rights (CCPA — California Users)</h2>
+        <p>If you are a California resident, the California Consumer Privacy Act (CCPA) and the California Privacy Rights Act (CPRA) grant you the following rights:</p>
+        <ul class="check-list">
+          <li><strong>Right to Know:</strong> You have the right to know what personal information we collect, use, disclose, and sell. See Section 04 for the complete list of data we do not collect. We collect no personal data on our servers.</li>
+          <li><strong>Right to Delete:</strong> You have the right to request deletion of personal information. Because we hold no personal information on our servers, deletion requests apply to locally-stored data, which you can clear at any time from Settings → Privacy → Clear Browsing Data.</li>
+          <li><strong>Right to Opt Out of Sale:</strong> Dhurta does not sell, rent, lease, or trade personal information. There is nothing to opt out of.</li>
+          <li><strong>Right to Non-Discrimination:</strong> Dhurta will not discriminate against you for exercising any of your CCPA rights.</li>
+          <li><strong>Right to Correct:</strong> You have the right to request correction of inaccurate personal information. Local browser data can be managed directly from the browser interface.</li>
+          <li><strong>Right to Limit Use of Sensitive Personal Information:</strong> We do not collect or process sensitive personal information as defined under the CPRA.</li>
+        </ul>
+        <p>To submit a CCPA request, contact us at <a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a> with the subject line "CCPA Request."</p>
+        <div class="callout c-teal">
+          <span class="co-label">Do Not Sell or Share</span>
+          <p><strong>Dhurta does not sell, share, rent, or otherwise disclose personal information to third parties for any purpose.</strong> We have no advertising partners, no data brokers, and no revenue model based on user data. This is not a policy position that requires opting out — it is the default and permanent state of the product.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s15">
+        <span class="section-eyebrow">15 — Universal Rights</span>
+        <h2>Universal Rights for All Users</h2>
+        <p>Regardless of your location or the specific laws applicable to you, every Dhurta Browser user has the following rights over their data:</p>
+        <ul class="check-list">
+          <li><strong>Full transparency:</strong> Open <code>dhurta://transparency</code> at any time to see every file the browser has written to your disk, its size, and when it was last modified.</li>
+          <li><strong>Immediate data deletion:</strong> Clear all browsing data at any time from Settings → Privacy → Clear Browsing Data. No waiting period, no support ticket, no approval required.</li>
+          <li><strong>Data portability:</strong> Export your bookmarks, history, and settings as standard JSON files that can be read by any text editor or imported into another browser.</li>
+          <li><strong>Profile portability:</strong> Your profile directory is a standard filesystem folder. Copy it, back it up, move it to another machine, or archive it freely.</li>
+          <li><strong>Complete erasure:</strong> Uninstalling Dhurta Browser removes the application. Deleting your profile directory removes all data the browser has ever stored. No residual server-side data exists.</li>
+          <li><strong>No dark patterns:</strong> We will not use confusing interfaces, pre-ticked boxes, or psychological manipulation to discourage you from exercising your privacy rights.</li>
+        </ul>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s16">
+        <span class="section-eyebrow">16 — Data Retention</span>
+        <h2>Data Retention</h2>
+        <p>Because all data is stored locally on your device, <strong>data retention is entirely under your control</strong>. The following default retention behaviours apply, all of which you can override:</p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Data Type</th><th>Default Retention</th><th>How to Change</th></tr></thead>
+            <tbody>
+              <tr><td>Browsing history</td><td>90 days</td><td>Settings → Privacy → History retention</td></tr>
+              <tr><td>Download history</td><td>Until manually cleared</td><td>Downloads panel → Clear</td></tr>
+              <tr><td>Cookies</td><td>Per cookie's own expiry</td><td>Settings → Privacy → Cookie settings</td></tr>
+              <tr><td>Cache</td><td>Until cache limit reached</td><td>Settings → Privacy → Clear cache</td></tr>
+              <tr><td>Saved passwords</td><td>Until deleted by user</td><td>Settings → Passwords</td></tr>
+              <tr><td>Bookmarks</td><td>Permanent (until deleted)</td><td>Bookmarks Manager</td></tr>
+              <tr><td>Ghost Mode sessions</td><td>Deleted on session end</td><td>Not configurable — by design</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Dhurta retains no data about you on any server. There is no server-side retention period to disclose.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s17">
+        <span class="section-eyebrow">17 — International Users</span>
+        <h2>International Users &amp; Data Transfers</h2>
+        <p>Dhurta Browser is available worldwide. Because the browser stores all data locally on your device and does not transmit personal data to any server, there are <strong>no international data transfers</strong> to disclose under GDPR Article 46 or comparable frameworks.</p>
+        <p>The only outbound connections to Dhurta-related infrastructure are version-check requests to GitHub (a public endpoint containing no personal data). GitHub operates under its own privacy policy and security certifications.</p>
+        <p>Users in the EU, UK, Switzerland, Canada, Australia, Brazil, Japan, South Korea, and all other jurisdictions with specific data protection laws are subject to the same zero-data-collection architecture as all other users. No special terms apply — the product simply does not collect the data that such laws would otherwise regulate.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s18">
+        <span class="section-eyebrow">18 — Policy Changes</span>
+        <h2>Changes to This Privacy Policy</h2>
+        <p>Dhurta may update this Privacy Policy from time to time. The nature of any change will determine how we communicate it:</p>
+        <ul class="check-list">
+          <li><strong>Material changes</strong> (changes that increase data collection, change the purpose of data use, or affect your rights) will be announced with at least 30 days' notice via a notice in the browser itself and an update to this page.</li>
+          <li><strong>Non-material changes</strong> (clarifications, corrections, adding detail without changing practice) will be published with an updated date on this page.</li>
+          <li>All historical versions of this policy remain accessible in the GitHub repository's commit history.</li>
+        </ul>
+        <p>Because our core data commitment — zero telemetry, local storage only — is an architectural property of the software rather than just a policy, any change to it would require releasing new source code visible in the public repository before it reached users through an update.</p>
+        <div class="callout c-gold">
+          <span class="co-label">Verification</span>
+          <p><strong>You can verify that the browser's data practices match this policy</strong> at any time by reviewing the source code at <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener" style="color:var(--gold)">github.com/prashantkeshr/Dhurta</a>. No amount of policy text changes what code actually does. We encourage users to treat the source code as the authoritative record.</p>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s19">
+        <span class="section-eyebrow">19 — Governing Law</span>
+        <h2>Governing Law &amp; Jurisdiction</h2>
+        <p>This Privacy Policy is governed by applicable data protection law, including but not limited to the General Data Protection Regulation (GDPR) for EU/EEA users, the UK GDPR for UK users, and the California Consumer Privacy Act (CCPA) for California residents.</p>
+        <p>Users in jurisdictions with their own data protection frameworks — including Brazil (LGPD), Canada (PIPEDA/Law 25), Australia (Privacy Act), Japan (APPI), South Korea (PIPA), India (DPDPA), and others — are entitled to exercise rights under those frameworks by contacting us at <a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a> or <a href="mailto:legal@dhurta.com">legal@dhurta.com</a>.</p>
+        <p>Because Dhurta Browser collects no personal data, most disputes relating to data handling cannot arise in practice. Any disputes that do arise shall first be addressed through direct correspondence with our Privacy team before escalation to formal legal proceedings.</p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section class="section" id="s20">
+        <span class="section-eyebrow">20 — Contact &amp; DPO</span>
+        <h2>Contact Information &amp; Data Protection</h2>
+        <p>For all privacy-related inquiries, requests, or concerns, please use the contact channels below. We aim to respond to all privacy inquiries within 72 hours and to formal rights requests within 30 days.</p>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <span class="contact-role">General Privacy Inquiries</span>
+            <a href="mailto:privacy@dhurta.com" class="contact-email">privacy@dhurta.com</a>
+            <p class="contact-note">Privacy policy questions, general data inquiries, rights requests under GDPR and CCPA. Response within 72 hours.</p>
+          </div>
+          <div class="contact-card">
+            <span class="contact-role">Security Disclosures</span>
+            <a href="mailto:security@dhurta.com" class="contact-email">security@dhurta.com</a>
+            <p class="contact-note">Vulnerability reports, security concerns about data handling. High-priority; initial acknowledgement within 24 hours.</p>
+          </div>
+          <div class="contact-card">
+            <span class="contact-role">Legal &amp; Compliance</span>
+            <a href="mailto:legal@dhurta.com" class="contact-email">legal@dhurta.com</a>
+            <p class="contact-note">Law enforcement requests, regulatory inquiries, formal legal correspondence, data protection authority matters.</p>
+          </div>
+          <div class="contact-card">
+            <span class="contact-role">Children's Privacy (COPPA)</span>
+            <a href="mailto:coppa@dhurta.com" class="contact-email">coppa@dhurta.com</a>
+            <p class="contact-note">Reports relating to children's data or inadvertent collection. Response within 24 hours; data deleted immediately.</p>
+          </div>
+          <div class="contact-card">
+            <span class="contact-role">General &amp; Support</span>
+            <a href="mailto:contact@dhurta.com" class="contact-email">contact@dhurta.com</a>
+            <p class="contact-note">Support requests, feature inquiries, general product questions, feedback.</p>
+          </div>
+          <div class="contact-card">
+            <span class="contact-role">Source Code Audit</span>
+            <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener" class="contact-email" style="color:var(--gold)">github.com/prashantkeshr/Dhurta</a>
+            <p class="contact-note">Public repository for independent code audits, security research, and policy verification.</p>
+          </div>
+        </div>
+        <div class="callout c-teal" style="margin-top:28px">
+          <span class="co-label">Response Time Commitments</span>
+          <p>
+            <strong>General privacy inquiries:</strong> Within 72 hours<br>
+            <strong>Formal rights requests (GDPR / CCPA):</strong> Within 30 days (extendable by 30 days for complex requests with notice)<br>
+            <strong>Security disclosures:</strong> Initial acknowledgement within 24 hours<br>
+            <strong>Children's privacy reports:</strong> Within 24 hours; data deleted immediately<br>
+            <strong>Law enforcement requests:</strong> As required by applicable law; legal counsel review required
+          </p>
+        </div>
+      </section>
+
+    </main>
   </div>
-  <div class="footer-copy">© 2026 Dhurta. This page phones no one. 🔱</div>
-  <div class="footer-links">
-    <a href="index.html">Home</a>
-    <a href="privacy-browser.html">Browser Privacy</a>
-    <a href="privacy-dev.html">Developer Privacy</a>
-    <a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">GitHub</a>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-wrap">
+    <div class="footer-top">
+      <div>
+        <a href="index.html" class="footer-brand-row nav-t">
+          <img src="assets/dhurta-logo.png" alt="Dhurta">
+          <span>Dhurta Browser</span>
+        </a>
+        <p class="footer-tagline">The browser that knows nothing about you — by design. Zero telemetry. Local storage only. Open source.</p>
+      </div>
+      <div>
+        <span class="footer-col-title">Privacy</span>
+        <ul class="footer-links">
+          <li><a href="privacy.html" class="nav-t">Privacy Hub</a></li>
+          <li><a href="privacy-browser.html" class="nav-t active">Dhurta Browser Policy ←</a></li>
+          <li><a href="privacy-dev.html" class="nav-t">Developer Browser Policy</a></li>
+          <li><a href="mailto:privacy@dhurta.com">privacy@dhurta.com</a></li>
+          <li><a href="mailto:legal@dhurta.com">legal@dhurta.com</a></li>
+        </ul>
+      </div>
+      <div>
+        <span class="footer-col-title">Product &amp; Legal</span>
+        <ul class="footer-links">
+          <li><a href="index.html" class="nav-t">Home</a></li>
+          <li><a href="https://github.com/prashantkeshr/Dhurta" target="_blank" rel="noopener">Source Code (GitHub)</a></li>
+          <li><a href="https://github.com/prashantkeshr/Dhurta/releases" target="_blank" rel="noopener">Releases</a></li>
+          <li><a href="mailto:security@dhurta.com">Report Vulnerability</a></li>
+          <li><a href="mailto:contact@dhurta.com">contact@dhurta.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 Dhurta. This page phones no one. 🔱</span>
+      <div class="footer-legal">
+        <a href="privacy.html" class="nav-t">Privacy Hub</a>
+        <a href="privacy-dev.html" class="nav-t">Developer Policy</a>
+        <a href="mailto:coppa@dhurta.com">COPPA Contact</a>
+        <a href="mailto:security@dhurta.com">Report Vulnerability</a>
+      </div>
+    </div>
   </div>
 </footer>
 
+<a href="#" id="back-top" title="Back to top" aria-label="Scroll to top">↑</a>
+
+<script>
+// Fade in on load
+document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('ready');
+});
+
+// Page transition for same-origin links
+const overlay = document.getElementById('pt-overlay');
+document.querySelectorAll('a.nav-t').forEach(a => {
+  a.addEventListener('click', e => {
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('http') || a.target === '_blank') return;
+    e.preventDefault();
+    overlay.classList.add('out');
+    setTimeout(() => { window.location.href = href; }, 300);
+  });
+});
+
+// Reading progress bar
+const prog = document.getElementById('prog');
+const updateProg = () => {
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  prog.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+};
+window.addEventListener('scroll', updateProg, { passive: true });
+
+// TOC active section highlight
+const sections = document.querySelectorAll('.section[id]');
+const tocLinks = document.querySelectorAll('.toc-link');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector('.toc-link[href="#' + e.target.id + '"]');
+      if (link) {
+        link.classList.add('active');
+        link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+  });
+}, { rootMargin: '-15% 0px -75% 0px' });
+sections.forEach(s => obs.observe(s));
+
+// Back to top button
+const topBtn = document.getElementById('back-top');
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('show', window.scrollY > 500);
+}, { passive: true });
+topBtn.addEventListener('click', e => {
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
 </body>
 </html>
